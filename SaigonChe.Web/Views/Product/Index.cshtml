@@ -1,0 +1,61 @@
+@model List<SaigonChe.Web.ViewModels.ProductViewModel>
+
+@{
+    ViewData["Title"] = "Danh sách món chè";
+}
+
+<div class="container mt-4">
+
+    <h1 class="mb-4">Quán Chè SG</h1>
+
+    <h3>Danh sách món chè</h3>
+
+    <table class="table table-bordered table-striped mt-3">
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tên món</th>
+                <th>Giá</th>
+                <th>Mô tả</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @foreach (var product in Model)
+            {
+                <tr>
+                    <td>@product.Id</td>
+
+                    <td>@product.Name</td>
+
+                    <td>
+                        @product.Price.ToString("N0") đ
+                    </td>
+
+                    <td>@product.Description</td>
+
+                    <td>
+                        @if (product.IsAvailable)
+                        {
+                            <span class="badge bg-success">
+                                Còn hàng
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">
+                                Hết hàng
+                            </span>
+                        }
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+
+</div>
