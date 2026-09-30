@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using QuanCheSG.Web.Models;
+using SaigonChe.Web.Models;
 using System.Diagnostics;
 
-namespace QuanCheSG.Web.Controllers
+namespace SaigonChe.Web.Controllers
 {
     public class HomeController : Controller
     {

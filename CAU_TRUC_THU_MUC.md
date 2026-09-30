@@ -1,13 +1,13 @@
-# Giải thích cấu trúc thư mục CheSaiGon
+# Giải thích cấu trúc thư mục SaigonChe
 
 ## 1. Nhận xét tổng quan
 
-Cấu trúc đề xuất phù hợp cho một đồ án ASP.NET Core quy mô nhỏ đến trung bình. Việc tách `CheSaiGon.Api` và `CheSaiGon.Web` giúp backend API không phụ thuộc vào giao diện, đồng thời cho phép bổ sung ứng dụng mobile hoặc frontend khác trong tương lai mà vẫn tái sử dụng API.
+Cấu trúc đề xuất phù hợp cho một đồ án ASP.NET Core quy mô nhỏ đến trung bình. Việc tách `SaigonChe.Api` và `SaigonChe.Web` giúp backend API không phụ thuộc vào giao diện, đồng thời cho phép bổ sung ứng dụng mobile hoặc frontend khác trong tương lai mà vẫn tái sử dụng API.
 
 ```text
-CheSaiGon/
+SaigonChe/
 │
-├── CheSaiGon.Api/
+├── SaigonChe.Api/
 │   ├── Controllers/
 │   ├── DTOs/
 │   ├── Services/
@@ -17,16 +17,16 @@ CheSaiGon/
 │   ├── Middleware/
 │   └── Program.cs
 │
-├── CheSaiGon.Web/
+├── SaigonChe.Web/
 │   ├── Controllers/
 │   ├── Views/
 │   ├── ViewModels/
 │   ├── Services/
 │   └── wwwroot/
 │
-├── CheSaiGon.Tests/
+├── SaigonChe.Tests/
 │
-└── CheSaiGon.sln
+└── SaigonChe.sln
 ```
 
 Luồng xử lý chính:
@@ -34,7 +34,7 @@ Luồng xử lý chính:
 ```text
 Trình duyệt
     ↓
-CheSaiGon.Web Controller
+SaigonChe.Web Controller
     ↓
 Web Service gọi HTTP API
     ↓
@@ -45,7 +45,7 @@ API Controller → Service → Repository → AppDbContext → SQL Server
 
 Nguyên tắc quan trọng là mỗi tầng chỉ đảm nhận một nhóm trách nhiệm. Không viết truy vấn cơ sở dữ liệu trong Controller và không đặt nghiệp vụ của cửa hàng trong Repository.
 
-## 2. Thư mục gốc `CheSaiGon/`
+## 2. Thư mục gốc `SaigonChe/`
 
 Đây là thư mục chứa toàn bộ solution. Các project con và tài liệu chung của nhóm được đặt tại đây.
 
@@ -56,9 +56,9 @@ Có thể bổ sung ở thư mục gốc:
 - `docs/`: tài liệu thiết kế database, API và phân công nhóm.
 - `docker-compose.yml`: tùy chọn, dùng khi chạy SQL Server bằng Docker.
 
-## 3. Project `CheSaiGon.Api`
+## 3. Project `SaigonChe.Api`
 
-Đây là backend ASP.NET Core Web API. Project chịu trách nhiệm xác thực, phân quyền, xử lý nghiệp vụ, truy xuất cơ sở dữ liệu và cung cấp dữ liệu cho `CheSaiGon.Web` hoặc các client khác.
+Đây là backend ASP.NET Core Web API. Project chịu trách nhiệm xác thực, phân quyền, xử lý nghiệp vụ, truy xuất cơ sở dữ liệu và cung cấp dữ liệu cho `SaigonChe.Web` hoặc các client khác.
 
 ### `Controllers/`
 
@@ -240,9 +240,9 @@ Các nhiệm vụ chính:
 
 Nên chuyển các nhóm cấu hình dài sang extension method, ví dụ `AddApplicationServices()` hoặc `AddJwtAuthentication()`, để `Program.cs` dễ đọc.
 
-## 4. Project `CheSaiGon.Web`
+## 4. Project `SaigonChe.Web`
 
-Đây là ứng dụng giao diện ASP.NET Core MVC. Web nhận thao tác từ trình duyệt, gọi `CheSaiGon.Api` qua HTTP và render HTML.
+Đây là ứng dụng giao diện ASP.NET Core MVC. Web nhận thao tác từ trình duyệt, gọi `SaigonChe.Api` qua HTTP và render HTML.
 
 Web không nên kết nối trực tiếp tới database. Nếu Web truy cập database bỏ qua API, nghiệp vụ và phân quyền có thể bị lặp hoặc không nhất quán.
 
@@ -291,7 +291,7 @@ ViewModel có thể kết hợp dữ liệu từ nhiều response DTO để ph�
 
 ### `Services/`
 
-Chứa các client gọi HTTP tới `CheSaiGon.Api`.
+Chứa các client gọi HTTP tới `SaigonChe.Api`.
 
 Ví dụ:
 
@@ -328,21 +328,21 @@ wwwroot/
 
 Không đặt source code C#, connection string hoặc dữ liệu bí mật trong `wwwroot`, vì nội dung trong đây có thể được cung cấp công khai.
 
-### Các file nên có thêm trong `CheSaiGon.Web`
+### Các file nên có thêm trong `SaigonChe.Web`
 
 Cấu trúc ban đầu chưa hiển thị một số file bắt buộc hoặc thường dùng:
 
 - `Program.cs`: cấu hình MVC, Session, Cookie và các API Service.
 - `appsettings.json`: lưu địa chỉ cơ sở của API và cấu hình không nhạy cảm.
-- `CheSaiGon.Web.csproj`: định nghĩa project và package.
+- `SaigonChe.Web.csproj`: định nghĩa project và package.
 - `Properties/launchSettings.json`: cấu hình chạy local.
 
-## 5. Project `CheSaiGon.Tests`
+## 5. Project `SaigonChe.Tests`
 
 Chứa kiểm thử tự động. Nên chia test theo loại:
 
 ```text
-CheSaiGon.Tests/
+SaigonChe.Tests/
 ├── Unit/
 │   ├── Services/
 │   └── Validators/
@@ -357,26 +357,26 @@ CheSaiGon.Tests/
 - **Integration test:** chạy nhiều thành phần cùng nhau, ví dụ gọi API đăng nhập hoặc tạo đơn với database kiểm thử.
 - **Fixtures/Helpers:** tạo dữ liệu dùng chung và hỗ trợ thiết lập môi trường test.
 
-`CheSaiGon.Tests` cần reference tới project được kiểm thử. Khi số lượng test tăng, có thể tách thành `CheSaiGon.Api.UnitTests`, `CheSaiGon.Api.IntegrationTests` và `CheSaiGon.Web.Tests`.
+`SaigonChe.Tests` cần reference tới project được kiểm thử. Khi số lượng test tăng, có thể tách thành `SaigonChe.Api.UnitTests`, `SaigonChe.Api.IntegrationTests` và `SaigonChe.Web.Tests`.
 
-## 6. File `CheSaiGon.sln`
+## 6. File `SaigonChe.sln`
 
 Solution liên kết các project để Visual Studio và .NET CLI có thể restore, build và test cùng lúc.
 
 Các project cần được thêm vào solution:
 
 ```bash
-dotnet sln CheSaiGon.sln add CheSaiGon.Api/CheSaiGon.Api.csproj
-dotnet sln CheSaiGon.sln add CheSaiGon.Web/CheSaiGon.Web.csproj
-dotnet sln CheSaiGon.sln add CheSaiGon.Tests/CheSaiGon.Tests.csproj
+dotnet sln SaigonChe.sln add SaigonChe.Api/SaigonChe.Api.csproj
+dotnet sln SaigonChe.sln add SaigonChe.Web/SaigonChe.Web.csproj
+dotnet sln SaigonChe.sln add SaigonChe.Tests/SaigonChe.Tests.csproj
 ```
 
 Các lệnh kiểm tra toàn solution:
 
 ```bash
-dotnet restore CheSaiGon.sln
-dotnet build CheSaiGon.sln
-dotnet test CheSaiGon.sln
+dotnet restore SaigonChe.sln
+dotnet build SaigonChe.sln
+dotnet test SaigonChe.sln
 ```
 
 Nếu sử dụng định dạng solution mới của .NET/Visual Studio, file có thể mang đuôi `.slnx`. Nhóm nên chọn một định dạng thống nhất.
@@ -385,7 +385,7 @@ Nếu sử dụng định dạng solution mới của .NET/Visual Studio, file c
 
 Không cần tạo tất cả ngay từ đầu. Chỉ bổ sung khi đã có nhu cầu thực tế.
 
-### Trong `CheSaiGon.Api`
+### Trong `SaigonChe.Api`
 
 - `Enums/`: `UserRole`, `OrderStatus`.
 - `Validators/`: validation phức tạp hoặc FluentValidation.
@@ -394,13 +394,13 @@ Không cần tạo tất cả ngay từ đầu. Chỉ bổ sung khi đã có nhu
 - `Extensions/`: extension method cấu hình Dependency Injection.
 - `Common/`: kiểu phân trang hoặc hằng số dùng chung, nhưng tránh biến thành nơi chứa mọi thứ.
 
-### Trong `CheSaiGon.Web`
+### Trong `SaigonChe.Web`
 
 - `Models/Api/` hoặc `Contracts/`: kiểu request/response dùng khi gọi API.
 - `Extensions/`: helper đăng ký HttpClient, Session hoặc Authentication.
 - `Filters/`: action filter dùng chung cho MVC.
 
-Không nên cho `CheSaiGon.Web` reference trực tiếp tới `CheSaiGon.Api`, vì điều đó dễ khiến Web gọi Service hoặc dùng Entity của API thay vì giao tiếp qua HTTP. Nếu cả hai cần dùng chung contract, có thể tạo project riêng `CheSaiGon.Contracts` chứa các request/response DTO không phụ thuộc hạ tầng.
+Không nên cho `SaigonChe.Web` reference trực tiếp tới `SaigonChe.Api`, vì điều đó dễ khiến Web gọi Service hoặc dùng Entity của API thay vì giao tiếp qua HTTP. Nếu cả hai cần dùng chung contract, có thể tạo project riêng `SaigonChe.Contracts` chứa các request/response DTO không phụ thuộc hạ tầng.
 
 ## 8. Quy tắc phụ thuộc
 

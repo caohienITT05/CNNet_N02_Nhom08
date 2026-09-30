@@ -1,4 +1,4 @@
-namespace QuanCheSG.Web.Models
+namespace SaigonChe.Web.Models
 {
     public class ErrorViewModel
     {
