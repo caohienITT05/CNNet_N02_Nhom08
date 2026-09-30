@@ -26,6 +26,10 @@ dotnet build .\SaigonChe.slnx
 ```powershell
 dotnet run --project .\SaigonChe.Api\SaigonChe.Api.csproj
 ```
+hoặc 
+```
+dotnet run --project SaigonChe.Api\SaigonChe.Api.csproj --launch-profile https
+```
 
 API mặc định: `https://localhost:7286` hoặc `http://localhost:5267`.
 Endpoint mẫu: `/weatherforecast`.
