@@ -10,6 +10,12 @@
 
     <h3>Danh sách món chè</h3>
 
+    <a asp-controller="Product"
+       asp-action="Create"
+       class="btn btn-primary mb-3">
+       + Thêm món chè
+       </a>
+
     <table class="table table-bordered table-striped mt-3">
 
         <thead>
@@ -19,6 +25,7 @@
                 <th>Giá</th>
                 <th>Mô tả</th>
                 <th>Trạng thái</th>
+                <th>Thao tác</th>
             </tr>
         </thead>
 
@@ -50,6 +57,23 @@
                                 Hết hàng
                             </span>
                         }
+                    </td>
+                    <td>
+                        <a asp-controller="Product"
+                            asp-action="Edit"
+                            asp-route-id="@product.Id"
+                            class="btn btn-warning btn-sm">Sửa</a>
+                    </td>
+                    <td>
+                        <form asp-controller="Product"
+                            asp-action = "Delete"
+                            asp-route-id ="@product.Id"
+                            method = "post"
+                            style ="display:inline;"
+                            onsubmit="return confirm('Bạn có chắc chắn muốn xóa món này không?');">
+                                <button type="submit" class = "btn btn-danger btn-sm">Xóa</button>
+                            </form>
+                            
                     </td>
                 </tr>
             }

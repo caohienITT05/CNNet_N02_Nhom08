@@ -1,0 +1,30 @@
+@model SaigonChe.Web.ViewModels.ProductViewModel
+
+@{
+    ViewData["Title"] = "Thêm món chè";
+}
+
+<div class="container mt-4">
+    <h2>Thêm món chè</h2>
+    <form asp-action="Create" method="post">
+        <div class="mb-3">
+            <label asp-for="Name" class = "form-label">Tên món</label>
+            <input asp-for="Name"
+                    class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="Price" class="form-label">Giá</label>
+            <input asp-for="Price" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="Description" class = "form-label">Mô tả</label>
+            <textarea asp-for="Description" class ="form-control"></textarea>
+        </div>
+        <div class ="mb-3 form-check">
+            <input asp-for="IsAvailable" class = "form-check-input" />
+            <label asp-for="IsAvailable" class="form-check-label">Còn hàng</label>
+        </div>
+        <button type="submit" class="btn btn-success">Thêm món</button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </form>
+</div>
