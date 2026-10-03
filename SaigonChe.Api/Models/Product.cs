@@ -1,4 +1,4 @@
-namespace SaigonChe.API.Models
+namespace SaigonChe.Api.Models
 {
     public class Product
     {

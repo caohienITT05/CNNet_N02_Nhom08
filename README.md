@@ -13,6 +13,17 @@ Dự án môn học Công nghệ .NET, sử dụng ASP.NET Core 10 và C#.
 ## Yêu cầu
 
 - .NET 10 SDK
+- SQL Server Express
+cài các package vào SaigonChe.Api
+```
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer --version 10.0.12
+```
+```
+dotnet add package Microsoft.EntityFrameworkCore.Design --version 10.0.12
+```
+```
+dotnet add package Microsoft.EntityFrameworkCore.Tools --version 10.0.12
+```
 
 ## Khôi phục và build
 
@@ -42,4 +53,10 @@ dotnet run --project .\SaigonChe.Web\SaigonChe.Web.csproj
 
 Web mặc định: `https://localhost:7120` hoặc `http://localhost:5140`.
 
-Hai project hiện là khung mặc định và chưa kết nối với nhau.
+
+
+ToListAsync()       → SELECT
+FindAsync(id)       → SELECT ... WHERE Id = ...
+Add() + SaveChanges → INSERT
+SaveChangesAsync()  → UPDATE
+Remove()            → DELETE

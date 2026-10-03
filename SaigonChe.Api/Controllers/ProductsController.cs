@@ -1,39 +1,31 @@
 using Microsoft.AspNetCore.Mvc;
-using SaigonChe.API.Models;
+using Microsoft.EntityFrameworkCore;
+using SaigonChe.Api.Data;
+using SaigonChe.Api.Models;
 
-namespace SaigonChe.API.Controllers
+namespace SaigonChe.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
-        private static readonly List<Product> Products = [
-            new Product {
-                Id = 1,
-                Name = "Chè Thái",
-                Price = 30000,
-                Description = "chè thái từ sài gòn",
-                IsAvailable = true
-                
-            },
-            new Product {
-                Id = 2,
-                Name = "Chè Bưởi",
-                Price = 25000,
-                Description = "chè bưởi làm từ bưởi",
-                IsAvailable = true
-            }
-        ];
+        private readonly AppDbContext _context;
+        public ProductsController(AppDbContext context)
+        {
+            _context = context;
+        }
+        
 
         [HttpGet]
-        public ActionResult<List<Product>> GetAll()
+        public async Task<ActionResult<List<Product>>> GetAll()
         {
-            return Ok(Products);
+            var products = await _context.Products.ToListAsync();
+            return Ok(products);
         }
         [HttpGet("{id}")]
-        public ActionResult<Product> GetbyId( int id)
+        public async Task<ActionResult<Product>> GetbyId(int id)
         {
-            var product = Products.FirstOrDefault(p => p.Id == id);
+            var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
@@ -42,10 +34,10 @@ namespace SaigonChe.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Product> Create(Product product)
+        public async Task<ActionResult<Product>> Create(Product product)
         {
-            product.Id = Products.Max(p => p.Id) +1;
-            Products.Add(product);
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
             return CreatedAtAction(
                 nameof(GetbyId),
                 new { id = product.Id},
@@ -54,9 +46,9 @@ namespace SaigonChe.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult<Product> Update(int id, Product updateProduct)
+        public async Task<ActionResult<Product>> Update(int id, Product updateProduct)
         {
-            var product = Products.FirstOrDefault( p => p.Id == id);
+            var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
@@ -65,18 +57,20 @@ namespace SaigonChe.API.Controllers
             product.Price = updateProduct.Price;
             product.Description = updateProduct.Description;
             product.IsAvailable = updateProduct.IsAvailable;
+            await _context.SaveChangesAsync();
             return Ok(product);
         }
 
         [HttpDelete("{id}")]
-        public ActionResult<Product> Delete(int id)
+        public async Task<ActionResult<Product>> Delete(int id)
         {
-            var product = Products.FirstOrDefault( p => p.Id == id);
+            var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
-            Products.Remove(product);
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
             return NoContent();
 
         }
