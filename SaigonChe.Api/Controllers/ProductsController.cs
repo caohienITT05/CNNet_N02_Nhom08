@@ -19,7 +19,19 @@ namespace SaigonChe.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<List<Product>>> GetAll()
         {
-            var products = await _context.Products.ToListAsync();
+            var products = await _context.Products
+                .Include(p=> p.Category)
+                .Select(p=>new
+                {
+                    p.Id,
+                    p.Name,
+                    p.Price,
+                    p.Description,
+                    p.IsAvailable,
+                    p.CategoryId,
+                    CategoryName = p.Category != null ? p.Category.Name : null
+                })
+                .ToListAsync();
             return Ok(products);
         }
         [HttpGet("{id}")]

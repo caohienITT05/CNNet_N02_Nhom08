@@ -7,5 +7,7 @@ namespace SaigonChe.Api.Models
         public decimal Price{get;set;}
         public string Description{get;set;} = string.Empty;
         public bool IsAvailable {get;set;}
+        public int? CategoryId { get; set; }
+        public Category? Category { get; set; }
     }
 }

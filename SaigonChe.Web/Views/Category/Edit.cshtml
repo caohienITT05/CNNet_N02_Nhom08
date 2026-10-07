@@ -1,0 +1,52 @@
+﻿@model SaigonChe.Web.ViewModels.CategoryViewModel
+
+@{
+    ViewData["Title"] = "Sửa danh mục";
+}
+
+<div class="container mt-4">
+
+    <h2>Sửa danh mục</h2>
+
+    <form asp-action="Edit" method="post">
+
+        <input asp-for="Id" type="hidden" />
+
+        <div class="mb-3">
+
+            <label asp-for="Name"
+                   class="form-label">
+                Tên danh mục
+            </label>
+
+            <input asp-for="Name"
+                   class="form-control" />
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Description"
+                   class="form-label">
+                Mô tả
+            </label>
+
+            <textarea asp-for="Description"
+                      class="form-control">
+            </textarea>
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-warning">
+            Lưu thay đổi
+        </button>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            Hủy
+        </a>
+
+    </form>
+
+</div>

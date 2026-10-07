@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SaigonChe.Web.ViewModels;
+using System.Buffers.Text;
 using System.Net.Http.Json;
-
 namespace SaigonChe.web.Controllers
 {
     public class ProductController : Controller
@@ -36,8 +37,15 @@ namespace SaigonChe.web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
+            var baseUrl = _configuration["ApiSettings:BaseUrl"];
+            var categories = 
+            await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>(
+                $"{baseUrl}/api/categories"
+                ) ?? new List<CategoryViewModel>();
+        
+            ViewBag.Categories = new SelectList(categories, "Id", "Name");
             return View();
         }
 
@@ -54,6 +62,8 @@ namespace SaigonChe.web.Controllers
             {
                 return RedirectToAction(nameof(Index));
             }
+            var categories = await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>($"{baseUrl}/api/categories") ?? new List<CategoryViewModel>();
+            ViewBag.Categories = new SelectList(categories, "Id", "Name");
             return View(product);
         }
 

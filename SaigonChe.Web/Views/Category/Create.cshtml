@@ -1,0 +1,50 @@
+﻿@model SaigonChe.Web.ViewModels.CategoryViewModel
+
+@{
+    ViewData["Title"] = "Thêm danh mục";
+}
+
+<div class="container mt-4">
+
+    <h2>Thêm danh mục</h2>
+
+    <form asp-action="Create" method="post">
+
+        <div class="mb-3">
+
+            <label asp-for="Name"
+                   class="form-label">
+                Tên danh mục
+            </label>
+
+            <input asp-for="Name"
+                   class="form-control" />
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Description"
+                   class="form-label">
+                Mô tả
+            </label>
+
+            <textarea asp-for="Description"
+                      class="form-control">
+            </textarea>
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-success">
+            Thêm danh mục
+        </button>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            Quay lại
+        </a>
+
+    </form>
+
+</div>
