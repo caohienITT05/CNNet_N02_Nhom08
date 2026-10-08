@@ -28,6 +28,7 @@ namespace SaigonChe.Api.Controllers
                     p.Price,
                     p.Description,
                     p.IsAvailable,
+                    p.ImageUrl,
                     p.CategoryId,
                     CategoryName = p.Category != null ? p.Category.Name : null
                 })
@@ -37,7 +38,21 @@ namespace SaigonChe.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetbyId(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Where(p => p.Id == id)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.Price,
+                    p.Description,
+                    p.IsAvailable,
+                    p.ImageUrl,
+                    p.CategoryId,
+                    CategoryName = p.Category != null ? p.Category.Name : null
+                })
+                .FirstOrDefaultAsync();
             if (product == null)
             {
                 return NotFound();
@@ -69,6 +84,8 @@ namespace SaigonChe.Api.Controllers
             product.Price = updateProduct.Price;
             product.Description = updateProduct.Description;
             product.IsAvailable = updateProduct.IsAvailable;
+            product.CategoryId = updateProduct.CategoryId;
+            product.ImageUrl = updateProduct.ImageUrl;
             await _context.SaveChangesAsync();
             return Ok(product);
         }

@@ -6,7 +6,8 @@
 
 <div class="container mt-4">
     <h2>Thêm món chè</h2>
-    <form asp-action="Create" method="post">
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="All" class="text-danger"></div>
         <div class="mb-3">
             <label asp-for="Name" class = "form-label">Tên món</label>
             <input asp-for="Name"
@@ -27,6 +28,11 @@
         <div class="mb-3">
             <label asp-for="Description" class = "form-label">Mô tả</label>
             <textarea asp-for="Description" class ="form-control"></textarea>
+        </div>
+        <div class="mb-3">
+            <label asp-for="ImageFile" class="form-label">Hình ảnh</label>
+            <input asp-for="ImageFile" type="file" class="form-control" />
+            <span asp-validation-for="ImageFile" class="text-danger"></span>
         </div>
         <div class ="mb-3 form-check">
             <input asp-for="IsAvailable" class = "form-check-input" />

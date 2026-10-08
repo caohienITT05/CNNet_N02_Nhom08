@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 namespace SaigonChe.Web.ViewModels
 {
     public class ProductViewModel
@@ -8,5 +9,8 @@ namespace SaigonChe.Web.ViewModels
         public string Description {get; set;} = string.Empty;
         public bool IsAvailable {get; set;}
         public int? CategoryId { get; set; }
+        public string? ImageUrl { get; set; }
+        [JsonIgnore]
+        public IFormFile? ImageFile { get; set; }
     }
 }

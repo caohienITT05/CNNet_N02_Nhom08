@@ -21,6 +21,7 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Ảnh</th>
                 <th>Tên món</th>
                 <th>Giá</th>
                 <th>Mô tả</th>
@@ -35,6 +36,20 @@
             {
                 <tr>
                     <td>@product.Id</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <img src="@product.ImageUrl"
+                                 alt="@product.Name"
+                                 width="80"
+                                 height="80"
+                                 style="object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <span>Chưa có ảnh</span>
+                        }
+                    </td>
 
                     <td>@product.Name</td>
 

@@ -9,14 +9,17 @@ namespace SaigonChe.web.Controllers
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _environment;
 
         public ProductController(
             HttpClient httpClient,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IWebHostEnvironment environment
         )
         {
             _httpClient = httpClient;
             _configuration = configuration;
+            _environment = environment;
         }
         
         public async Task<IActionResult> Index()
@@ -53,7 +56,49 @@ namespace SaigonChe.web.Controllers
         public async Task<IActionResult> Create(ProductViewModel product)
         {
             var baseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (product.ImageFile is { Length:> 0 })
+            {
+                var allowedExtensions = new[] {".jpg", ".jpeg", ".png", ".webp" };
+                var extension = Path.GetExtension(product.ImageFile.FileName).ToLowerInvariant();
 
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError(
+                        nameof(product.ImageFile),
+                        "Chỉ chấp nhận JPG, JPEG, PNG, WEBP"
+                    );
+                }
+                else if(product.ImageFile.Length >5*1024*1024)
+                {
+                    ModelState.AddModelError(
+                        nameof(product.ImageFile),
+                        "Dung lượng ảnh tối đa là 5MB"
+                    );
+                }
+                else
+                {
+                    var uploadDirectory = Path.Combine(
+                        _environment.WebRootPath,
+                        "uploads",
+                        "products"
+                    );
+                    Directory.CreateDirectory(uploadDirectory);
+                    var fileName = $"{Guid.NewGuid():N}{extension}";
+                    var filePath = Path.Combine(uploadDirectory, fileName);
+                    await using var stream = new FileStream(filePath, FileMode.Create);
+                    await product.ImageFile.CopyToAsync(stream);
+                    product.ImageUrl = $"/uploads/products/{fileName}";
+                }
+            }
+            if (!ModelState.IsValid)
+            {
+                var categories = 
+                    await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>(
+                        $"{baseUrl}/api/categories"
+                    ) ?? [];
+                ViewBag.Categories = new SelectList(categories, "Id", "Name");
+                return View(product);
+            }
             var response = await _httpClient.PostAsJsonAsync(
                 $"{baseUrl}/api/products",
                 product
@@ -62,8 +107,6 @@ namespace SaigonChe.web.Controllers
             {
                 return RedirectToAction(nameof(Index));
             }
-            var categories = await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>($"{baseUrl}/api/categories") ?? new List<CategoryViewModel>();
-            ViewBag.Categories = new SelectList(categories, "Id", "Name");
             return View(product);
         }
 
