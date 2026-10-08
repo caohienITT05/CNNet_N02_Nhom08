@@ -6,8 +6,10 @@
 
 <div class="container mt-4">
     <h2>Sửa món chè</h2>
-    <form asp-action="Edit" method="post">
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="All" class="text-danger"></div>
         <input asp-for="Id" type="hidden"/>
+        <input asp-for="ImageUrl" type="hidden"/>
         <div class="mb-3">
             <label asp-for="Name" class="form-label">Tên món</label>
             <input asp-for="Name" class = "form-control" />
@@ -25,8 +27,34 @@
             </select>
         </div>
         <div class="mb-3">
-            <label asp-for="Description" class="form-label">Description</label>
+            <label asp-for="Description" class="form-label">Mô tả</label>
             <textarea asp-for="Description" class="form-control"></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Ảnh hiện tại</label>
+            <div>
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl"
+                         alt="@Model.Name"
+                         width="120"
+                         height="120"
+                         class="mb-2"
+                         style="object-fit: cover;" />
+                }
+                else
+                {
+                    <p>Chưa có ảnh</p>
+                }
+            </div>
+
+            <label asp-for="ImageFile" class="form-label">Chọn ảnh mới</label>
+            <input asp-for="ImageFile"
+                   type="file"
+                   accept="image/jpeg,image/png,image/webp"
+                   class="form-control" />
+            <div class="form-text">Để trống nếu muốn giữ ảnh hiện tại.</div>
+            <span asp-validation-for="ImageFile" class="text-danger"></span>
         </div>
         <div class="mb-3">
             <input asp-for="IsAvailable" class="form-check-input"/>

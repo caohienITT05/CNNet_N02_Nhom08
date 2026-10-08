@@ -122,6 +122,18 @@ namespace SaigonChe.web.Controllers
                 return NotFound();
 
             }
+
+            var categories =
+                await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>(
+                    $"{baseUrl}/api/categories"
+                ) ?? [];
+            ViewBag.Categories = new SelectList(
+                categories,
+                "Id",
+                "Name",
+                product.CategoryId
+            );
+
             return View(product);
         }
 
@@ -129,15 +141,132 @@ namespace SaigonChe.web.Controllers
         public async Task<IActionResult> Edit(ProductViewModel product)
         {
             var baseUrl = _configuration["ApiSettings:BaseUrl"];
+            var currentProduct = await _httpClient.GetFromJsonAsync<ProductViewModel>(
+                $"{baseUrl}/api/products/{product.Id}"
+            );
+
+            if (currentProduct == null)
+            {
+                return NotFound();
+            }
+
+            var oldImageUrl = currentProduct.ImageUrl;
+            string? newImageUrl = null;
+            product.ImageUrl = oldImageUrl;
+
+            if (product.ImageFile is { Length: > 0 })
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var extension = Path.GetExtension(product.ImageFile.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError(
+                        nameof(product.ImageFile),
+                        "Chỉ chấp nhận JPG, JPEG, PNG, WEBP"
+                    );
+                }
+                else if (product.ImageFile.Length > 5 * 1024 * 1024)
+                {
+                    ModelState.AddModelError(
+                        nameof(product.ImageFile),
+                        "Dung lượng ảnh tối đa là 5MB"
+                    );
+                }
+                else
+                {
+                    var uploadDirectory = Path.Combine(
+                        _environment.WebRootPath,
+                        "uploads",
+                        "products"
+                    );
+                    Directory.CreateDirectory(uploadDirectory);
+
+                    var fileName = $"{Guid.NewGuid():N}{extension}";
+                    var filePath = Path.Combine(uploadDirectory, fileName);
+
+                    await using var stream = new FileStream(filePath, FileMode.Create);
+                    await product.ImageFile.CopyToAsync(stream);
+
+                    newImageUrl = $"/uploads/products/{fileName}";
+                    product.ImageUrl = newImageUrl;
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                if (newImageUrl != null)
+                {
+                    DeleteLocalProductImage(newImageUrl);
+                    product.ImageUrl = oldImageUrl;
+                }
+
+                await LoadCategoriesAsync(baseUrl, product.CategoryId);
+                return View(product);
+            }
+
             var response = await _httpClient.PutAsJsonAsync(
                 $"{baseUrl}/api/products/{product.Id}",
                 product
             );
             if (response.IsSuccessStatusCode)
             {
+                if (newImageUrl != null)
+                {
+                    DeleteLocalProductImage(oldImageUrl);
+                }
+
                 return RedirectToAction(nameof(Index));
             }
+
+            if (newImageUrl != null)
+            {
+                DeleteLocalProductImage(newImageUrl);
+                product.ImageUrl = oldImageUrl;
+            }
+
+            ModelState.AddModelError(string.Empty, "Không thể cập nhật sản phẩm.");
+            await LoadCategoriesAsync(baseUrl, product.CategoryId);
             return View(product);
+        }
+
+        private async Task LoadCategoriesAsync(string? baseUrl, int? selectedCategoryId)
+        {
+            var categories =
+                await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>(
+                    $"{baseUrl}/api/categories"
+                ) ?? [];
+
+            ViewBag.Categories = new SelectList(
+                categories,
+                "Id",
+                "Name",
+                selectedCategoryId
+            );
+        }
+
+        private void DeleteLocalProductImage(string? imageUrl)
+        {
+            const string localImagePrefix = "/uploads/products/";
+
+            if (string.IsNullOrWhiteSpace(imageUrl) ||
+                !imageUrl.StartsWith(localImagePrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var fileName = Path.GetFileName(imageUrl);
+            var filePath = Path.Combine(
+                _environment.WebRootPath,
+                "uploads",
+                "products",
+                fileName
+            );
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
         }
         
         [HttpPost]
