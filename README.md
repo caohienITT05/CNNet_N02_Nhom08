@@ -1,6 +1,6 @@
 # SaigonChe
 
-Website đặt món và quản lý Quán Chè Sài Gòn, được xây dựng cho bài tập lớn học phần Công nghệ .NET.
+Website đặt món, vận hành và quản lý Quán Chè Sài Gòn, được xây dựng cho bài tập lớn học phần Công nghệ .NET. Hệ thống hướng tới ba vai trò: Khách hàng, Nhân viên và Quản trị viên.
 
 ## Kiến trúc hiện tại
 
@@ -24,6 +24,8 @@ Trình duyệt → SaigonChe.Web → HTTP API → SaigonChe.Api → SQL Server
 Chưa có:
 
 - Đăng ký, đăng nhập, hồ sơ cá nhân và phân quyền.
+- Khu vực nhân viên để tiếp nhận, pha chế, giao và hoàn tất đơn.
+- Quản lý tài khoản nhân viên và lịch sử người xử lý đơn.
 - Trang thực đơn dành cho khách, tìm kiếm, lọc và chi tiết món.
 - Topping, giỏ hàng, checkout và đơn hàng.
 - Theo dõi đơn, lịch sử mua hàng và đánh giá.

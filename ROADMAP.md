@@ -4,10 +4,11 @@ Tài liệu này hợp nhất đặc tả trong [thư mục Google Drive của d
 
 ## 1. Mục tiêu sản phẩm
 
-Hệ thống phục vụ hai nhóm người dùng:
+Hệ thống phục vụ ba nhóm người dùng:
 
 - **Khách hàng:** đăng ký, xem và tìm món, chọn topping, quản lý giỏ hàng, đặt hàng, theo dõi đơn, xem lịch sử và đánh giá món.
-- **Quản trị viên:** quản lý danh mục, món, hình ảnh, đơn hàng, khách hàng, khuyến mãi và dashboard doanh thu.
+- **Nhân viên:** đăng nhập vào khu vực vận hành, tiếp nhận đơn, cập nhật tiến độ pha chế/giao hàng, xem thông tin cần thiết của đơn và cập nhật tình trạng còn hàng.
+- **Quản trị viên:** quản lý danh mục, món, hình ảnh, nhân viên, khách hàng, khuyến mãi, toàn bộ đơn hàng và dashboard doanh thu.
 
 Công nghệ theo đặc tả:
 
@@ -36,21 +37,23 @@ Công nghệ theo đặc tả:
 - Chưa có xử lý lỗi tập trung; Web dễ lỗi khi API dừng hoặc trả response không hợp lệ.
 - Xóa sản phẩm chưa xóa ảnh; xóa danh mục có thể xung đột khi còn sản phẩm.
 - Chỉ kiểm tra đuôi file ảnh, chưa kiểm tra MIME/signature và chưa gom logic ảnh thành service.
-- Chưa có Swagger/OpenAPI, authentication, authorization, pagination hoặc test.
+- Chưa có Swagger/OpenAPI, authentication, authorization theo ba vai trò, pagination hoặc test.
 - Giao diện hiện là CRUD quản trị, chưa phải trải nghiệm mua hàng cho khách.
+- Chưa có màn hình vận hành đơn dành riêng cho nhân viên.
 
 ## 3. Phạm vi ưu tiên
 
 ### MVP bắt buộc
 
-1. Đăng ký, đăng nhập và phân quyền `Customer`/`Admin`.
+1. Đăng ký, đăng nhập và phân quyền `Customer`/`Staff`/`Admin`.
 2. Admin quản lý danh mục, sản phẩm và trạng thái còn hàng.
 3. Khách xem, tìm kiếm, lọc và xem chi tiết món.
 4. Giỏ hàng bằng Session.
 5. Checkout COD, tạo đơn và chi tiết đơn trong một transaction.
-6. Khách xem lịch sử/trạng thái đơn; Admin cập nhật trạng thái.
-7. Dashboard cơ bản: số đơn, doanh thu, khách hàng và món bán chạy.
-8. Kiểm thử luồng chính và hoàn thiện báo cáo.
+6. Khách xem lịch sử/trạng thái đơn; nhân viên tiếp nhận và xử lý đơn; Admin giám sát toàn bộ.
+7. Admin quản lý tài khoản nhân viên và phân công trạng thái hoạt động.
+8. Dashboard cơ bản: số đơn, doanh thu, khách hàng và món bán chạy.
+9. Kiểm thử luồng chính và hoàn thiện báo cáo.
 
 ### Sau MVP
 
@@ -104,14 +107,16 @@ Quy tắc:
 ### Nền tảng
 
 - `ApplicationUser`: kế thừa Identity, bổ sung họ tên, địa chỉ, trạng thái tài khoản.
+- Vai trò Identity: `Customer`, `Staff`, `Admin`; tài khoản nhân viên chỉ do Admin tạo hoặc gán quyền.
 - `Category`: thêm `IsActive`.
 - `Product`: giữ `ImageUrl`, thêm thời gian tạo/cập nhật và nên dùng trạng thái thay vì hard delete.
 
 ### Giao dịch
 
-- `Order`: khách hàng, người nhận, SĐT, địa chỉ, ghi chú, trạng thái, tổng tiền, thời gian.
+- `Order`: khách hàng, nhân viên đang xử lý, người nhận, SĐT, địa chỉ, ghi chú, trạng thái, tổng tiền, thời gian.
 - `OrderItem`: sản phẩm, tên/giá chụp tại thời điểm mua, số lượng và thành tiền.
 - `OrderStatus`: `Pending`, `Confirmed`, `Preparing`, `Delivering`, `Completed`, `Cancelled`.
+- `OrderStatusHistory`: đơn hàng, trạng thái cũ/mới, người cập nhật, thời gian và ghi chú/lý do hủy.
 
 ### Mở rộng
 
@@ -150,13 +155,15 @@ Quy tắc:
 ### Giai đoạn 2 — Identity, đăng nhập và phân quyền
 
 - [ ] Tích hợp ASP.NET Core Identity vào API.
-- [ ] Tạo role `Customer`, `Admin` và seed tài khoản Admin.
+- [ ] Tạo role `Customer`, `Staff`, `Admin`; seed tài khoản Admin và một Staff demo.
 - [ ] Làm đăng ký, đăng nhập, đăng xuất và hồ sơ cá nhân.
 - [ ] API phát hành token; Web lưu phiên đăng nhập bằng cookie an toàn và gắn token khi gọi API.
-- [ ] Bảo vệ endpoint quản trị; ẩn menu quản trị với Customer.
+- [ ] Tài khoản đăng ký công khai luôn nhận role `Customer`; không cho client tự gửi role.
+- [ ] Bảo vệ endpoint theo policy; Customer không thấy khu vực nội bộ, Staff không vào trang quản trị hệ thống.
 - [ ] Thêm khóa/mở khóa tài khoản.
+- [ ] Admin tạo, sửa, khóa/mở khóa tài khoản nhân viên; không hard-delete tài khoản đã xử lý đơn.
 
-**Hoàn thành khi:** Customer không gọi được API quản trị; Admin quản lý được catalog; mật khẩu không lưu dạng rõ.
+**Hoàn thành khi:** Customer không gọi được API nội bộ; Staff chỉ truy cập nghiệp vụ vận hành; Admin quản lý được catalog và nhân viên; mật khẩu không lưu dạng rõ.
 
 ### Giai đoạn 3 — Trải nghiệm xem món
 
@@ -188,16 +195,22 @@ Quy tắc:
 - [ ] API lấy giá từ database và tạo toàn bộ đơn trong transaction.
 - [ ] Xóa giỏ chỉ sau khi tạo đơn thành công.
 - [ ] Khách xem chi tiết, trạng thái và lịch sử đơn của chính mình.
-- [ ] Admin lọc đơn theo trạng thái/thời gian và xem chi tiết.
-- [ ] Chỉ cho phép chuyển trạng thái hợp lệ; lưu lý do hủy.
+- [ ] Tạo màn hình `Staff/Orders` tối ưu cho thao tác nhanh: đơn mới, đang pha chế, đang giao và đã xong.
+- [ ] Nhân viên nhận đơn và hệ thống lưu `AssignedStaffId`; tránh hai nhân viên xử lý trùng.
+- [ ] Staff cập nhật trạng thái theo luồng hợp lệ; chỉ thấy thông tin khách hàng cần để hoàn thành đơn.
+- [ ] Admin lọc đơn theo trạng thái, thời gian, nhân viên và xem lịch sử xử lý.
+- [ ] Lưu mọi lần đổi trạng thái vào `OrderStatusHistory`, bao gồm người thực hiện và lý do hủy.
+- [ ] Dùng kiểm soát đồng thời để cảnh báo khi đơn vừa được người khác cập nhật.
 
-**Hoàn thành khi:** chạy trọn luồng `xem món → giỏ → checkout → Admin xử lý → hoàn thành`.
+**Hoàn thành khi:** chạy trọn luồng `xem món → giỏ → checkout → Staff tiếp nhận/pha chế/giao → hoàn thành`, Admin theo dõi được người xử lý và lịch sử trạng thái.
 
 ### Giai đoạn 6 — Dashboard và nghiệp vụ mở rộng
 
 - [ ] Tổng số đơn, doanh thu, khách hàng và sản phẩm.
 - [ ] Biểu đồ doanh thu ngày/tháng.
 - [ ] Danh sách món bán chạy.
+- [ ] Dashboard Staff trong ca: số đơn mới, đang xử lý, hoàn thành và đơn quá thời gian dự kiến.
+- [ ] Staff báo món hết/tạm hết; Admin quyết định thay đổi thông tin hoặc ngừng bán dài hạn.
 - [ ] Đánh giá món sau khi đơn hoàn thành.
 - [ ] Mã giảm giá có thời gian hiệu lực và giới hạn sử dụng.
 - [ ] Chỉ tích hợp ví điện tử sau khi COD ổn định.
@@ -209,7 +222,10 @@ Quy tắc:
 - [ ] Tạo project test.
 - [ ] Unit test tính tiền, giảm giá và chuyển trạng thái.
 - [ ] Integration test đăng nhập, CRUD sản phẩm và tạo đơn.
+- [ ] Authorization test cho ma trận quyền Customer/Staff/Admin.
+- [ ] Test hai nhân viên cùng nhận hoặc cập nhật một đơn.
 - [ ] Kiểm tra IDOR: khách không xem được đơn của người khác.
+- [ ] Kiểm tra Staff không xem/sửa được tài khoản, khuyến mãi hoặc báo cáo quản trị.
 - [ ] Kiểm tra upload file giả, file lớn và path traversal.
 - [ ] Thêm logging, trang lỗi thân thiện và health check.
 - [ ] Kiểm tra responsive, accessibility và các trường hợp dữ liệu rỗng.
@@ -227,7 +243,35 @@ Quy tắc:
 
 **Hoàn thành khi:** một máy mới có thể làm theo README để chạy và nhóm demo được toàn bộ luồng không cần sửa dữ liệu thủ công.
 
-## 7. Ánh xạ 19 use case
+## 7. Use case bổ sung cho nhân viên
+
+Đặc tả Drive ban đầu có 19 use case cho Customer và Admin. Khi bổ sung Staff, thêm các use case sau:
+
+| Use case mới | Tác nhân | Giai đoạn |
+|---|---|---|
+| UC20: Nhân viên đăng nhập và xem màn hình ca làm | Staff | 2, 5 |
+| UC21: Xem/lọc danh sách đơn cần xử lý | Staff | 5 |
+| UC22: Tiếp nhận đơn | Staff | 5 |
+| UC23: Cập nhật trạng thái pha chế/giao hàng | Staff | 5 |
+| UC24: Hủy/từ chối đơn kèm lý do theo quyền được cấp | Staff, Admin | 5 |
+| UC25: Báo món tạm hết | Staff | 6 |
+| UC26: Quản lý tài khoản nhân viên | Admin | 2 |
+| UC27: Theo dõi hiệu quả xử lý đơn theo nhân viên | Admin | 6 |
+
+### Ma trận quyền tối thiểu
+
+| Chức năng | Customer | Staff | Admin |
+|---|:---:|:---:|:---:|
+| Xem thực đơn, đặt hàng, xem đơn của mình | Có | Không | Không bắt buộc |
+| Xem hàng đợi và xử lý đơn | Không | Có | Có |
+| Báo món tạm hết | Không | Có | Có |
+| Quản lý danh mục/sản phẩm | Không | Không | Có |
+| Quản lý nhân viên/khách hàng/khuyến mãi | Không | Không | Có |
+| Xem báo cáo doanh thu đầy đủ | Không | Không | Có |
+
+Nguyên tắc: API kiểm tra quyền ở server; việc ẩn nút trên giao diện không được xem là cơ chế bảo mật.
+
+## 8. Ánh xạ 19 use case ban đầu
 
 | Use case | Giai đoạn |
 |---|---|
@@ -238,11 +282,11 @@ Quy tắc:
 | UC13: đánh giá/bình luận | 6 |
 | UC14: dashboard | 6 |
 | UC15–UC16: danh mục và sản phẩm | 0–1 |
-| UC17: quản lý đơn | 5 |
+| UC17: quản lý đơn | 5 (Admin giám sát, Staff vận hành) |
 | UC18: quản lý khách hàng | 2 |
 | UC19: khuyến mãi | 6 |
 
-## 8. Thứ tự công việc cho mỗi tính năng
+## 9. Thứ tự công việc cho mỗi tính năng
 
 1. Viết user story và tiêu chí chấp nhận.
 2. Thiết kế Entity/DTO và quyền truy cập.
@@ -253,11 +297,12 @@ Quy tắc:
 7. Test đường thành công và các trường hợp lỗi.
 8. Build toàn solution, review rồi tạo pull request nhỏ.
 
-## 9. Definition of Done
+## 10. Definition of Done
 
 Một chức năng chỉ hoàn thành khi:
 
 - Đúng tiêu chí chấp nhận và phân quyền.
+- Đã kiểm tra cả ba vai trò `Customer`, `Staff`, `Admin` nếu chức năng liên quan quyền truy cập.
 - Có validation phía server; lỗi hiển thị được trên giao diện.
 - Trả đúng HTTP status code và không lộ stack trace/secret.
 - Không tin giá, role hoặc user ID do client tự gửi.
@@ -266,14 +311,14 @@ Một chức năng chỉ hoàn thành khi:
 - `dotnet build` và `dotnet test` thành công.
 - README/API docs được cập nhật nếu cách chạy hoặc endpoint thay đổi.
 
-## 10. Việc nên làm ngay tiếp theo
+## 11. Việc nên làm ngay tiếp theo
 
 Theo đúng phụ thuộc, thứ tự 5 pull request tiếp theo nên là:
 
 1. `fix/category-product-crud`: sửa Category Update, validation, xóa ảnh và lỗi API.
 2. `refactor/catalog-dtos-services`: DTO, Service, `ProblemDetails`, Swagger.
-3. `feature/identity-auth`: Identity, role, seed Admin, đăng nhập Web/API.
+3. `feature/identity-auth`: Identity, ba role, seed Admin/Staff, đăng nhập Web/API.
 4. `feature/customer-menu`: trang chủ, tìm kiếm, lọc, chi tiết món.
 5. `feature/cart`: Session và toàn bộ thao tác giỏ hàng.
 
-Chỉ bắt đầu Order sau khi năm bước trên chạy ổn định.
+Sau năm bước trên, triển khai `feature/staff-order-workflow` cùng mô hình Order; không dồn màn hình vận hành của Staff vào khu vực Admin.
