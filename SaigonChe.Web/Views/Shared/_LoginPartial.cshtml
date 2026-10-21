@@ -1,0 +1,32 @@
+@using Microsoft.AspNetCore.Identity
+@using SaigonChe.Web.Models
+@inject SignInManager<ApplicationUser> SignInManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <li class="nav-item">
+        <a class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
+            Xin chào, @User.Identity?.Name
+        </a>
+    </li>
+    @if (User.IsInRole("Admin"))
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Admin" asp-action="Products">Quản trị</a>
+        </li>
+    }
+    <li class="nav-item">
+        <form class="d-inline" asp-controller="Account" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post">
+            <button type="submit" class="btn btn-outline-primary btn-sm">Đăng xuất</button>
+        </form>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+    </li>
+    <li class="nav-item">
+        <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">Đăng ký</a>
+    </li>
+}

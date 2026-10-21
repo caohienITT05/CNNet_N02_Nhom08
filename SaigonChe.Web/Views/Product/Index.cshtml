@@ -86,6 +86,7 @@
                             method = "post"
                             style ="display:inline;"
                             onsubmit="return confirm('Bạn có chắc chắn muốn xóa món này không?');">
+                                @Html.AntiForgeryToken()
                                 <button type="submit" class = "btn btn-danger btn-sm">Xóa</button>
                             </form>
                             

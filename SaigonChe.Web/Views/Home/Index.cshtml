@@ -1,8 +1,342 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model SaigonChe.Web.ViewModels.LandingPageViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section id="home" class="hero-section">
+    <div class="container">
+        @if (TempData["OrderSuccess"] is string orderSuccess)
+        {
+            <div class="alert alert-success" role="status">
+                @orderSuccess
+                @if (TempData["OrderId"] is int orderId)
+                {
+                    <strong>Mã đơn hàng: #@orderId</strong>
+                }
+            </div>
+        }
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 hero-copy">
+                <span class="eyebrow">Chè Sài Gòn • Ngọt ngào hương vị Việt</span>
+                <h1>Một Chút Ngọt Ngào, Một Chút Sài Gòn</h1>
+                <p>Từ những món chè truyền thống đến hương vị hiện đại, mỗi ly chè là một trải nghiệm ngọt ngào được chuẩn bị bằng sự tận tâm.</p>
+                <div class="hero-actions">
+                    <a href="#menu" class="btn btn-primary">Khám phá thực đơn</a>
+                    <a href="#menu" class="btn btn-secondary">Đặt món ngay</a>
+                </div>
+                <div class="hero-badges">
+                    <span>Nguyên liệu chọn lọc</span>
+                    <span>Chế biến mỗi ngày</span>
+                    <span>Hương vị Việt</span>
+                </div>
+            </div>
+            <div class="col-lg-6 hero-visual">
+                <div class="image-card main-card">
+                    <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1200&q=80" alt="Món tráng miệng lấy cảm hứng từ chè Sài Gòn" fetchpriority="high" />
+                </div>
+                <div class="floating-badge badge-one">
+                    <strong>Vị Việt</strong>
+                    <small>Ngọt ngào thân quen</small>
+                </div>
+                <div class="floating-badge badge-two">
+                    <strong>Mỗi ngày</strong>
+                    <small>Thêm lựa chọn mới</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="about" class="brand-story section-spacing">
+    <div class="container">
+        <div class="section-heading text-center">
+            <span class="eyebrow accent">Về Chè Sài Gòn</span>
+            <h2>Hương Vị Sài Gòn Trong Từng Ly Chè</h2>
+        </div>
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <p>Khởi nguồn từ niềm yêu mến ẩm thực đường phố Sài Gòn, quán chè của chúng tôi mang đến trải nghiệm vừa quen thuộc vừa hiện đại. Mỗi món chè được làm từ nguyên liệu tươi, đường mía, hạt giống và toppings được chọn lọc kỹ lưỡng.</p>
+                <div class="value-list">
+                    <div class="value-item">
+                        <span class="value-icon">✓</span>
+                        <div>
+                            <h4>Nguyên liệu được lựa chọn kỹ lưỡng</h4>
+                            <p>Chọn lựa nguyên liệu tươi ngon, an toàn và đúng chuẩn chất lượng.</p>
+                        </div>
+                    </div>
+                    <div class="value-item">
+                        <span class="value-icon">✓</span>
+                        <div>
+                            <h4>Thực đơn đa dạng</h4>
+                            <p>Từ chè truyền thống đến món ăn theo xu hướng hiện đại, phù hợp mọi khẩu vị.</p>
+                        </div>
+                    </div>
+                    <div class="value-item">
+                        <span class="value-icon">✓</span>
+                        <div>
+                            <h4>Không gian thân thiện</h4>
+                            <p>Phục vụ tận tâm và tạo cảm giác dễ chịu cho từng khách hàng.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="story-visual">
+                    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80" alt="Không gian quán ăn ấm cúng" loading="lazy" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="menu" class="menu-section section-spacing">
+    <div class="container">
+        <div class="section-heading text-center">
+            <span class="eyebrow accent">Thực đơn</span>
+            <h2>Thực Đơn Được Yêu Thích</h2>
+        </div>
+        <div class="menu-search">
+            <label for="menuSearch" class="visually-hidden">Tìm món chè</label>
+            <input id="menuSearch" class="form-control menu-search-input" type="search"
+                   placeholder="Tìm món chè theo tên hoặc mô tả..." autocomplete="off"
+                   aria-describedby="menuResultCount" />
+            <span id="menuResultCount" class="menu-result-count" aria-live="polite"></span>
+        </div>
+        <div class="menu-filter" aria-label="Bộ lọc món ăn">
+            @foreach (var filter in Model.Categories)
+            {
+                var filterValue = filter switch
+                {
+                    "Chè truyền thống" => "traditional",
+                    "Chè hiện đại" => "modern",
+                    "Món bán chạy" => "featured",
+                    _ => "all"
+                };
+                <button type="button" class="filter-btn @(filterValue == "all" ? "active" : string.Empty)"
+                        data-filter="@filterValue" aria-pressed="@(filterValue == "all" ? "true" : "false")">
+                    @filter
+                </button>
+            }
+        </div>
+        <div class="row g-4 menu-grid">
+            @foreach (var item in Model.Products)
+            {
+                <div class="col-md-6 col-lg-3 menu-card-wrapper"
+                     data-category="@item.CategoryTag"
+                     data-featured="@(item.IsFeatured ? "featured" : "normal")"
+                     data-search="@($"{item.Name} {item.Description} {item.CategoryName}")">
+                    <article class="menu-card">
+                        <div class="card-image-wrap">
+                            @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                            {
+                                <img src="@item.ImageUrl" alt="@item.Name" loading="lazy" />
+                            }
+                            else
+                            {
+                                <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80" alt="@item.Name" loading="lazy" />
+                            }
+                            @if (item.IsFeatured)
+                            {
+                                <span class="menu-label">Bán chạy</span>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <div class="card-head">
+                                <h4>@item.Name</h4>
+                                <span class="price">@item.Price.ToString("N0")₫</span>
+                            </div>
+                            <p>@item.Description</p>
+                            <div class="card-footer">
+                                <span class="category-tag">@item.CategoryName</span>
+                                <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                    <input type="hidden" name="productId" value="@item.Id" />
+                                    <button type="submit" class="btn btn-primary buy-btn">Đặt món</button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+            @if (!Model.Products.Any())
+            {
+                <div class="col-12">
+                    <p class="empty-menu-message">Thực đơn đang được cập nhật. Mời bạn quay lại sau nhé!</p>
+                </div>
+            }
+            else
+            {
+                <div class="col-12">
+                    <p class="empty-menu-message menu-no-results" hidden>Không tìm thấy món phù hợp. Hãy thử từ khóa khác hoặc chọn danh mục khác.</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="best-sellers section-spacing">
+    <div class="container">
+        <div class="section-heading text-center">
+            <span class="eyebrow accent">Món ngon</span>
+            <h2>Best Sellers – Món Ngon Không Thể Bỏ Lỡ</h2>
+        </div>
+        <div class="row g-4">
+            @foreach (var item in Model.BestSellers)
+            {
+                <div class="col-md-6 col-lg-3">
+                    <article class="best-card">
+                        <div class="best-image">
+                            <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80" : item.ImageUrl)" alt="@item.Name" loading="lazy" />
+                        </div>
+                        <div class="best-content">
+                            <span class="small-badge">Được yêu thích</span>
+                            <h4>@item.Name</h4>
+                            <div class="best-meta">
+                                <span>@item.Price.ToString("N0")₫</span>
+                                <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                    <input type="hidden" name="productId" value="@item.Id" />
+                                    <button type="submit" class="btn btn-primary btn-sm">Đặt món</button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section id="offers" class="promo-banner section-spacing">
+    <div class="container">
+        <div class="promo-box">
+            <div>
+                <span class="eyebrow light">Khuyến mãi đặc biệt</span>
+                <h3>Ngọt Ngào Hơn Với Ưu Đãi Đặc Biệt</h3>
+                <p>Giảm 10% cho đơn hàng đầu tiên. Đặt ngay để thưởng thức hương vị Sài Gòn tuyệt vời hơn.</p>
+            </div>
+            <a href="#contact" class="btn btn-light">Khám phá ưu đãi</a>
+        </div>
+    </div>
+</section>
+
+<section class="reasons section-spacing">
+    <div class="container">
+        <div class="section-heading text-center">
+            <span class="eyebrow accent">Tại sao chọn chúng tôi</span>
+            <h2>Lý Do Lựa Chọn Quán</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="reason-card">
+                    <span class="reason-icon">✦</span>
+                    <h4>Hương vị đa dạng</h4>
+                    <p>Đa dạng món chè truyền thống và hiện đại cho mọi sở thích.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="reason-card">
+                    <span class="reason-icon">✓</span>
+                    <h4>Nguyên liệu chọn lọc</h4>
+                    <p>Được chọn lọc kỹ lưỡng để mang lại cảm giác ngon và an toàn.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="reason-card">
+                    <span class="reason-icon">₫</span>
+                    <h4>Giá cả hợp lý</h4>
+                    <p>Phù hợp với nhiều nhóm khách hàng, từ sinh viên đến gia đình.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="reason-card">
+                    <span class="reason-icon">❤</span>
+                    <h4>Phục vụ thân thiện</h4>
+                    <p>Đội ngũ nhiệt tình, chu đáo và luôn sẵn sàng chăm sóc khách hàng.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="testimonials section-spacing">
+    <div class="container">
+        <div class="section-heading text-center">
+            <span class="eyebrow accent">Khách hàng</span>
+            <h2>Khách Hàng Nói Gì Về Chúng Tôi?</h2>
+        </div>
+        <div class="row g-4">
+            @foreach (var review in Model.Testimonials)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <article class="testimonial-card">
+                        <div class="testimonial-top">
+                            <div class="avatar">@review.Avatar</div>
+                            <div>
+                                <h5>@review.Name</h5>
+                                <div class="stars">@for (var i = 0; i < review.Rating; i++) { <span>★</span> }</div>
+                            </div>
+                        </div>
+                        <p>@review.Content</p>
+                    </article>
+                </div>
+            }
+        </div>
+        <p class="sample-note">* Đây là dữ liệu mẫu trong môi trường phát triển.</p>
+    </div>
+</section>
+
+<section id="contact" class="contact-section section-spacing">
+    <div class="container">
+        <div class="row g-5 align-items-stretch">
+            <div class="col-lg-5">
+                <div class="contact-info">
+                    <span class="eyebrow accent">Liên hệ</span>
+                    <h2>Đừng ngại ghé qua và thưởng thức</h2>
+                    <ul>
+                        <li><strong>Địa chỉ:</strong> Thông tin sẽ được cập nhật</li>
+                        <li><strong>Số điện thoại:</strong> Thông tin sẽ được cập nhật</li>
+                        <li><strong>Giờ mở cửa:</strong> Thông tin sẽ được cập nhật</li>
+                        <li><strong>Mạng xã hội:</strong> Thông tin sẽ được cập nhật</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <form class="contact-form" asp-action="Contact" asp-controller="Home" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="FullName">Họ tên</label>
+                            <input id="FullName" name="FullName" class="form-control" maxlength="100" placeholder="Nhập họ tên" required />
+                            <span class="text-danger small" data-valmsg-for="FullName" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="Contact">Số điện thoại / Email</label>
+                            <input id="Contact" name="Contact" class="form-control" maxlength="200" placeholder="Số điện thoại hoặc email" required />
+                            <span class="text-danger small" data-valmsg-for="Contact" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="col-12">
+                            <label for="Message">Nội dung</label>
+                            <textarea id="Message" name="Message" rows="5" class="form-control" minlength="10" maxlength="2000" placeholder="Bạn muốn đặt hàng, hỏi về món ăn hay đặt tiệc?" required></textarea>
+                            <span class="text-danger small" data-valmsg-for="Message" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <button type="submit" class="btn btn-primary">Gửi liên hệ</button>
+                            @if (TempData["ContactSuccess"] is string successMessage)
+                            {
+                                <span class="success-message">@successMessage</span>
+                            }
+                            @if (TempData["ContactError"] is string errorMessage)
+                            {
+                                <span class="error-message">@errorMessage</span>
+                            }
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+}

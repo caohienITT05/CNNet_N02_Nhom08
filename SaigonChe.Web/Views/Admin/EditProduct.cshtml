@@ -1,0 +1,60 @@
+@model SaigonChe.Web.ViewModels.ProductFormViewModel
+@{
+    ViewData["Title"] = "Sửa sản phẩm";
+}
+
+<section class="section-spacing">
+    <div class="container admin-form-wrap">
+        <div class="section-heading">
+            <span class="eyebrow accent">Quản trị</span>
+            <h2>Cập Nhật Món</h2>
+        </div>
+
+        <form asp-action="EditProduct" method="post" enctype="multipart/form-data" class="admin-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ImageUrl" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Name">Tên món</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="CategoryId">Danh mục</label>
+                    <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Price">Giá (VNĐ)</label>
+                    <input asp-for="Price" class="form-control" type="number" min="1000" step="1000" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ImageFile">Ảnh mới</label>
+                    <input asp-for="ImageFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="Description">Mô tả</label>
+                    <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="col-12 d-flex gap-3 flex-wrap">
+                    <div class="form-check">
+                        <input asp-for="IsAvailable" class="form-check-input" />
+                        <label asp-for="IsAvailable" class="form-check-label">Còn bán</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="IsFeatured" class="form-check-input" />
+                        <label asp-for="IsFeatured" class="form-check-label">Món bán chạy</label>
+                    </div>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <a asp-action="Products" class="btn btn-secondary">Quay lại</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>

@@ -1,0 +1,19 @@
+@page
+@{
+    ViewData["Title"] = "Không có quyền truy cập";
+}
+
+<section class="section-spacing status-section">
+    <div class="container">
+        <div class="status-card">
+            <span class="status-icon" aria-hidden="true">!</span>
+            <span class="eyebrow accent">Tài khoản</span>
+            <h1>Bạn chưa có quyền truy cập</h1>
+            <p>Tài khoản hiện tại không được cấp quyền xem trang này. Bạn có thể quay lại cửa hàng hoặc tiếp tục mua sắm.</p>
+            <div class="status-actions">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Về trang chủ</a>
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-secondary">Xem giỏ hàng</a>
+            </div>
+        </div>
+    </div>
+</section>

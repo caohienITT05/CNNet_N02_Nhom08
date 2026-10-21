@@ -1,47 +1,113 @@
+@{
+    var isHomePage = ViewContext.RouteData.Values["controller"]?.ToString() == "Home"
+        && ViewContext.RouteData.Values["action"]?.ToString() == "Index";
+    var homeUrl = Url.Action("Index", "Home") ?? "/";
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SaigonChe.Web</title>
-    <script type="importmap"></script>
+    <meta name="description" content="Chè Sài Gòn – Ngọt ngào hương vị Việt. Thực đơn chè truyền thống và hiện đại, ưu đãi hấp dẫn, phong cách Sài Gòn." />
+    <title>@ViewData["Title"] - Chè Sài Gòn</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/SaigonChe.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SaigonChe.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+    <header class="site-header">
+        <nav class="navbar navbar-expand-xl navbar-light">
+            <div class="container">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark">CS</span>
+                    <span class="brand-text">Chè Sài Gòn</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                <div class="collapse navbar-collapse" id="siteNav">
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#home" : $"{homeUrl}#home")">Trang chủ</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#about" : $"{homeUrl}#about")">Giới thiệu</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#menu" : $"{homeUrl}#menu")">Thực đơn</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#offers" : $"{homeUrl}#offers")">Ưu đãi</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#contact" : $"{homeUrl}#contact")">Liên hệ</a></li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link cart-nav-link" asp-controller="Cart" asp-action="Index">
+                                Giỏ hàng
+                                @{
+                                    var cartJson = Context.Session.GetString("Cart");
+                                    var cartCount = 0;
+                                    if (!string.IsNullOrWhiteSpace(cartJson))
+                                    {
+                                        try
+                                        {
+                                            var cartItems = System.Text.Json.JsonSerializer.Deserialize<List<SaigonChe.Web.ViewModels.CartItemViewModel>>(cartJson);
+                                            cartCount = cartItems?.Sum(i => i.Quantity) ?? 0;
+                                        }
+                                        catch
+                                        {
+                                            cartCount = 0;
+                                        }
+                                    }
+                                }
+                                @if (cartCount > 0)
+                                {
+                                    <span class="badge rounded-pill bg-primary-subtle text-primary">@cartCount</span>
+                                }
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-primary btn-order" href="@(isHomePage ? "#menu" : $"{homeUrl}#menu")">Đặt món ngay</a>
                         </li>
+                        <partial name="_LoginPartial" />
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
         <div class="container">
-            &copy; 2026 - SaigonChe.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-4">
+                    <div class="footer-brand">
+                        <span class="brand-mark">CS</span>
+                        <span class="brand-text">Chè Sài Gòn</span>
+                    </div>
+                    <p class="footer-copy">Mang hương vị Sài Gòn ngọt ngào qua từng ly chè được chế biến thủ công từ nguyên liệu tươi ngon mỗi ngày.</p>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <h5>Liên kết</h5>
+                    <ul class="footer-links">
+                        <li><a href="@(isHomePage ? "#home" : $"{homeUrl}#home")">Trang chủ</a></li>
+                        <li><a href="@(isHomePage ? "#about" : $"{homeUrl}#about")">Giới thiệu</a></li>
+                        <li><a href="@(isHomePage ? "#menu" : $"{homeUrl}#menu")">Thực đơn</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 col-lg-3">
+                    <h5>Liên hệ</h5>
+                    <ul class="footer-links">
+                        <li>Địa chỉ: sẽ được cập nhật</li>
+                        <li>Điện thoại: sẽ được cập nhật</li>
+                        <li>Giờ mở cửa: sẽ được cập nhật</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 col-lg-3">
+                    <h5>Mạng xã hội</h5>
+                    <p class="footer-copy">Thông tin mạng xã hội sẽ được cập nhật.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">© 2026 Chè Sài Gòn – Ngọt ngào hương vị Việt.</div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

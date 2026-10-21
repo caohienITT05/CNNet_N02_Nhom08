@@ -1,15 +1,15 @@
 # SaigonChe
 
-Website đặt món, vận hành và quản lý Quán Chè Sài Gòn, được xây dựng cho bài tập lớn học phần Công nghệ .NET. Hệ thống hướng tới ba vai trò: Khách hàng, Nhân viên và Quản trị viên.
+Website đặt món và quản lý Quán Chè Sài Gòn, được xây dựng cho bài tập lớn học phần Công nghệ .NET. Hệ thống hiện có khu vực khách hàng và quản trị viên.
 
 ## Kiến trúc hiện tại
 
-- `SaigonChe.Api`: ASP.NET Core Web API, Entity Framework Core và SQL Server.
-- `SaigonChe.Web`: ASP.NET Core MVC, gọi API bằng `HttpClient`.
+- `SaigonChe.Api`: ASP.NET Core Web API và Entity Framework Core.
+- `SaigonChe.Web`: ASP.NET Core MVC, ASP.NET Core Identity, Entity Framework Core và SQL Server.
 - `SaigonChe.slnx`: solution chứa hai project.
 
 ```text
-Trình duyệt → SaigonChe.Web → HTTP API → SaigonChe.Api → SQL Server
+Trình duyệt → SaigonChe.Web → SQL Server
 ```
 
 ## Trạng thái chức năng
@@ -19,15 +19,15 @@ Trình duyệt → SaigonChe.Web → HTTP API → SaigonChe.Api → SQL Server
 - CRUD danh mục và món chè.
 - Liên kết món chè với danh mục.
 - Upload, hiển thị và thay ảnh món chè.
-- Migration tạo bảng `Categories`, `Products` và cột `ImageUrl`.
+- Đăng ký, đăng nhập có giao diện đồng bộ với dashboard, hồ sơ tài khoản và phân quyền quản trị bằng ASP.NET Core Identity.
+- Quản trị sản phẩm, danh mục, đơn hàng, trạng thái đơn và hộp thư liên hệ.
+- Tìm kiếm thực đơn theo tên, mô tả hoặc danh mục; lọc theo loại chè và món bán chạy.
+- Giỏ hàng và checkout, xác thực lại giá và tình trạng món trước khi lưu đơn.
+- Lưu liên hệ khách hàng vào database và quản lý trong khu vực quản trị.
 
 Chưa có:
-
-- Đăng ký, đăng nhập, hồ sơ cá nhân và phân quyền.
 - Khu vực nhân viên để tiếp nhận, pha chế, giao và hoàn tất đơn.
 - Quản lý tài khoản nhân viên và lịch sử người xử lý đơn.
-- Trang thực đơn dành cho khách, tìm kiếm, lọc và chi tiết món.
-- Topping, giỏ hàng, checkout và đơn hàng.
 - Theo dõi đơn, lịch sử mua hàng và đánh giá.
 - Khuyến mãi, thanh toán điện tử và dashboard doanh thu.
 - Kiểm thử tự động và tài liệu API.
@@ -53,12 +53,14 @@ dotnet tool install --global dotnet-ef
 
 ## Cấu hình database
 
-Connection string hiện dùng SQL Server Express với database `SaigonCheDb`. Nên chuyển cấu hình riêng của từng máy sang User Secrets trước khi làm việc nhóm hoặc triển khai.
+Mặc định, `SaigonChe.Web` sử dụng SQL Server LocalDB với database `SaigonCheDb`. Có thể ghi đè `ConnectionStrings:DefaultConnection` bằng User Secrets hoặc biến môi trường `ConnectionStrings__DefaultConnection`.
+
+Khi database chưa có tài khoản quản trị, cần cấp `Seed:AdminPassword` qua User Secrets hoặc biến môi trường `Seed__AdminPassword`. Không lưu mật khẩu quản trị trong source code hoặc file cấu hình được commit. Khi tài khoản quản trị đã tồn tại, ứng dụng giữ nguyên mật khẩu hiện tại.
 
 Áp dụng migration:
 
 ```powershell
-dotnet ef database update --project .\SaigonChe.Api\SaigonChe.Api.csproj
+dotnet ef database update --project .\SaigonChe.Web\SaigonChe.Web.csproj
 ```
 
 ## Khôi phục và build
@@ -68,17 +70,9 @@ dotnet restore .\SaigonChe.slnx
 dotnet build .\SaigonChe.slnx
 ```
 
-## Chạy dự án
+## Chạy website
 
-Mở hai terminal và chạy đồng thời API và Web.
-
-Terminal 1:
-
-```powershell
-dotnet run --project .\SaigonChe.Api\SaigonChe.Api.csproj --launch-profile http
-```
-
-Terminal 2:
+Chạy website:
 
 ```powershell
 dotnet run --project .\SaigonChe.Web\SaigonChe.Web.csproj --launch-profile http
@@ -86,10 +80,7 @@ dotnet run --project .\SaigonChe.Web\SaigonChe.Web.csproj --launch-profile http
 
 Địa chỉ mặc định:
 
-- API: `http://localhost:5267`
-- Web: `http://localhost:5140`
-
-`SaigonChe.Web/appsettings.json` phải trỏ `ApiSettings:BaseUrl` tới đúng địa chỉ API.
+- Web: `http://localhost:5141`
 
 ## Quy ước làm việc
 

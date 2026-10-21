@@ -1,0 +1,91 @@
+@model List<SaigonChe.Web.Models.Order>
+@using SaigonChe.Web.Models
+@{
+    ViewData["Title"] = "Quản trị đơn hàng";
+}
+
+<section class="section-spacing">
+    <div class="container admin-layout">
+        <div class="admin-header">
+            <div>
+                <span class="eyebrow accent">Quản trị</span>
+                <h2>Đơn Hàng</h2>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Products" class="btn btn-secondary">Sản phẩm</a>
+                <a asp-action="Categories" class="btn btn-secondary">Danh mục</a>
+                <a asp-action="ContactMessages" class="btn btn-secondary">Liên hệ</a>
+            </div>
+        </div>
+
+        @if (TempData["AdminSuccess"] is string success)
+        {
+            <div class="alert alert-success mt-3" role="status">@success</div>
+        }
+        @if (TempData["AdminError"] is string error)
+        {
+            <div class="alert alert-danger mt-3" role="alert">@error</div>
+        }
+
+        <div class="table-responsive mt-4">
+            <table class="table table-striped align-middle admin-table">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Liên hệ / Địa chỉ</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Cập nhật</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td>
+                                <details>
+                                    <summary>#@order.Id · @order.Items.Count món</summary>
+                                    <ul class="mb-0 mt-2 ps-3">
+                                        @foreach (var item in order.Items)
+                                        {
+                                            <li>@item.ProductName × @item.Quantity — @((item.Price * item.Quantity).ToString("N0"))₫</li>
+                                        }
+                                    </ul>
+                                </details>
+                            </td>
+                            <td>@order.CustomerName</td>
+                            <td>
+                                <div>@order.Phone</div>
+                                <small class="text-muted">@order.Address</small>
+                            </td>
+                            <td>@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@order.Total.ToString("N0")₫</td>
+                            <td>@Html.DisplayFor(_ => order.Status)</td>
+                            <td>
+                                <form asp-action="UpdateOrderStatus" method="post" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="OrderId" value="@order.Id" />
+                                    <select name="Status" class="form-select form-select-sm" aria-label="Trạng thái đơn hàng @order.Id">
+                                        @foreach (var status in Html.GetEnumSelectList<OrderStatus>())
+                                        {
+                                            <option value="@status.Value" selected="@(status.Value == ((int)order.Status).ToString())">@status.Text</option>
+                                        }
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm">Lưu</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SaigonChe.Web.ViewModels;
 using System.Net.Http.Json;
 
 namespace SaigonChe.Web.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class CategoryController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -34,8 +36,14 @@ namespace SaigonChe.Web.Controllers
             return View();
         }
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategoryViewModel category)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(category);
+            }
+
             var baseUrl = _configuration["ApiSettings:BaseUrl"];
             var response = await _httpClient.PostAsJsonAsync(
                 $"{baseUrl}/api/categories",category);
@@ -59,8 +67,14 @@ namespace SaigonChe.Web.Controllers
             return View(category);
         }
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CategoryViewModel category)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(category);
+            }
+
             var baseUrl = _configuration["ApiSettings:BaseUrl"];
             var response = await _httpClient.PutAsJsonAsync(
                 $"{baseUrl}/api/categories/{category.Id}", category);
@@ -71,6 +85,7 @@ namespace SaigonChe.Web.Controllers
             return View(category);
         }
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             var baseUrl = _configuration["ApiSettings:BaseUrl"];

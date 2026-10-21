@@ -1,0 +1,77 @@
+@model List<SaigonChe.Web.ViewModels.CartItemViewModel>
+@{
+    ViewData["Title"] = "Giỏ hàng";
+    var total = Model.Sum(item => item.LineTotal);
+}
+
+<section class="section-spacing">
+    <div class="container">
+        <div class="section-heading text-center">
+            <span class="eyebrow accent">Giỏ hàng</span>
+            <h2>Đơn Hàng Của Bạn</h2>
+        </div>
+
+        @if (TempData["CartError"] is string cartError)
+        {
+            <div class="alert alert-warning" role="alert">@cartError</div>
+        }
+
+        @if (TempData["CartSuccess"] is string cartSuccess)
+        {
+            <div class="alert alert-success">@cartSuccess</div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <p>Giỏ hàng đang trống. Hãy chọn món chè yêu thích ngay nhé.</p>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Khám phá thực đơn</a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    @foreach (var item in Model)
+                    {
+                        <div class="cart-item">
+                            <div class="cart-thumb">
+                                <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80" : item.ImageUrl)" alt="@item.Name" loading="lazy" />
+                            </div>
+                            <div class="cart-details">
+                                <h4>@item.Name</h4>
+                                <p>@item.Price.ToString("N0")₫ / ly</p>
+                            </div>
+                            <form asp-action="UpdateQuantity" asp-controller="Cart" method="post" class="cart-qty-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <input type="number" name="quantity" value="@item.Quantity" min="1" max="20" required aria-label="Số lượng @item.Name" />
+                                <button type="submit" class="btn btn-secondary btn-sm">Cập nhật</button>
+                            </form>
+                            <div class="cart-total">@item.LineTotal.ToString("N0")₫</div>
+                            <form asp-action="RemoveItem" asp-controller="Cart" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <button type="submit" class="btn btn-link text-danger">Xóa</button>
+                            </form>
+                        </div>
+                    }
+                </div>
+                <div class="col-lg-4">
+                    <div class="cart-summary">
+                        <h4>Tổng đơn hàng</h4>
+                        <div class="summary-row">
+                            <span>Tạm tính</span>
+                            <strong>@total.ToString("N0")₫</strong>
+                        </div>
+                        <div class="summary-row total-row">
+                            <span>Thành tiền</span>
+                            <strong>@total.ToString("N0")₫</strong>
+                        </div>
+                        <a asp-controller="Cart" asp-action="Checkout" class="btn btn-primary w-100">Tiến hành đặt món</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>

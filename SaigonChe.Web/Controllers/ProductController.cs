@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SaigonChe.Web.ViewModels;
@@ -5,6 +6,7 @@ using System.Buffers.Text;
 using System.Net.Http.Json;
 namespace SaigonChe.web.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class ProductController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -53,6 +55,7 @@ namespace SaigonChe.web.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductViewModel product)
         {
             var baseUrl = _configuration["ApiSettings:BaseUrl"];
@@ -138,6 +141,7 @@ namespace SaigonChe.web.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ProductViewModel product)
         {
             var baseUrl = _configuration["ApiSettings:BaseUrl"];
@@ -270,6 +274,7 @@ namespace SaigonChe.web.Controllers
         }
         
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             var baseUrl = _configuration["ApiSettings:BaseUrl"];

@@ -1,0 +1,66 @@
+@model SaigonChe.Web.ViewModels.CheckoutViewModel
+@{
+    ViewData["Title"] = "Đặt món";
+}
+
+<section class="section-spacing">
+    <div class="container">
+        <div class="section-heading text-center">
+            <span class="eyebrow accent">Đặt món</span>
+            <h2>Thông Tin Giao Hàng</h2>
+        </div>
+
+        <form asp-action="Checkout" method="post" class="checkout-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label asp-for="CustomerName" class="form-label"></label>
+                        <input asp-for="CustomerName" class="form-control" autocomplete="name" maxlength="100" />
+                        <span asp-validation-for="CustomerName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Phone" class="form-label"></label>
+                        <input asp-for="Phone" class="form-control" autocomplete="tel" maxlength="30" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Address" class="form-label"></label>
+                        <textarea asp-for="Address" class="form-control" rows="4" autocomplete="street-address" maxlength="500"></textarea>
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="checkout-summary">
+                        <h4>Đơn hàng</h4>
+                        <ul class="checkout-items">
+                            @foreach (var item in Model.Items)
+                            {
+                                <li>
+                                    <span>@item.Name × @item.Quantity</span>
+                                    <strong>@item.LineTotal.ToString("N0")₫</strong>
+                                </li>
+                            }
+                        </ul>
+                        <div class="summary-row total-row">
+                            <span>Tổng cộng</span>
+                            <strong>@Model.Total.ToString("N0")₫</strong>
+                        </div>
+                        <div class="summary-content">
+                            <p>Thanh toán khi nhận hàng.</p>
+                            <p>Phí vận chuyển sẽ được xác nhận khi gọi điện.</p>
+                            <p>Thời gian chuẩn bị: 15–20 phút.</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Xác nhận đặt món</button>
+                        <a asp-action="Index" class="btn btn-secondary w-100 mt-2">Quay lại giỏ hàng</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
