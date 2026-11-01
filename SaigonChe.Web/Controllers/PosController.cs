@@ -336,7 +336,7 @@ public sealed class PosController : Controller
         {
             var voucher = await _db.Vouchers.FirstOrDefaultAsync(
                 item => item.Id == voucherId.Value && item.IsActive, cancellationToken);
-            if (voucher == null || !TryCalculateDiscount(voucher, order.Items, out _))
+            if (voucher == null || !VoucherPricingService.TryCalculateDiscount(voucher, order.Items, DateTime.UtcNow, out _))
             {
                 TempData["PosError"] = "Voucher đã hết hạn, hết lượt hoặc đơn chưa đạt giá trị tối thiểu.";
                 return RedirectToAction(nameof(Order), new { id = order.Id });
@@ -423,7 +423,7 @@ public sealed class PosController : Controller
         {
             voucher = await _db.Vouchers.FirstOrDefaultAsync(
                 item => item.Id == order.VoucherId.Value, cancellationToken);
-            if (voucher == null || !TryCalculateDiscount(voucher, order.Items, out var discount))
+            if (voucher == null || !VoucherPricingService.TryCalculateDiscount(voucher, order.Items, DateTime.UtcNow, out var discount))
             {
                 TempData["PosError"] = "Voucher không còn hợp lệ. Hãy bỏ voucher hoặc chọn voucher khác.";
                 return RedirectToAction(nameof(Order), new { id = order.Id });
@@ -436,11 +436,10 @@ public sealed class PosController : Controller
             order.DiscountAmount = 0;
         }
 
-        var subtotal = order.Items.Sum(item => item.Price * item.Quantity);
-        order.Total = Math.Max(0, subtotal - order.DiscountAmount);
+        order.Total = VoucherPricingService.CalculateTotal(order.Items, order.DiscountAmount);
 
         if (method == PaymentMethod.Cash
-            && (!amountReceived.HasValue || amountReceived.Value < order.Total))
+            && !CashPaymentCalculator.TryCalculateChange(order.Total, amountReceived, out _))
         {
             TempData["PosError"] = "Số tiền khách đưa chưa đủ thanh toán.";
             return RedirectToAction(nameof(Order), new { id = order.Id });
@@ -549,11 +548,10 @@ public sealed class PosController : Controller
 
     private void RecalculateOrder(Order order)
     {
-        var subtotal = order.Items.Sum(item => item.Price * item.Quantity);
         if (!order.VoucherId.HasValue)
         {
             order.DiscountAmount = 0;
-            order.Total = subtotal;
+            order.Total = VoucherPricingService.CalculateTotal(order.Items, order.DiscountAmount);
             return;
         }
 
@@ -561,12 +559,12 @@ public sealed class PosController : Controller
         if (voucher == null)
         {
             // The selected voucher is reloaded and validated on every checkout.
-            order.Total = subtotal;
             order.DiscountAmount = 0;
+            order.Total = VoucherPricingService.CalculateTotal(order.Items, order.DiscountAmount);
             return;
         }
 
-        if (TryCalculateDiscount(voucher, order.Items, out var discount))
+        if (VoucherPricingService.TryCalculateDiscount(voucher, order.Items, DateTime.UtcNow, out var discount))
         {
             order.DiscountAmount = discount;
         }
@@ -575,27 +573,7 @@ public sealed class PosController : Controller
             order.DiscountAmount = 0;
         }
 
-        order.Total = Math.Max(0, subtotal - order.DiscountAmount);
-    }
-
-    private static bool TryCalculateDiscount(Voucher voucher, IEnumerable<OrderItem> items, out decimal discount)
-    {
-        var subtotal = items.Sum(item => item.Price * item.Quantity);
-        var now = DateTime.UtcNow;
-        if (!voucher.IsActive || voucher.ValidFrom > now || voucher.ValidTo < now
-            || (voucher.UseLimit.HasValue && voucher.UseCount >= voucher.UseLimit.Value)
-            || subtotal < voucher.MinimumOrderTotal
-            || (voucher.Type == VoucherType.Percentage && voucher.Amount > 100))
-        {
-            discount = 0;
-            return false;
-        }
-
-        discount = voucher.Type == VoucherType.Percentage
-            ? subtotal * voucher.Amount / 100m
-            : voucher.Amount;
-        discount = Math.Min(subtotal, Math.Max(0, decimal.Round(discount, 2, MidpointRounding.AwayFromZero)));
-        return true;
+        order.Total = VoucherPricingService.CalculateTotal(order.Items, order.DiscountAmount);
     }
 
     private bool IsVietQrConfigured() =>

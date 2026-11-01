@@ -111,6 +111,32 @@ dotnet run --project .\SaigonChe.Web\SaigonChe.Web.csproj --launch-profile http
 
 Database cần được cập nhật migration trước khi chạy các luồng mới. Các API ghi dữ liệu danh mục thử nghiệm cũ đã bị khóa; dùng giao diện Admin có bảo vệ quyền để quản lý.
 
+## Kiểm thử và ma trận quyền
+
+Chạy kiểm thử tự động trên toàn solution:
+
+```powershell
+dotnet build .\SaigonChe.slnx
+dotnet test .\SaigonChe.slnx
+```
+
+Bộ kiểm thử hiện bao phủ tính tổng/giảm giá, voucher hết hạn hoặc hết lượt, tiền thừa và thiếu tiền, thiếu tồn, bán phần cuối theo thứ tự, xác nhận thanh toán lặp và từ chối đơn ở trạng thái kết thúc. Kiểm thử chưa thay thế xác minh cạnh tranh giao dịch trên SQL Server hoặc kiểm thử tích hợp đủ ba vai trò.
+
+| Quyền | Được phép | Bị chặn |
+|---|---|---|
+| `Customer` | Thực đơn, giỏ hàng/checkout, yêu cầu tiệc và lịch sử của mình (`/Party/Create`, `/Party/MyRequests`) | POS, hàng đợi nhân viên, quản trị và báo cáo |
+| `Staff` | POS (`/Pos`), hàng đợi đơn (`/OrderOperations`), xử lý yêu cầu tiệc (`/Party`) | Quản lý nhân viên/danh mục/tồn kho/voucher và báo cáo doanh thu |
+| `Admin` | Toàn bộ chức năng quản trị, vận hành, báo cáo và quản lý Staff | Không được khóa hoặc hạ quyền Admin cuối cùng |
+
+## Kịch bản demo Thành viên 3 (5–10 phút)
+
+1. Đăng nhập Admin; tạo một bàn, thiết lập tồn kho ban đầu và tạo voucher còn hiệu lực tại `/OperationsAdmin/DiningTables`, `/OperationsAdmin/Inventory`, `/OperationsAdmin/Vouchers`.
+2. Đăng nhập Customer; gửi yêu cầu tiệc tại `/Party/Create`, sau đó kiểm tra trạng thái tại `/Party/MyRequests`.
+3. Đăng nhập Staff; mở `/Pos`, chọn bàn hoặc mang về, thêm món và ghi chú, áp dụng voucher, thanh toán tiền mặt hoặc xác nhận VietQR rồi mở `/Pos/Receipt/{id}` để in/lưu PDF.
+4. Ở vai trò Staff, mở `/Party` để tư vấn, báo giá và cập nhật yêu cầu; xác nhận yêu cầu để tạo đơn tiệc.
+5. Đăng nhập Admin; mở `/Reports`, lọc thời gian và loại đơn, đối chiếu doanh thu/món bán chạy, tải Excel và dùng chức năng in của trình duyệt để lưu PDF.
+6. Đăng xuất và thử truy cập `/Reports` bằng Customer, `/Pos` bằng Customer và `/Staff` bằng Staff; xác nhận hệ thống yêu cầu đăng nhập hoặc từ chối quyền.
+
 ## Quy ước làm việc
 
 - Không commit `.vs/`, `bin/`, `obj`, secret hoặc cấu hình cá nhân.

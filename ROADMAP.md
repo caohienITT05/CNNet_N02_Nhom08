@@ -4,7 +4,7 @@ Tài liệu này hợp nhất đặc tả trong [thư mục Google Drive của d
 
 ## Trạng thái Thành viên 3 — branch `Nhom3_Hoang`
 
-Mục tiêu là hoàn tất 90% trọng số M1–M5; M6 là 10% kiểm thử và bàn giao cuối. Tỷ lệ dưới đây tính theo phần triển khai của từng mốc. Hạng mục cần kiểm thử tích hợp được ghi riêng để không hiểu nhầm là đã nghiệm thu đầy đủ.
+Mục tiêu là đạt ít nhất 90% tiến độ có trọng số M1–M6. Tỷ lệ dưới đây tính theo số tiêu chí đã được kiểm chứng trong từng mốc; hạng mục mới kiểm thử một phần chưa được tính là hoàn thành.
 
 | Mốc | Trọng số | Tiến độ | Phần đã triển khai |
 |---|---:|---:|---|
@@ -13,19 +13,30 @@ Mục tiêu là hoàn tất 90% trọng số M1–M5; M6 là 10% kiểm thử v�
 | M3. Bán hàng tại quầy | 30% | 100% | POS, voucher, tiền mặt/VietQR xác nhận tay, tồn kho, xử lý thanh toán dùng chung và bill in lại. |
 | M4. Đặt tiệc | 15% | 100% | Yêu cầu của khách, hàng đợi tư vấn/báo giá, vòng đời trạng thái và tạo tối đa một đơn Party. |
 | M5. Dashboard và báo cáo | 20% | 100% | Lọc ngày/loại đơn, doanh thu theo UTC/VN, biểu đồ ngày/tháng, Excel và in/lưu PDF. |
-| M6. Kiểm thử và bàn giao | 10% | 0% | Chưa chạy ma trận kiểm thử, bộ dữ liệu đối chiếu báo cáo và kiểm tra desktop/tablet. |
+| M6. Kiểm thử và bàn giao | 10% | 28,57% | Hoàn thành 2/7 tiêu chí: kiểm thử quy tắc giá/voucher/thanh toán/tồn kho/trạng thái và bổ sung README, hướng dẫn cấu hình/migration, ma trận quyền, kịch bản demo. Còn các kiểm thử tích hợp, báo cáo và UI desktop/tablet. |
 
-**Tiến độ có trọng số hiện tại: 88,35%.** Khi Draft PR về `main` được tạo, M1 đạt 100% và tổng phần triển khai M1–M5 đạt **90%**. Chưa tự merge PR.
+**Tiến độ có trọng số hiện tại: 91,21%.** Cách tính: M1 67%, M2–M5 100%, M6 2/7 tiêu chí; chưa merge vào `main`.
+
+### Checklist M6
+
+- [x] Kiểm thử tổng tiền/giảm giá, voucher hết hạn/hết lượt/không đạt tối thiểu, tiền thừa/thiếu, thiếu tồn, phần tồn cuối và đơn ở trạng thái kết thúc.
+- [ ] Kiểm thử cạnh tranh hai nhân viên thanh toán đồng thời, bán phần cuối đồng thời và xác nhận lặp bằng SQL Server.
+- [ ] Kiểm thử Customer/Staff/Admin, khóa tài khoản, thu hồi phiên và truy cập dữ liệu người khác.
+- [ ] Kiểm thử migration trên database có dữ liệu cũ và hồi quy giỏ hàng/checkout/quản trị.
+- [ ] Đối chiếu ranh giới ngày/tháng, Excel/PDF và bản in bill với bộ dữ liệu cố định.
+- [ ] Build/test và kiểm tra giao diện desktop/tablet: build/test solution đã đạt; kiểm tra viewport trực quan còn thiếu.
+- [x] README có hướng dẫn chạy, cấu hình, migration, ma trận quyền và kịch bản demo POS → tiệc → báo cáo → phân quyền.
 
 ### Bằng chứng hiện có
 
-- `dotnet build .\SaigonChe.slnx --no-restore -m:1 -v:minimal`: thành công, 0 lỗi; còn cảnh báo không truy cập được NuGet vulnerability feed và advisory của `System.Security.Cryptography.Pkcs` 9.0.11.
+- `dotnet build .\SaigonChe.slnx --no-restore --verbosity minimal -p:UseSharedCompilation=false`: thành công, 0 lỗi; còn cảnh báo không truy cập được NuGet vulnerability feed và advisory của `System.Security.Cryptography.Pkcs` 9.0.11.
+- `dotnet test .\SaigonChe.slnx --no-restore --verbosity minimal -p:UseSharedCompilation=false`: 19 passed, 0 failed.
 - `dotnet restore .\SaigonChe.slnx -v:minimal`: thành công; tất cả project up-to-date, còn các cảnh báo NuGet/dependency nêu trên.
 - `dotnet ef migrations has-pending-model-changes`: không có thay đổi model chưa migration.
 - `dotnet ef database update`: hai migration mới áp dụng thành công trên LocalDB. Migration chỉ thêm cột, bảng, chỉ mục và khóa ngoại.
 - Website khởi động và chạy seeding được; trang chủ trả HTTP 200. POS, báo cáo, tạo tiệc và hàng đợi yêu cầu đăng nhập (HTTP 302 khi chưa đăng nhập).
 - GitHub xác nhận branch đã có và chưa có PR; lần tạo Draft PR qua connector trả HTTP 403 `Resource not accessible by integration`. Cần cấp quyền tạo pull request cho kết nối GitHub hoặc tạo Draft PR thủ công; đến lúc đó M1 giữ 67% và tổng giữ 88,35%.
-- Chưa xác minh trọn luồng giao dịch bằng tài khoản Staff/Admin hoặc đối chiếu số liệu với bộ dữ liệu chuẩn. Các việc này thuộc nghiệm thu M6.
+- Chưa xác minh trọn luồng giao dịch bằng tài khoản Staff/Admin, concurrency trên SQL Server hoặc đối chiếu số liệu dashboard với bộ dữ liệu chuẩn. Các việc này còn trong M6.
 
 ## 1. Mục tiêu sản phẩm
 

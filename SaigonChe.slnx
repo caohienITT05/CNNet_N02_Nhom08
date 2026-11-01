@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="SaigonChe.Api/SaigonChe.Api.csproj" />
+  <Project Path="SaigonChe.Web.Tests/SaigonChe.Web.Tests.csproj" />
   <Project Path="SaigonChe.Web/SaigonChe.Web.csproj" />
 </Solution>
