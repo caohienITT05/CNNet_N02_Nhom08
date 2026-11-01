@@ -10,5 +10,9 @@ namespace SaigonChe.Web.ViewModels
         [EnumDataType(typeof(OrderStatus), ErrorMessage = "Trạng thái đơn hàng không hợp lệ.")]
         [Display(Name = "Trạng thái")]
         public OrderStatus Status { get; set; }
+
+        [StringLength(500)]
+        [Display(Name = "Ghi chú / lý do hủy")]
+        public string? Note { get; set; }
     }
 }

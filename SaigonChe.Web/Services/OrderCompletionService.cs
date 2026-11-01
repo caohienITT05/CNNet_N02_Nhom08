@@ -23,6 +23,8 @@ public sealed class OrderCompletionService(ApplicationDbContext context)
             throw new OrderCompletionException("Đơn đã kết thúc và không thể hoàn tất lần nữa.");
         if (order.Items.Count == 0)
             throw new OrderCompletionException("Đơn hàng chưa có món.");
+        if (!Enum.IsDefined(method) || order.Items.Any(item => item.Quantity <= 0))
+            throw new OrderCompletionException("Phương thức thanh toán hoặc số lượng món không hợp lệ.");
 
         var required = order.Items.GroupBy(item => item.ProductId)
             .ToDictionary(group => group.Key, group => group.Sum(item => item.Quantity));

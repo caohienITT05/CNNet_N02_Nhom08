@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
+using System.Security.Claims;
 using SaigonChe.Web.Data;
 using SaigonChe.Web.Models;
+using SaigonChe.Web.Services;
 using SaigonChe.Web.ViewModels;
 
 namespace SaigonChe.Web.Controllers
@@ -13,11 +16,13 @@ namespace SaigonChe.Web.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly OrderCompletionService _orderCompletion;
 
-        public AdminController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public AdminController(ApplicationDbContext context, IWebHostEnvironment environment, OrderCompletionService orderCompletion)
         {
             _context = context;
             _environment = environment;
+            _orderCompletion = orderCompletion;
         }
 
         [HttpGet]
@@ -197,15 +202,86 @@ namespace SaigonChe.Web.Controllers
                 return RedirectToAction(nameof(Orders));
             }
 
-            var order = await _context.Orders.FindAsync(model.OrderId);
+            var order = await _context.Orders.Include(item => item.Items)
+                .FirstOrDefaultAsync(item => item.Id == model.OrderId);
             if (order == null) return NotFound();
+            if (order.Type != OrderType.Online)
+            {
+                TempData["AdminError"] = "Cập nhật đơn POS hoặc đặt tiệc tại màn hình nghiệp vụ tương ứng.";
+                return RedirectToAction(nameof(Orders));
+            }
 
-            order.Status = model.Status;
-            await _context.SaveChangesAsync();
+            if (!IsValidOrderTransition(order.Status, model.Status))
+            {
+                TempData["AdminError"] = "Luồng trạng thái đơn hàng không hợp lệ hoặc đơn đã kết thúc.";
+                return RedirectToAction(nameof(Orders));
+            }
+            if (model.Status == OrderStatus.Cancelled && string.IsNullOrWhiteSpace(model.Note))
+            {
+                TempData["AdminError"] = "Vui lòng nhập lý do hủy đơn.";
+                return RedirectToAction(nameof(Orders));
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            var actorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (model.Status == OrderStatus.Completed)
+            {
+                if (order.PaymentMethod != PaymentMethod.CashOnDelivery)
+                {
+                    TempData["AdminError"] = "Chỉ có thể hoàn tất đơn COD sau khi xác nhận tiền mặt đã thu.";
+                    return RedirectToAction(nameof(Orders));
+                }
+
+                try
+                {
+                    await _orderCompletion.CompleteAsync(order, PaymentMethod.Cash, actorId, "Thu tiền COD và hoàn tất đơn.");
+                }
+                catch (OrderCompletionException exception)
+                {
+                    await transaction.RollbackAsync();
+                    TempData["AdminError"] = exception.Message;
+                    return RedirectToAction(nameof(Orders));
+                }
+            }
+            else
+            {
+                var previous = order.Status;
+                order.Status = model.Status;
+                order.AssignedStaffId ??= actorId;
+                _context.OrderStatusHistory.Add(new OrderStatusHistory
+                {
+                    OrderId = order.Id,
+                    PreviousStatus = previous,
+                    Status = order.Status,
+                    ActorId = actorId,
+                    Note = model.Note?.Trim(),
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+                TempData["AdminError"] = "Đơn vừa được cập nhật bởi nhân viên khác. Hãy tải lại trước khi tiếp tục.";
+                return RedirectToAction(nameof(Orders));
+            }
 
             TempData["AdminSuccess"] = $"Đã cập nhật trạng thái đơn #{order.Id}.";
             return RedirectToAction(nameof(Orders));
         }
+
+        private static bool IsValidOrderTransition(OrderStatus current, OrderStatus next) => current switch
+        {
+            OrderStatus.Pending => next is OrderStatus.Confirmed or OrderStatus.Cancelled,
+            OrderStatus.Confirmed => next is OrderStatus.Preparing or OrderStatus.Cancelled,
+            OrderStatus.Preparing => next is OrderStatus.Completed or OrderStatus.Cancelled,
+            _ => false
+        };
 
         [HttpGet]
         public async Task<IActionResult> CreateProduct()

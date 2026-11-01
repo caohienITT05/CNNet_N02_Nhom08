@@ -1,0 +1,27 @@
+@model IReadOnlyList<SaigonChe.Web.Models.Order>
+@using SaigonChe.Web.Models
+@{
+    ViewData["Title"] = "Đơn hàng cần xử lý";
+    var ordersTimeZone = VietnamTime.Zone;
+}
+<div class="admin-page-head"><div><span class="eyebrow">Vận hành giao hàng</span><h1>Đơn hàng trực tuyến</h1><p>Xác nhận, chuẩn bị, giao và ghi nhận thanh toán COD.</p></div></div>
+<div class="admin-table-wrap"><table class="table admin-table"><thead><tr><th>Đơn / món</th><th>Khách hàng</th><th>Địa chỉ</th><th>Đặt lúc</th><th>Tổng tiền</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead><tbody>
+@foreach (var order in Model)
+{
+    var nextStatuses = order.Status switch
+    {
+        OrderStatus.Pending => new[] { OrderStatus.Confirmed, OrderStatus.Cancelled },
+        OrderStatus.Confirmed => new[] { OrderStatus.Preparing, OrderStatus.Cancelled },
+        OrderStatus.Preparing => new[] { OrderStatus.Completed, OrderStatus.Cancelled },
+        _ => Array.Empty<OrderStatus>()
+    };
+    <tr><td><details><summary>#@order.Id · @order.Items.Sum(item => item.Quantity) phần</summary><ul>@foreach (var item in order.Items) { <li>@item.ProductName × @item.Quantity @(string.IsNullOrWhiteSpace(item.Notes) ? "" : $"· {item.Notes}")</li> }</ul></details></td><td>@order.CustomerName<br/><span class="cell-muted">@order.Phone</span></td><td>@order.Address</td><td>@VietnamTime.ToLocal(order.CreatedAt).ToString("dd/MM HH:mm")</td><td>@order.Total.ToString("N0") ₫</td><td>@order.Status</td><td>
+    @if (nextStatuses.Length > 0)
+    {
+        <form asp-action="Update" method="post" class="d-flex gap-2 flex-wrap">@Html.AntiForgeryToken()<input type="hidden" name="OrderId" value="@order.Id"/><input type="hidden" name="RowVersion" value="@Convert.ToBase64String(order.RowVersion)"/><select class="form-select form-select-sm" name="Status" aria-label="Trạng thái đơn @order.Id">@foreach (var status in nextStatuses) { <option value="@((int)status)">@status</option> }</select><input class="form-control form-control-sm" name="Note" maxlength="500" placeholder="Lý do hủy nếu cần"/><button type="submit" class="btn btn-primary btn-sm">Lưu</button></form>
+    }
+    else { <span class="cell-muted">Đơn đã kết thúc</span> }
+    </td></tr>
+}
+@if (Model.Count == 0) { <tr><td colspan="7">Hiện không có đơn trực tuyến cần xử lý.</td></tr> }
+</tbody></table></div>

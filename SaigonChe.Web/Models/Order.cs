@@ -23,6 +23,9 @@ namespace SaigonChe.Web.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal DiscountAmount { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? AmountReceived { get; set; }
+
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         public OrderType Type { get; set; } = OrderType.Online;

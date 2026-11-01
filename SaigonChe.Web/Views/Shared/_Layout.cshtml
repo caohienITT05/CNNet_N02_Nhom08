@@ -7,7 +7,8 @@
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var action = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
     var isHomePage = controller == "Home" && action == "Index";
-    var isAdminSection = controller is "Admin" or "Product" or "Category";
+    var isAdminSection = controller is "Admin" or "Product" or "Category" or "Pos" or "Reports" or "Staff" or "OperationsAdmin" or "OrderOperations"
+        || (controller == "Party" && (User.IsInRole("Staff") || User.IsInRole("Admin")));
     var homeUrl = Url.Action("Index", "Home") ?? "/";
     var isSignedIn = SignInManager.IsSignedIn(User);
     var accountName = User.Identity?.Name ?? string.Empty;
@@ -117,9 +118,20 @@
                 </a>
 
                 <div>
-                    <p class="admin-nav-label">Quản lý cửa hàng</p>
+                    <p class="admin-nav-label">Vận hành cửa hàng</p>
                     <nav>
                         <ul class="admin-nav">
+                            @if (User.IsInRole("Staff") || User.IsInRole("Admin"))
+                            {
+                                <li><a asp-controller="Pos" asp-action="Index" class="@(controller == "Pos" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-store" /></svg> Bán hàng tại quầy</a></li>
+                                <li><a asp-controller="OrderOperations" asp-action="Index" class="@(controller == "OrderOperations" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-file" /></svg> Đơn giao hàng</a></li>
+                                <li><a asp-controller="Party" asp-action="Index" class="@(controller == "Party" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-file" /></svg> Yêu cầu đặt tiệc</a></li>
+                            }
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li><a asp-controller="OperationsAdmin" asp-action="Inventory" class="@(controller == "OperationsAdmin" && action == "Inventory" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-box" /></svg> Tồn kho</a></li>
+                                <li><a asp-controller="OperationsAdmin" asp-action="DiningTables" class="@(controller == "OperationsAdmin" && action == "DiningTables" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-store" /></svg> Bàn tại quầy</a></li>
+                                <li><a asp-controller="OperationsAdmin" asp-action="Vouchers" class="@(controller == "OperationsAdmin" && action == "Vouchers" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-tag" /></svg> Voucher</a></li>
                             <li>
                                 <a asp-controller="Admin" asp-action="Products" class="@(controller == "Admin" && action == "Products" ? "is-active" : null)">
                                     <svg class="icon" aria-hidden="true"><use href="#i-box" /></svg>
@@ -144,6 +156,9 @@
                                     Tin nhắn liên hệ
                                 </a>
                             </li>
+                                <li><a asp-controller="Reports" asp-action="Index" class="@(controller == "Reports" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg> Dashboard báo cáo</a></li>
+                                <li><a asp-controller="Staff" asp-action="Index" class="@(controller == "Staff" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-user" /></svg> Tài khoản nhân viên</a></li>
+                            }
                         </ul>
                     </nav>
                 </div>
@@ -173,7 +188,7 @@
                         <span class="avatar avatar-sm">@initials</span>
                         <div>
                             <strong>@(string.IsNullOrWhiteSpace(displayName) ? "Quản trị viên" : displayName)</strong>
-                            <small>Quản trị viên</small>
+                            <small>@(User.IsInRole("Admin") ? "Quản trị viên" : "Nhân viên")</small>
                         </div>
                     </div>
                     <div class="admin-sidebar__links">
@@ -258,6 +273,10 @@
                         <li><a class="nav-link" href="@SectionHref("menu")" data-nav-section="menu">Thực đơn</a></li>
                         <li><a class="nav-link" href="@SectionHref("offers")" data-nav-section="offers">Ưu đãi</a></li>
                         <li><a class="nav-link" href="@SectionHref("contact")" data-nav-section="contact">Liên hệ</a></li>
+                        @if (User.IsInRole("Customer"))
+                        {
+                            <li><a class="nav-link" asp-controller="Party" asp-action="Create">Đặt tiệc</a></li>
+                        }
                     </ul>
 
                     <div class="nav-actions">

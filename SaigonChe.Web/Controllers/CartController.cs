@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using SaigonChe.Web.Data;
 using SaigonChe.Web.Models;
 using SaigonChe.Web.ViewModels;
@@ -193,11 +194,21 @@ namespace SaigonChe.Web.Controllers
                 Address = model.Address.Trim(),
                 Total = items.Sum(item => item.Price * item.Quantity),
                 CreatedAt = DateTime.UtcNow,
+                CustomerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
+                PaymentMethod = PaymentMethod.CashOnDelivery,
                 Status = OrderStatus.Pending,
                 Items = items
             };
 
             _context.Orders.Add(order);
+            _context.OrderStatusHistory.Add(new OrderStatusHistory
+            {
+                Order = order,
+                Status = OrderStatus.Pending,
+                ActorId = User.FindFirstValue(ClaimTypes.NameIdentifier),
+                Note = "Khách tạo đơn online.",
+                CreatedAt = DateTime.UtcNow
+            });
             await _context.SaveChangesAsync();
 
             HttpContext.Session.Remove("Cart");

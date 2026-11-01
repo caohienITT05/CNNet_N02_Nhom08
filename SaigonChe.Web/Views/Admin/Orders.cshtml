@@ -4,7 +4,7 @@
     ViewData["Title"] = "Đơn hàng";
     var pending = Model.Count(order => order.Status is OrderStatus.Pending or OrderStatus.Confirmed or OrderStatus.Preparing);
     var completed = Model.Count(order => order.Status == OrderStatus.Completed);
-    var revenue = Model.Where(order => order.Status != OrderStatus.Cancelled).Sum(order => order.Total);
+    var revenue = Model.Where(order => order.IsPaid && order.Status == OrderStatus.Completed).Sum(order => order.Total);
 }
 
 <div class="admin-page-head">
@@ -38,7 +38,7 @@
     <div class="stat-card">
         <span class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-tag" /></svg>Doanh thu</span>
         <p class="stat-value">@revenue.ToString("N0")₫</p>
-        <span class="stat-hint">Không gồm đơn đã hủy</span>
+        <span class="stat-hint">Đơn đã thanh toán và hoàn thành</span>
     </div>
 </div>
 
@@ -74,11 +74,18 @@
                     OrderStatus.Completed => "badge-success",
                     _ => "badge-danger"
                 };
+                var nextStatuses = order.Status switch
+                {
+                    OrderStatus.Pending => new[] { OrderStatus.Confirmed, OrderStatus.Cancelled },
+                    OrderStatus.Confirmed => new[] { OrderStatus.Preparing, OrderStatus.Cancelled },
+                    OrderStatus.Preparing => new[] { OrderStatus.Completed, OrderStatus.Cancelled },
+                    _ => Array.Empty<OrderStatus>()
+                };
 
                 <tr>
                     <td>
                         <details>
-                            <summary>#@order.Id · @order.Items.Count món</summary>
+                            <summary>#@order.Id · @order.Type · @order.Items.Count món</summary>
                             <ul>
                                 @foreach (var item in order.Items)
                                 {
@@ -94,23 +101,35 @@
                         <span class="cell-mono">@order.Phone</span>
                         <div class="cell-muted">@order.Address</div>
                     </td>
-                    <td class="cell-muted">@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="cell-muted">@VietnamTime.ToLocal(order.CreatedAt).ToString("dd/MM/yyyy HH:mm")</td>
                     <td class="cell-mono">@order.Total.ToString("N0")₫</td>
                     <td>
                         <span class="badge @statusClass">@statusText</span>
+                        @if (order.Status == OrderStatus.Completed && !order.IsPaid)
+                        {
+                            <div class="cell-muted">Đơn cũ · chưa xác minh thanh toán</div>
+                        }
                     </td>
                     <td>
+                        @if (order.Type != OrderType.Online)
+                        {
+                            <span class="cell-muted">Cập nhật tại POS / Đặt tiệc</span>
+                        }
+                        else
+                        {
                         <form asp-action="UpdateOrderStatus" method="post" class="d-flex gap-2 align-items-center">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="OrderId" value="@order.Id" />
-                            <select name="Status" class="form-select form-select-sm" aria-label="Trạng thái đơn hàng @order.Id" style="min-width:148px">
-                                @foreach (var status in Html.GetEnumSelectList<OrderStatus>())
+                            <select name="Status" class="form-select form-select-sm" aria-label="Trạng thái đơn hàng @order.Id" style="min-width:148px" disabled="@(nextStatuses.Length == 0)">
+                                @foreach (var statusOption in Html.GetEnumSelectList<OrderStatus>().Where(option => nextStatuses.Any(status => ((int)status).ToString() == option.Value)))
                                 {
-                                    <option value="@status.Value" selected="@(status.Value == ((int)order.Status).ToString())">@status.Text</option>
+                                    <option value="@statusOption.Value">@statusOption.Text</option>
                                 }
                             </select>
-                            <button type="submit" class="btn btn-primary btn-sm">Lưu</button>
+                            <input type="text" name="Note" maxlength="500" class="form-control form-control-sm" placeholder="Ghi chú / lý do hủy" aria-label="Ghi chú hoặc lý do hủy đơn @order.Id" />
+                            <button type="submit" class="btn btn-primary btn-sm" disabled="@(nextStatuses.Length == 0)">Lưu</button>
                         </form>
+                        }
                     </td>
                 </tr>
             }

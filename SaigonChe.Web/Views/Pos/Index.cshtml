@@ -1,0 +1,94 @@
+@model PosDashboardViewModel
+@{
+    ViewData["Title"] = "Bán hàng tại quầy";
+    var busyTableIds = Model.OpenOrders.Where(order => order.TableId.HasValue).Select(order => order.TableId!.Value).ToHashSet();
+}
+<style>
+    .pos-wrap{max-width:1180px;margin:2rem auto;padding:0 1rem;color:#213044}.pos-head,.pos-card,.pos-product{background:#fff;border:1px solid #e4e8ef;border-radius:16px;box-shadow:0 8px 24px #1b2a3a0b}.pos-head{padding:1.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem}.pos-head h1{margin:0 0 .25rem;font-size:1.8rem}.pos-muted{color:#68778b}.pos-grid{display:grid;grid-template-columns:320px 1fr;gap:1rem;margin-top:1rem}.pos-card{padding:1.25rem}.pos-card h2{font-size:1.15rem;margin:0 0 .9rem}.pos-form{display:grid;gap:.65rem}.pos-form select,.pos-form button{min-height:44px;padding:.65rem .8rem;border:1px solid #d7deea;border-radius:9px}.pos-form button,.pos-btn{background:#237b68;color:#fff;border:0;border-radius:9px;padding:.7rem 1rem;font-weight:650;text-decoration:none;cursor:pointer}.pos-orders{display:grid;gap:.65rem}.pos-order{padding:.9rem;border:1px solid #e3e8ef;border-radius:11px;display:flex;justify-content:space-between;align-items:center;gap:.75rem}.pos-order a{font-weight:650;color:#176c5b;text-decoration:none}.pos-menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.75rem;margin-top:.75rem}.pos-product{padding:.9rem}.pos-product strong{display:block}.pos-alert{padding:.8rem 1rem;border-radius:10px;margin:.8rem 0}.pos-error{background:#fff0ef;color:#a02f2b}.pos-success{background:#eaf7f0;color:#1d7650}.pos-label{display:block;font-size:.88rem;font-weight:600;margin:.25rem 0}.pos-pill{border-radius:999px;background:#eef4f8;padding:.2rem .55rem;font-size:.8rem}.pos-qr-config{font-size:.85rem;margin-top:.8rem}@@media(max-width:780px){.pos-grid{grid-template-columns:1fr}.pos-head{align-items:flex-start;flex-direction:column}}
+</style>
+<main class="pos-wrap">
+    <header class="pos-head">
+        <div><h1>Bán hàng tại quầy</h1><div class="pos-muted">Chọn bàn hoặc tạo đơn mang về. Đơn nháp chưa trừ tồn kho.</div></div>
+        <a class="pos-btn" asp-controller="Admin" asp-action="Orders">Quản lý đơn hàng</a>
+    </header>
+    @if (TempData["PosError"] is string error) { <div class="pos-alert pos-error" role="alert">@error</div> }
+    @if (TempData["PosSuccess"] is string success) { <div class="pos-alert pos-success" role="status">@success</div> }
+    <div class="pos-grid">
+        <section class="pos-card">
+            <h2>Mở đơn mới</h2>
+            <form asp-action="Start" method="post" class="pos-form">
+                @Html.AntiForgeryToken()
+                <label class="pos-label" for="tableId">Bàn (để trống nếu mang về)</label>
+                <select id="tableId" name="tableId">
+                    <option value="">Mang về</option>
+                    @foreach (var table in Model.Tables)
+                    {
+                        <option value="@table.Id" disabled="@(busyTableIds.Contains(table.Id) ? "disabled" : null)">
+                            @table.Code · @table.Name (@table.Capacity chỗ)@(busyTableIds.Contains(table.Id) ? " — đang có đơn" : "")
+                        </option>
+                    }
+                </select>
+                <button type="submit">Tạo đơn POS</button>
+            </form>
+            @if (string.IsNullOrWhiteSpace(Model.BankId) || string.IsNullOrWhiteSpace(Model.AccountNumber) || string.IsNullOrWhiteSpace(Model.AccountName))
+            {
+                <p class="pos-muted pos-qr-config">VietQR đang tắt. Admin cấu hình Payment:BankId, AccountNumber và AccountName trong User Secrets hoặc biến môi trường.</p>
+            }
+            <p class="pos-qr-config pos-muted">Tồn kho phải được khởi tạo ở quản trị trước khi thanh toán tại quầy.</p>
+        </section>
+        <section class="pos-card">
+            <h2>Đơn đang mở <span class="pos-pill">@Model.OpenOrders.Count</span></h2>
+            @if (Model.OpenOrders.Count == 0)
+            {
+                <p class="pos-muted">Chưa có đơn nháp.</p>
+            }
+            else
+            {
+                <div class="pos-orders">
+                    @foreach (var order in Model.OpenOrders)
+                    {
+                        <article class="pos-order">
+                            <div><a asp-action="Order" asp-route-id="@order.Id">Đơn #@order.Id</a><div class="pos-muted">@(order.Table?.Name ?? "Mang về") · @order.Items.Sum(item => item.Quantity) phần</div></div>
+                            <div style="text-align:right"><strong>@order.Total.ToString("N0") ₫</strong><div class="pos-muted">@order.CreatedAt.ToLocalTime().ToString("HH:mm")</div></div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+    <section class="pos-card" style="margin-top:1rem">
+        <h2>Thực đơn đang bán</h2>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.75rem">
+            <input id="posProductSearch" type="search" placeholder="Tìm món…" aria-label="Tìm món trong thực đơn" style="min-height:42px;padding:.6rem .75rem;border:1px solid #d7deea;border-radius:9px;flex:1;min-width:220px"/>
+            <select id="posCategoryFilter" aria-label="Lọc theo danh mục" style="min-height:42px;padding:.6rem .75rem;border:1px solid #d7deea;border-radius:9px">
+                <option value="">Tất cả danh mục</option>@foreach (var category in Model.Categories) { <option value="@category.Id">@category.Name</option> }
+            </select>
+        </div>
+        <div class="pos-menu" id="posMenu">
+            @foreach (var product in Model.Products)
+            {
+                <article class="pos-product" data-product-name="@product.Name" data-category-id="@product.CategoryId">
+                    <strong>@product.Name</strong>
+                    <div class="pos-muted">@product.Category?.Name</div>
+                    <div style="margin-top:.45rem;font-weight:700">@product.Price.ToString("N0") ₫</div>
+                    <div class="pos-muted">Tồn kho: @(product.Stock.HasValue ? product.Stock.Value.ToString("N0") + " phần" : "chưa khởi tạo")</div>
+                </article>
+            }
+            @if (Model.Products.Count == 0) { <p class="pos-muted">Chưa có món đang bán.</p> }
+        </div>
+    </section>
+</main>
+<script>
+    (() => {
+        const search = document.getElementById('posProductSearch');
+        const category = document.getElementById('posCategoryFilter');
+        const cards = [...document.querySelectorAll('#posMenu [data-product-name]')];
+        const filter = () => cards.forEach(card => {
+            const matchesName = card.dataset.productName.toLocaleLowerCase().includes(search.value.trim().toLocaleLowerCase());
+            const matchesCategory = !category.value || category.value === card.dataset.categoryId;
+            card.hidden = !(matchesName && matchesCategory);
+        });
+        search.addEventListener('input', filter);
+        category.addEventListener('change', filter);
+    })();
+</script>

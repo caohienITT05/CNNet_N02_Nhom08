@@ -364,6 +364,9 @@ namespace SaigonChe.Web.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal?>("AmountReceived")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("AssignedStaffId")
                         .HasColumnType("nvarchar(450)");
 
