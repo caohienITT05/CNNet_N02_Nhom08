@@ -1,6 +1,29 @@
 # Lộ trình xây dựng SaigonChe
 
-Tài liệu này hợp nhất đặc tả trong [thư mục Google Drive của dự án](https://drive.google.com/drive/folders/1cpvRw17V_vcU1bbQwkhicA3P75coMmXU) với trạng thái thực tế của repository ngày 12/10/2026.
+Tài liệu này hợp nhất đặc tả trong [thư mục Google Drive của dự án](https://drive.google.com/drive/folders/1cpvRw17V_vcU1bbQwkhicA3P75coMmXU) với trạng thái thực tế của repository ngày 01/11/2026.
+
+## Trạng thái Thành viên 3 — branch `Nhom3_Hoang`
+
+Mục tiêu là hoàn tất 90% trọng số M1–M5; M6 là 10% kiểm thử và bàn giao cuối. Tỷ lệ dưới đây tính theo phần triển khai của từng mốc. Hạng mục cần kiểm thử tích hợp được ghi riêng để không hiểu nhầm là đã nghiệm thu đầy đủ.
+
+| Mốc | Trọng số | Tiến độ | Phần đã triển khai |
+|---|---:|---:|---|
+| M1. Branch và nền chạy được | 5% | 67% | Branch và commit nền local, build solution, hướng dẫn cấu hình; còn push GitHub và Draft PR. |
+| M2. Dữ liệu và phân quyền | 20% | 100% | Role Customer/Staff/Admin, quản lý Staff, bảo vệ luồng ghi, migration cộng thêm. Migration đã chạy trên LocalDB; EF không còn pending model changes. |
+| M3. Bán hàng tại quầy | 30% | 100% | POS, voucher, tiền mặt/VietQR xác nhận tay, tồn kho, xử lý thanh toán dùng chung và bill in lại. |
+| M4. Đặt tiệc | 15% | 100% | Yêu cầu của khách, hàng đợi tư vấn/báo giá, vòng đời trạng thái và tạo tối đa một đơn Party. |
+| M5. Dashboard và báo cáo | 20% | 100% | Lọc ngày/loại đơn, doanh thu theo UTC/VN, biểu đồ ngày/tháng, Excel và in/lưu PDF. |
+| M6. Kiểm thử và bàn giao | 10% | 0% | Chưa chạy ma trận kiểm thử, bộ dữ liệu đối chiếu báo cáo và kiểm tra desktop/tablet. |
+
+**Tiến độ có trọng số hiện tại: 88,35%.** Khi branch được đẩy lên GitHub và có Draft PR về `main`, M1 đạt 100% và tổng phần triển khai M1–M5 đạt **90%**. Chưa tự merge PR.
+
+### Bằng chứng hiện có
+
+- `dotnet build .\SaigonChe.slnx --no-restore -m:1 -v:minimal`: thành công, 0 lỗi; còn cảnh báo không truy cập được NuGet vulnerability feed và advisory của `System.Security.Cryptography.Pkcs` 9.0.11.
+- `dotnet ef migrations has-pending-model-changes`: không có thay đổi model chưa migration.
+- `dotnet ef database update`: hai migration mới áp dụng thành công trên LocalDB. Migration chỉ thêm cột, bảng, chỉ mục và khóa ngoại.
+- Website khởi động và chạy seeding được; trang chủ trả HTTP 200. POS, báo cáo, tạo tiệc và hàng đợi yêu cầu đăng nhập (HTTP 302 khi chưa đăng nhập).
+- Chưa xác minh trọn luồng giao dịch bằng tài khoản Staff/Admin hoặc đối chiếu số liệu với bộ dữ liệu chuẩn. Các việc này thuộc nghiệm thu M6.
 
 ## 1. Mục tiêu sản phẩm
 

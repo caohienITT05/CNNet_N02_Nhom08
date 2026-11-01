@@ -1,6 +1,6 @@
 # SaigonChe
 
-Website đặt món và quản lý Quán Chè Sài Gòn, được xây dựng cho bài tập lớn học phần Công nghệ .NET. Hệ thống hiện có khu vực khách hàng và quản trị viên.
+Website đặt món và quản lý Quán Chè Sài Gòn, được xây dựng cho bài tập lớn học phần Công nghệ .NET. Hệ thống có khu vực khách hàng, vận hành nhân viên và quản trị viên.
 
 ## Kiến trúc hiện tại
 
@@ -24,13 +24,20 @@ Trình duyệt → SaigonChe.Web → SQL Server
 - Tìm kiếm thực đơn theo tên, mô tả hoặc danh mục; lọc theo loại chè và món bán chạy.
 - Giỏ hàng và checkout, xác thực lại giá và tình trạng món trước khi lưu đơn.
 - Lưu liên hệ khách hàng vào database và quản lý trong khu vực quản trị.
+- Vai trò `Customer`, `Staff`, `Admin`; đăng ký công khai chỉ tạo tài khoản `Customer`; Admin quản lý tài khoản Staff.
+- Nhân viên tiếp nhận và cập nhật trạng thái đơn; lịch sử trạng thái được lưu.
+- POS cho đơn tại bàn/mang về, ghi chú món, voucher, tiền mặt hoặc VietQR xác nhận thủ công, trừ tồn và in lại bill.
+- Quản trị tồn kho theo số phần, bàn và voucher.
+- Khách gửi/theo dõi yêu cầu đặt tiệc; Staff/Admin tư vấn, báo giá, xác nhận và hoàn tất.
+- Dashboard Admin lọc doanh thu theo ngày và loại đơn, biểu đồ ngày/tháng, món bán chạy và xuất Excel; có thể in/lưu PDF từ trình duyệt.
 
-Chưa có:
-- Khu vực nhân viên để tiếp nhận, pha chế, giao và hoàn tất đơn.
-- Quản lý tài khoản nhân viên và lịch sử người xử lý đơn.
-- Theo dõi đơn, lịch sử mua hàng và đánh giá.
-- Khuyến mãi, thanh toán điện tử và dashboard doanh thu.
-- Kiểm thử tự động và tài liệu API.
+Các giới hạn hiện tại:
+- VietQR chỉ hiển thị yêu cầu chuyển khoản; nhân viên xác nhận đã nhận tiền, chưa có cổng thanh toán tự động.
+- Tồn kho tính theo số phần món, chưa trừ nguyên liệu.
+- Chưa hỗ trợ hoàn tiền, ghép/tách bàn, đặt cọc tiệc hoặc hóa đơn điện tử.
+- PDF được tạo bằng chức năng in/lưu PDF của trình duyệt; file Excel được xuất trực tiếp.
+- Migration mới đã tạo và kiểm tra tính đồng bộ với model, nhưng cần chạy trên SQL Server trước khi dùng.
+- Kiểm thử tự động và tài liệu API vẫn còn trong lộ trình chung.
 
 Lộ trình chi tiết và thứ tự triển khai nằm trong [ROADMAP.md](ROADMAP.md).
 
@@ -57,6 +64,17 @@ Mặc định, `SaigonChe.Web` sử dụng SQL Server LocalDB với database `Sa
 
 Khi database chưa có tài khoản quản trị, cần cấp `Seed:AdminPassword` qua User Secrets hoặc biến môi trường `Seed__AdminPassword`. Không lưu mật khẩu quản trị trong source code hoặc file cấu hình được commit. Khi tài khoản quản trị đã tồn tại, ứng dụng giữ nguyên mật khẩu hiện tại.
 
+Đặt mật khẩu seed và thông tin nhận VietQR bằng User Secrets (chạy tại thư mục repository, thay giá trị mẫu bằng thông tin của môi trường):
+
+```powershell
+dotnet user-secrets set "Seed:AdminPassword" "<mat-khau-admin-manh>" --project .\SaigonChe.Web\SaigonChe.Web.csproj
+dotnet user-secrets set "Payment:BankId" "<ma-ngan-hang-VietQR>" --project .\SaigonChe.Web\SaigonChe.Web.csproj
+dotnet user-secrets set "Payment:AccountNumber" "<so-tai-khoan-nhan>" --project .\SaigonChe.Web\SaigonChe.Web.csproj
+dotnet user-secrets set "Payment:AccountName" "<ten-chu-tai-khoan>" --project .\SaigonChe.Web\SaigonChe.Web.csproj
+```
+
+Thiếu cấu hình VietQR thì lựa chọn này sẽ bị vô hiệu hóa. Có thể đặt `Payment:QrTemplate` nếu cần chọn mẫu QR khác.
+
 Áp dụng migration:
 
 ```powershell
@@ -81,6 +99,17 @@ dotnet run --project .\SaigonChe.Web\SaigonChe.Web.csproj --launch-profile http
 Địa chỉ mặc định:
 
 - Web: `http://localhost:5141`
+
+## Luồng Thành viên 3
+
+- POS: `/Pos`.
+- Hàng đợi xử lý đơn online: `/OrderOperations`.
+- Tạo và theo dõi yêu cầu tiệc: `/Party/Create`, `/Party/MyRequests`.
+- Dashboard báo cáo Admin: `/Reports`.
+- Quản lý nhân viên: `/Staff`.
+- Quản lý bàn, tồn kho và voucher: `/OperationsAdmin/DiningTables`, `/OperationsAdmin/Inventory`, `/OperationsAdmin/Vouchers`.
+
+Database cần được cập nhật migration trước khi chạy các luồng mới. Các API ghi dữ liệu danh mục thử nghiệm cũ đã bị khóa; dùng giao diện Admin có bảo vệ quyền để quản lý.
 
 ## Quy ước làm việc
 
