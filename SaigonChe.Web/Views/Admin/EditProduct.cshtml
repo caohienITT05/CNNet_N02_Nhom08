@@ -33,7 +33,18 @@
                 </div>
                 <div class="col-md-6">
                     <label asp-for="ImageFile">Ảnh mới</label>
-                    <input asp-for="ImageFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                    <input asp-for="ImageFile" type="file" class="form-control product-image-input"
+                           accept=".jpg,.jpeg,.png,.webp" data-preview-target="#productImagePreview" />
+                    <span asp-validation-for="ImageFile" class="text-danger"></span>
+                    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                    {
+                        <img id="productImagePreview" class="product-image-preview mt-2" src="@Model.ImageUrl" alt="Ảnh hiện tại của @Model.Name" />
+                    }
+                    else
+                    {
+                        <img id="productImagePreview" class="product-image-preview mt-2" alt="Xem trước ảnh món" hidden />
+                    }
+                    <small class="form-text">JPG, JPEG, PNG hoặc WEBP; tối đa 2MB.</small>
                 </div>
                 <div class="col-12">
                     <label asp-for="Description">Mô tả</label>

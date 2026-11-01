@@ -27,5 +27,7 @@ namespace SaigonChe.Web.Models
         public Category? Category { get; set; }
 
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

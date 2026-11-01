@@ -1,0 +1,75 @@
+@model SaigonChe.Web.ViewModels.MenuProductDetailsViewModel
+@{
+    ViewData["Title"] = Model.Name;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+<section class="section-spacing product-details-section">
+    <div class="container">
+        @if (TempData["CartError"] is string cartError)
+        {
+            <div class="alert alert-warning" role="alert">@cartError</div>
+        }
+        @if (TempData["CartSuccess"] is string cartSuccess)
+        {
+            <div class="alert alert-success" role="status">@cartSuccess</div>
+        }
+
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Thực đơn</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+            </ol>
+        </nav>
+
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-6">
+                <div class="product-details-image">
+                    <img src="@(string.IsNullOrWhiteSpace(Model.ImageUrl) ? "/images/menu/che-ba-mau.jpg" : Model.ImageUrl)"
+                         alt="@Model.Name" />
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <span class="eyebrow accent">@Model.CategoryName</span>
+                <h1 class="product-details-title">@Model.Name</h1>
+                <p class="product-details-description">@Model.Description</p>
+                <p class="product-details-price">@Model.Price.ToString("N0")₫</p>
+                <p>
+                    <span class="badge @(Model.IsAvailable ? "text-bg-success" : "text-bg-secondary")">
+                        @(Model.IsAvailable ? "Còn hàng" : "Hết hàng")
+                    </span>
+                </p>
+                @if (Model.Reviews.ReviewCount > 0)
+                {
+                    <p class="review-summary">
+                        <span class="stars">★</span>
+                        <strong>@Model.Reviews.AverageRating.ToString("0.0") / 5</strong>
+                        (@Model.Reviews.ReviewCount đánh giá)
+                    </p>
+                }
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-primary" disabled="@(!Model.IsAvailable)">
+                            @(Model.IsAvailable ? "Thêm vào giỏ hàng" : "Món hiện đã hết hàng")
+                        </button>
+                    </form>
+                    <form asp-controller="Favorite" asp-action="Toggle" method="post" class="favorite-toggle-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <button type="submit" class="favorite-toggle-button product-detail-favorite @(Model.IsFavorite ? "is-favorite" : string.Empty)"
+                                aria-label="@(Model.IsFavorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích")"
+                                aria-pressed="@Model.IsFavorite" title="@(Model.IsFavorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích")">
+                            <span aria-hidden="true">@(Model.IsFavorite ? "♥" : "♡")</span>
+                            <span class="visually-hidden">Yêu thích</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<partial name="_ProductReviews" model="Model.Reviews" />

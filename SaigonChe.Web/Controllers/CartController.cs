@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SaigonChe.Web.Data;
 using SaigonChe.Web.Models;
 using SaigonChe.Web.ViewModels;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace SaigonChe.Web.Controllers
@@ -191,6 +192,7 @@ namespace SaigonChe.Web.Controllers
                 CustomerName = model.CustomerName.Trim(),
                 Phone = model.Phone.Trim(),
                 Address = model.Address.Trim(),
+                CustomerId = User.FindFirstValue(ClaimTypes.NameIdentifier),
                 Total = items.Sum(item => item.Price * item.Quantity),
                 CreatedAt = DateTime.UtcNow,
                 Status = OrderStatus.Pending,

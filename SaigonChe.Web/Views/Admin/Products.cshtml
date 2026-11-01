@@ -1,4 +1,4 @@
-@model List<SaigonChe.Web.Models.Product>
+@model SaigonChe.Web.ViewModels.AdminProductListViewModel
 @{
     ViewData["Title"] = "Quản trị sản phẩm";
 }
@@ -11,6 +11,7 @@
                 <h2>Danh Sách Sản Phẩm</h2>
             </div>
             <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Dashboard" class="btn btn-secondary">Dashboard</a>
                 <a asp-action="Categories" class="btn btn-secondary">Danh mục</a>
                 <a asp-action="Orders" class="btn btn-secondary">Đơn hàng</a>
                 <a asp-action="ContactMessages" class="btn btn-secondary">Liên hệ</a>
@@ -27,6 +28,36 @@
             <div class="alert alert-danger mt-3" role="alert">@error</div>
         }
 
+        <form asp-action="Products" method="get" class="row g-3 align-items-end mt-3">
+            <div class="col-lg-4 col-md-6">
+                <label asp-for="Search" class="form-label">Tìm món chè</label>
+                <input asp-for="Search" class="form-control" placeholder="Nhập tên món" />
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="">Tất cả danh mục</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <label asp-for="IsAvailable" class="form-label">Trạng thái</label>
+                <select asp-for="IsAvailable" class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="true">Còn hàng</option>
+                    <option value="false">Hết hàng</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-6">
+                <button type="submit" class="btn btn-primary w-100">Lọc</button>
+            </div>
+        </form>
+
+        <p class="mt-3 mb-0">Có @Model.TotalProducts món, trang @Model.Page / @Model.TotalPages.</p>
+
         <div class="table-responsive mt-4">
             <table class="table table-striped align-middle admin-table">
                 <thead>
@@ -41,34 +72,78 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var product in Model)
+                    @foreach (var product in Model.Products)
                     {
                         <tr>
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(product.ImageUrl))
                                 {
-                                    <img src="@product.ImageUrl" alt="@product.Name" class="admin-thumb" />
+                                    <a asp-controller="Menu" asp-action="Details" asp-route-id="@product.Id">
+                                        <img src="@product.ImageUrl" alt="@product.Name" class="admin-thumb" />
+                                    </a>
                                 }
                             </td>
-                            <td>@product.Name</td>
-                            <td>@(product.Category?.Name ?? "Chưa phân loại")</td>
+                            <td><a asp-controller="Menu" asp-action="Details" asp-route-id="@product.Id">@product.Name</a></td>
+                            <td>@product.CategoryName</td>
                             <td>@product.Price.ToString("N0")₫</td>
-                            <td>@(product.IsAvailable ? "Có sẵn" : "Hết món")</td>
+                            <td>
+                                <span class="badge @(product.IsAvailable ? "text-bg-success" : "text-bg-secondary")">
+                                    @(product.IsAvailable ? "Còn hàng" : "Hết hàng")
+                                </span>
+                            </td>
                             <td>@(product.IsFeatured ? "Có" : "Không")</td>
                             <td>
                                 <div class="d-flex gap-2 flex-wrap">
                                     <a asp-action="EditProduct" asp-route-id="@product.Id" class="btn btn-secondary btn-sm">Sửa</a>
+                                    <form asp-action="ToggleProductAvailability" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@product.Id" />
+                                        <input type="hidden" name="search" value="@Model.Search" />
+                                        <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                                        <input type="hidden" name="isAvailable" value="@Model.IsAvailable" />
+                                        <input type="hidden" name="page" value="@Model.Page" />
+                                        <button type="submit" class="btn btn-outline-warning btn-sm">
+                                            @(product.IsAvailable ? "Chuyển hết hàng" : "Mở bán")
+                                        </button>
+                                    </form>
                                     <form asp-action="DeleteProduct" method="post">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@product.Id" />
+                                        <input type="hidden" name="search" value="@Model.Search" />
+                                        <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                                        <input type="hidden" name="isAvailable" value="@Model.IsAvailable" />
+                                        <input type="hidden" name="page" value="@Model.Page" />
                                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Xóa món này?')">Xóa</button>
                                     </form>
                                 </div>
                             </td>
                         </tr>
                     }
+                    @if (Model.Products.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Không tìm thấy món chè phù hợp.</td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Phân trang món chè" class="mt-3">
+                <ul class="pagination justify-content-center flex-wrap">
+                    @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.Page ? "active" : string.Empty)">
+                            <a class="page-link" asp-action="Products"
+                               asp-route-search="@Model.Search"
+                               asp-route-categoryId="@Model.CategoryId"
+                               asp-route-isAvailable="@Model.IsAvailable"
+                               asp-route-page="@pageNumber">@pageNumber</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
     </div>
 </section>

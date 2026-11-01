@@ -17,6 +17,9 @@ namespace SaigonChe.Web.Models
         Completed,
 
         [Display(Name = "Đã hủy")]
-        Cancelled
+        Cancelled,
+
+        [Display(Name = "Đang giao")]
+        Delivering = 5
     }
 }

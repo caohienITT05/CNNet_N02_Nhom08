@@ -12,6 +12,9 @@
                 <h2>Đơn Hàng</h2>
             </div>
             <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Dashboard" class="btn btn-secondary">Dashboard</a>
+                <a asp-action="Staff" class="btn btn-secondary">Nhân viên</a>
+                <a asp-controller="Staff" asp-action="Orders" class="btn btn-secondary">Vận hành đơn</a>
                 <a asp-action="Products" class="btn btn-secondary">Sản phẩm</a>
                 <a asp-action="Categories" class="btn btn-secondary">Danh mục</a>
                 <a asp-action="ContactMessages" class="btn btn-secondary">Liên hệ</a>
@@ -37,6 +40,7 @@
                         <th>Ngày đặt</th>
                         <th>Tổng tiền</th>
                         <th>Trạng thái</th>
+                        <th>Nhân viên</th>
                         <th>Cập nhật</th>
                     </tr>
                 </thead>
@@ -53,6 +57,31 @@
                                             <li>@item.ProductName × @item.Quantity — @((item.Price * item.Quantity).ToString("N0"))₫</li>
                                         }
                                     </ul>
+                                    @if (order.StatusHistory.Count > 0)
+                                    {
+                                        <strong>Lịch sử</strong>
+                                        <ul class="mb-0 mt-2 ps-3">
+                                            @foreach (var history in order.StatusHistory.OrderByDescending(item => item.ChangedAt))
+                                            {
+                                                <li>
+                                                    @if (history.PreviousStatus.HasValue)
+                                                    {
+                                                        @Html.DisplayFor(_ => history.PreviousStatus.Value)<span> → </span>
+                                                    }
+                                                    @Html.DisplayFor(_ => history.Status)
+                                                    · @history.ChangedAt.ToLocalTime().ToString("dd/MM HH:mm")
+                                                    @if (!string.IsNullOrWhiteSpace(history.ChangedBy))
+                                                    {
+                                                        <span> · @history.ChangedBy</span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(history.Note))
+                                                    {
+                                                        <span> — @history.Note</span>
+                                                    }
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
                                 </details>
                             </td>
                             <td>@order.CustomerName</td>
@@ -63,6 +92,7 @@
                             <td>@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                             <td>@order.Total.ToString("N0")₫</td>
                             <td>@Html.DisplayFor(_ => order.Status)</td>
+                            <td>@(order.AssignedStaff?.Email ?? "Chưa nhận")</td>
                             <td>
                                 <form asp-action="UpdateOrderStatus" method="post" class="d-flex gap-2">
                                     @Html.AntiForgeryToken()
@@ -81,7 +111,7 @@
                     @if (Model.Count == 0)
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
+                            <td colspan="8" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
                         </tr>
                     }
                 </tbody>

@@ -24,6 +24,17 @@ namespace SaigonChe.Web.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public string? AssignedStaffId { get; set; }
+
+        public ApplicationUser? AssignedStaff { get; set; }
+
+        public string? CustomerId { get; set; }
+        public ApplicationUser? Customer { get; set; }
+
+        public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+
+        public ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
     }
 }

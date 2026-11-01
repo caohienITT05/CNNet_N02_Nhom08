@@ -307,6 +307,43 @@ section {
     background: rgba(255,255,255,0.4);
 }
 
+.weather-recommendation {
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.weather-selector {
+    display: grid;
+    grid-template-columns: minmax(180px, 320px) auto;
+    justify-content: center;
+    align-items: end;
+    gap: 0.75rem;
+}
+
+.weather-selector .form-label {
+    grid-column: 1 / -1;
+    margin-bottom: -0.5rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.weather-description {
+    color: var(--muted);
+}
+
+.weather-card .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.weather-card .card-body > form {
+    margin-top: auto;
+}
+
+.best-image {
+    position: relative;
+}
+
 .menu-filter {
     display: flex;
     flex-wrap: wrap;
@@ -381,6 +418,208 @@ section {
 .card-image-wrap {
     position: relative;
     height: 220px;
+}
+
+.favorite-toggle-form {
+    display: contents;
+}
+
+.favorite-toggle-button {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--coffee);
+    box-shadow: 0 4px 14px rgba(89, 58, 42, 0.18);
+    font-size: 1.65rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.favorite-toggle-button:hover,
+.favorite-toggle-button.is-favorite {
+    color: #c62828;
+}
+
+.availability-label {
+    position: absolute;
+    right: 0.85rem;
+    bottom: 0.85rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.favorite-card .card-head h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.favorite-category {
+    min-height: 0 !important;
+}
+
+.favorite-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+}
+
+.review-summary {
+    color: var(--muted);
+}
+
+.review-summary span,
+.stars {
+    color: #e19a27;
+}
+
+.review-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.review-card,
+.review-form-card {
+    padding: 1.4rem;
+    border: 1px solid rgba(89, 58, 42, 0.08);
+    border-radius: 1.2rem;
+    background: var(--white);
+    box-shadow: var(--shadow);
+}
+
+.menu-filter-panel {
+    padding: 1.4rem;
+    border: 1px solid rgba(89, 58, 42, 0.08);
+    border-radius: 1.2rem;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: var(--shadow);
+}
+
+.menu-card .card-head h2 {
+    margin: 0;
+    font-size: 1.6rem;
+}
+
+.menu-card .card-head h2 a,
+.card-head h4 a,
+.best-content h4 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.menu-card .card-head h2 a:hover,
+.card-head h4 a:hover,
+.best-content h4 a:hover {
+    color: var(--brick);
+}
+
+.menu-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.menu-card-actions form {
+    margin-left: auto;
+}
+
+.product-details-image {
+    overflow: hidden;
+    min-height: 320px;
+    border-radius: 1.8rem;
+    background: var(--white);
+    box-shadow: var(--shadow);
+}
+
+.product-details-image img {
+    width: 100%;
+    min-height: 320px;
+    max-height: 560px;
+    object-fit: cover;
+}
+
+.product-details-title {
+    margin-bottom: 1rem;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+}
+
+.product-details-description {
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.product-details-price {
+    color: var(--brick);
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.product-detail-favorite {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 3rem;
+    height: 3rem;
+}
+
+.product-image-preview {
+    display: block;
+    width: min(100%, 360px);
+    max-height: 260px;
+    border-radius: 0.9rem;
+    object-fit: contain;
+    background: rgba(89, 58, 42, 0.05);
+}
+
+.menu-page .section-heading p {
+    color: var(--muted);
+}
+
+.review-card-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.review-card-heading time,
+.admin-review-reply time {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.review-rating-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.admin-review-reply {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-left: 3px solid var(--sunset);
+    border-radius: 0.5rem;
+    background: rgba(244, 162, 97, 0.1);
+}
+
+.admin-review-reply p {
+    min-height: 0;
+    margin: 0.5rem 0;
 }
 
 .card-image-wrap img {
@@ -1216,6 +1455,153 @@ main {
     margin: 0;
 }
 
+.dashboard-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(89, 58, 42, 0.08);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.dashboard-filter > div {
+    min-width: 180px;
+}
+
+.dashboard-filter .form-label {
+    margin-bottom: 0.35rem;
+    font-weight: 700;
+}
+
+.staff-account-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 1rem;
+}
+
+.staff-account-form .validation-errors {
+    grid-column: 1 / -1;
+}
+
+.staff-order-action {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 190px;
+}
+
+.dashboard-note {
+    color: var(--coffee);
+    font-size: 0.95rem;
+}
+
+.dashboard-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.dashboard-metric,
+.dashboard-panel {
+    padding: 1.25rem;
+    border: 1px solid rgba(89, 58, 42, 0.08);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.78);
+}
+
+.dashboard-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.dashboard-metric > span {
+    color: rgba(89, 58, 42, 0.75);
+    font-size: 0.9rem;
+}
+
+.dashboard-metric > strong {
+    color: var(--brick);
+    font-size: clamp(1.35rem, 2.3vw, 1.8rem);
+}
+
+.dashboard-metric > small {
+    color: rgba(89, 58, 42, 0.65);
+}
+
+.dashboard-sections {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    gap: 1rem;
+}
+
+.dashboard-panel h3 {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.daily-revenue-list {
+    display: grid;
+    gap: 0.65rem;
+    max-height: 580px;
+    overflow-y: auto;
+}
+
+.daily-revenue-row {
+    display: grid;
+    grid-template-columns: 4rem minmax(3rem, 1fr) minmax(5.5rem, auto);
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.88rem;
+}
+
+.daily-revenue-row time {
+    color: rgba(89, 58, 42, 0.75);
+}
+
+.daily-revenue-row strong {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.daily-revenue-track {
+    height: 0.65rem;
+    overflow: hidden;
+    border-radius: 99px;
+    background: rgba(89, 58, 42, 0.08);
+}
+
+.daily-revenue-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--brick);
+}
+
+.image-credits {
+    color: rgba(89, 58, 42, 0.72);
+    font-size: 0.82rem;
+}
+
+.image-credits summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.image-credits ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin: 0.65rem 0;
+    padding-left: 1.2rem;
+}
+
+.image-credits a {
+    color: var(--brick);
+}
+
 .admin-table {
     min-width: 680px;
     margin-bottom: 0;
@@ -1345,12 +1731,25 @@ main {
         flex-direction: column;
     }
 
+    .dashboard-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-sections {
+        grid-template-columns: 1fr;
+    }
+
     .cart-summary {
         position: static;
     }
 }
 
 @media (max-width: 767px) {
+    .weather-selector,
+    .staff-account-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .menu-search {
         grid-template-columns: minmax(0, 1fr);
         gap: 0.5rem;
@@ -1468,6 +1867,10 @@ main {
     .admin-layout {
         padding: 1rem;
         border-radius: 1.1rem;
+    }
+
+    .dashboard-metrics {
+        grid-template-columns: 1fr;
     }
 
     .admin-header .d-flex {

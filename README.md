@@ -19,17 +19,19 @@ Trình duyệt → SaigonChe.Web → SQL Server
 - CRUD danh mục và món chè.
 - Liên kết món chè với danh mục.
 - Upload, hiển thị và thay ảnh món chè.
-- Đăng ký, đăng nhập có giao diện đồng bộ với dashboard, hồ sơ tài khoản và phân quyền quản trị bằng ASP.NET Core Identity.
-- Quản trị sản phẩm, danh mục, đơn hàng, trạng thái đơn và hộp thư liên hệ.
+- Đăng ký, đăng nhập, hồ sơ tài khoản; quản trị và nhân viên dùng các vai trò riêng của ASP.NET Core Identity.
+- Quản trị sản phẩm, danh mục, đơn hàng, tài khoản nhân viên và hộp thư liên hệ.
+- Nhân viên nhận đơn, cập nhật tuần tự từ xác nhận đến chuẩn bị, giao hàng và hoàn thành; mỗi lần đổi trạng thái có lịch sử, đơn nhận đồng thời được bảo vệ bằng rowversion.
 - Tìm kiếm thực đơn theo tên, mô tả hoặc danh mục; lọc theo loại chè và món bán chạy.
+- Gợi ý ba món chè theo thời tiết khách tự chọn (nắng nóng, trời mát hoặc trời mưa); không thu thập vị trí hay gọi dịch vụ thời tiết bên ngoài.
 - Giỏ hàng và checkout, xác thực lại giá và tình trạng món trước khi lưu đơn.
 - Lưu liên hệ khách hàng vào database và quản lý trong khu vực quản trị.
+- Dashboard admin lọc theo ngày, thống kê doanh thu từ đơn hoàn thành, đơn đang xử lý và top món bán chạy.
+- Ảnh minh họa món chè được lưu cục bộ trong `SaigonChe.Web/wwwroot/images/menu`; giấy phép và nguồn ảnh hiển thị ở cuối thực đơn.
 
 Chưa có:
-- Khu vực nhân viên để tiếp nhận, pha chế, giao và hoàn tất đơn.
-- Quản lý tài khoản nhân viên và lịch sử người xử lý đơn.
 - Theo dõi đơn, lịch sử mua hàng và đánh giá.
-- Khuyến mãi, thanh toán điện tử và dashboard doanh thu.
+- Khuyến mãi và thanh toán điện tử.
 - Kiểm thử tự động và tài liệu API.
 
 Lộ trình chi tiết và thứ tự triển khai nằm trong [ROADMAP.md](ROADMAP.md).
@@ -56,6 +58,10 @@ dotnet tool install --global dotnet-ef
 Mặc định, `SaigonChe.Web` sử dụng SQL Server LocalDB với database `SaigonCheDb`. Có thể ghi đè `ConnectionStrings:DefaultConnection` bằng User Secrets hoặc biến môi trường `ConnectionStrings__DefaultConnection`.
 
 Khi database chưa có tài khoản quản trị, cần cấp `Seed:AdminPassword` qua User Secrets hoặc biến môi trường `Seed__AdminPassword`. Không lưu mật khẩu quản trị trong source code hoặc file cấu hình được commit. Khi tài khoản quản trị đã tồn tại, ứng dụng giữ nguyên mật khẩu hiện tại.
+
+Trong môi trường Development, có thể seed ba tài khoản khách hàng và đánh giá mẫu bằng cách cấp `Seed:SampleCustomerPassword` qua User Secrets hoặc biến môi trường `Seed__SampleCustomerPassword`. Nếu chưa cấu hình mật khẩu này, dữ liệu mẫu sẽ được bỏ qua; không dùng các tài khoản mẫu trong môi trường khác.
+
+Đăng nhập bằng tài khoản Admin để tạo tài khoản Staff trong mục **Nhân viên**. Nhân viên đăng nhập bằng tài khoản được cấp và dùng mục **Đơn cần xử lý** để nhận đơn, chuyển trạng thái và ghi chú.
 
 Áp dụng migration:
 

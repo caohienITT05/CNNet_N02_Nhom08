@@ -12,6 +12,7 @@ namespace SaigonChe.Web.ViewModels
         public string CategoryName { get; set; } = string.Empty;
         public string CategoryTag { get; set; } = "traditional";
         public bool IsFeatured { get; set; }
+        public bool IsFavorite { get; set; }
         public string? ImageUrl { get; set; }
         [JsonIgnore]
         public IFormFile? ImageFile { get; set; }

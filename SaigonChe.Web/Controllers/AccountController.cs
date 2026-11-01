@@ -85,7 +85,8 @@ namespace SaigonChe.Web.Controllers
             var user = new ApplicationUser
             {
                 UserName = model.Email,
-                Email = model.Email
+                Email = model.Email,
+                FullName = model.FullName.Trim()
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -94,6 +95,25 @@ namespace SaigonChe.Web.Controllers
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                return View(model);
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(user, "Customer");
+            if (!roleResult.Succeeded)
+            {
+                var deleteResult = await _userManager.DeleteAsync(user);
+                foreach (var error in roleResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                if (!deleteResult.Succeeded)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        "Không thể hoàn tất đăng ký hoặc dọn tài khoản chưa hoàn tất. Vui lòng liên hệ quản trị viên.");
                 }
 
                 return View(model);
