@@ -4,7 +4,7 @@ Tài liệu này hợp nhất đặc tả trong [thư mục Google Drive của d
 
 ## Trạng thái Thành viên 3 — branch `Nhom3_Hoang`
 
-Mục tiêu là đạt ít nhất 90% tiến độ có trọng số M1–M6. Tỷ lệ dưới đây tính theo số tiêu chí đã được kiểm chứng trong từng mốc; hạng mục mới kiểm thử một phần chưa được tính là hoàn thành.
+Mục tiêu là đạt ít nhất 90% tiến độ triển khai có trọng số M1–M6. M1–M5 phản ánh phần chức năng đã được triển khai; M6 theo dõi kiểm thử và nghiệm thu. Vì vậy, tỷ lệ triển khai không đồng nghĩa toàn bộ luồng đã được nghiệm thu end-to-end.
 
 | Mốc | Trọng số | Tiến độ | Phần đã triển khai |
 |---|---:|---:|---|
@@ -15,7 +15,7 @@ Mục tiêu là đạt ít nhất 90% tiến độ có trọng số M1–M6. T�
 | M5. Dashboard và báo cáo | 20% | 100% | Lọc ngày/loại đơn, doanh thu theo UTC/VN, biểu đồ ngày/tháng, Excel và in/lưu PDF. |
 | M6. Kiểm thử và bàn giao | 10% | 28,57% | Hoàn thành 2/7 tiêu chí: kiểm thử quy tắc giá/voucher/thanh toán/tồn kho/trạng thái và bổ sung README, hướng dẫn cấu hình/migration, ma trận quyền, kịch bản demo. Còn các kiểm thử tích hợp, báo cáo và UI desktop/tablet. |
 
-**Tiến độ có trọng số hiện tại: 91,21%.** Cách tính: M1 67%, M2–M5 100%, M6 2/7 tiêu chí; chưa merge vào `main`.
+**Tiến độ triển khai có trọng số hiện tại: 91,21%.** Cách tính: M1 67%, M2–M5 100%, M6 2/7 tiêu chí. Đây là tiến độ triển khai, chưa phải tỷ lệ nghiệm thu toàn bộ hành vi; các kiểm thử tích hợp còn mở bên dưới. Branch vẫn ở `Nhom3_Hoang`, chưa merge vào `main`.
 
 ### Checklist M6
 
