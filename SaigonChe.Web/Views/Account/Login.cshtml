@@ -1,6 +1,7 @@
 @model SaigonChe.Web.ViewModels.LoginViewModel
 @{
     ViewData["Title"] = "Đăng nhập";
+    ViewData["Description"] = "Đăng nhập Chè Sài Gòn để đặt món và theo dõi đơn hàng của bạn.";
 }
 
 <section class="auth-section">
@@ -9,33 +10,39 @@
             <aside class="auth-aside">
                 <span class="eyebrow light">Chào mừng trở lại</span>
                 <h1>Hương vị quen thuộc, luôn chờ bạn.</h1>
-                <p>Đăng nhập để đặt món yêu thích và theo dõi những đơn hàng của bạn.</p>
+                <p>Đăng nhập để đặt món yêu thích, lưu địa chỉ giao hàng và theo dõi những đơn hàng của bạn.</p>
                 <div class="auth-aside-note">
                     <span class="auth-aside-mark">CS</span>
-                    <span>Ngọt ngào hương vị Việt</span>
+                    <span>Ngọt ngào hương vị Việt · Từ 1998</span>
                 </div>
             </aside>
 
             <div class="auth-form-panel">
                 <div class="auth-form-heading">
-                    <span class="eyebrow accent">Tài khoản của bạn</span>
+                    <span class="eyebrow">Tài khoản của bạn</span>
                     <h2>Đăng nhập</h2>
-                    <p>Nhập thông tin để tiếp tục.</p>
+                    <p>Nhập email và mật khẩu để tiếp tục.</p>
                 </div>
 
                 <form asp-controller="Account" asp-action="Login" method="post">
                     <input asp-for="ReturnUrl" type="hidden" />
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger auth-validation" role="alert"></div>
 
-                    <div class="mb-3">
+                    <div class="form-group">
                         <label asp-for="Email" class="form-label"></label>
                         <input asp-for="Email" class="form-control" autocomplete="username" placeholder="ban@email.com" />
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="form-group">
                         <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" autocomplete="current-password" placeholder="Nhập mật khẩu" />
+                        <div class="password-field">
+                            <input asp-for="Password" class="form-control" autocomplete="current-password" placeholder="Nhập mật khẩu" />
+                            <button type="button" class="password-toggle" data-password-toggle="Password" aria-label="Hiện mật khẩu" aria-pressed="false">
+                                <svg class="icon eye-open" aria-hidden="true"><use href="#i-eye" /></svg>
+                                <svg class="icon eye-off" aria-hidden="true" hidden><use href="#i-eye-off" /></svg>
+                            </button>
+                        </div>
                         <span asp-validation-for="Password" class="text-danger small"></span>
                     </div>
 
@@ -44,13 +51,21 @@
                         <label asp-for="RememberMe" class="form-check-label"></label>
                     </div>
 
-                    <button type="submit" class="btn btn-primary auth-submit">Đăng nhập</button>
+                    <button type="submit" class="btn btn-primary auth-submit">
+                        Đăng nhập
+                        <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                    </button>
                 </form>
 
                 <p class="auth-switch">
                     Chưa có tài khoản?
                     <a asp-controller="Account" asp-action="Register" asp-route-returnUrl="@Model.ReturnUrl">Đăng ký ngay</a>
                 </p>
+
+                <div class="auth-footnote">
+                    <svg class="icon" aria-hidden="true"><use href="#i-lock" /></svg>
+                    <span>Bảo mật bởi ASP.NET Core Identity</span>
+                </div>
             </div>
         </div>
     </div>

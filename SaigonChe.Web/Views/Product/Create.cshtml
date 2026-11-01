@@ -1,45 +1,66 @@
 @model SaigonChe.Web.ViewModels.ProductViewModel
-
 @{
-    ViewData["Title"] = "Thêm món chè";
+    ViewData["Title"] = "Thêm món qua API";
 }
 
-<div class="container mt-4">
-    <h2>Thêm món chè</h2>
-    <form asp-action="Create" method="post" enctype="multipart/form-data">
+<div class="admin-page-head">
+    <div>
+        <span class="eyebrow">Product API</span>
+        <h1>Thêm món qua API</h1>
+        <p>Món được gửi tới <span class="cell-mono">POST /api/products</span>.</p>
+    </div>
+    <div class="btn-row">
+        <a asp-action="Index" class="btn btn-ghost">Quay lại</a>
+    </div>
+</div>
+
+<div class="admin-form-wrap">
+    <form asp-action="Create" method="post" enctype="multipart/form-data" class="admin-form">
         @Html.AntiForgeryToken()
-        <div asp-validation-summary="All" class="text-danger"></div>
-        <div class="mb-3">
-            <label asp-for="Name" class = "form-label">Tên món</label>
-            <input asp-for="Name"
-                    class="form-control" />
+        <div asp-validation-summary="All" class="alert alert-danger auth-validation" role="alert"></div>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label asp-for="Name" class="form-label">Tên món</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Price" class="form-label">Giá (VNĐ)</label>
+                <input asp-for="Price" class="form-control" type="number" min="0" step="1000" />
+                <span asp-validation-for="Price" class="text-danger small"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                    <option value="">-- Chọn danh mục --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label asp-for="ImageFile" class="form-label">Hình ảnh</label>
+                <input asp-for="ImageFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                <span asp-validation-for="ImageFile" class="text-danger small"></span>
+            </div>
         </div>
-        <div class="mb-3">
-            <label asp-for="Price" class="form-label">Giá</label>
-            <input asp-for="Price" class="form-control" />
+
+        <div class="form-group">
+            <label asp-for="Description" class="form-label">Mô tả</label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger small"></span>
         </div>
-        <div class="mb-3">
-            <label asp-for="CategoryId" class="form-label">Danh mục</label>
-            <select asp-for="CategoryId"
-                    asp-items="ViewBag.Categories"
-                    class="form-select">
-                <option value="">-- Chọn danh mục --</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label asp-for="Description" class = "form-label">Mô tả</label>
-            <textarea asp-for="Description" class ="form-control"></textarea>
-        </div>
-        <div class="mb-3">
-            <label asp-for="ImageFile" class="form-label">Hình ảnh</label>
-            <input asp-for="ImageFile" type="file" class="form-control" />
-            <span asp-validation-for="ImageFile" class="text-danger"></span>
-        </div>
-        <div class ="mb-3 form-check">
-            <input asp-for="IsAvailable" class = "form-check-input" />
+
+        <div class="form-check">
+            <input asp-for="IsAvailable" class="form-check-input" />
             <label asp-for="IsAvailable" class="form-check-label">Còn hàng</label>
         </div>
-        <button type="submit" class="btn btn-success">Thêm món</button>
-        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Thêm món</button>
+            <a asp-action="Index" class="btn btn-ghost">Hủy</a>
+        </div>
     </form>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

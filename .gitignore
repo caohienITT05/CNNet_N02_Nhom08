@@ -18,9 +18,17 @@ coverage/
 
 # Local configuration and secrets
 appsettings.Local.json
+appsettings.*.Local.json
 secrets.json
 .env
 .env.*
+*.pfx
+*.snk
+
+# AI assistant local skills/config
+.codex/
+.opencode/
+.shared/
 
 # IDE and operating-system files
 .idea/

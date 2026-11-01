@@ -2,13 +2,16 @@
 @{
     ViewData["Title"] = "Giỏ hàng";
     var total = Model.Sum(item => item.LineTotal);
+    var itemCount = Model.Sum(item => item.Quantity);
+    var freeShipping = total >= 150000m;
 }
 
-<section class="section-spacing">
+<section class="section">
     <div class="container">
-        <div class="section-heading text-center">
-            <span class="eyebrow accent">Giỏ hàng</span>
-            <h2>Đơn Hàng Của Bạn</h2>
+        <div class="page-head">
+            <span class="eyebrow">Giỏ hàng</span>
+            <h1>Đơn hàng của bạn</h1>
+            <p>@(Model.Any() ? $"{itemCount} phần chè đang chờ được giao đến bạn." : "Chưa có món nào trong giỏ.")</p>
         </div>
 
         @if (TempData["CartError"] is string cartError)
@@ -18,59 +21,109 @@
 
         @if (TempData["CartSuccess"] is string cartSuccess)
         {
-            <div class="alert alert-success">@cartSuccess</div>
+            <div class="alert alert-success" role="status">@cartSuccess</div>
         }
 
         @if (!Model.Any())
         {
             <div class="empty-state">
-                <p>Giỏ hàng đang trống. Hãy chọn món chè yêu thích ngay nhé.</p>
-                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Khám phá thực đơn</a>
+                <span class="empty-icon">
+                    <svg class="icon" aria-hidden="true"><use href="#i-cart" /></svg>
+                </span>
+                <h2>Giỏ hàng đang trống</h2>
+                <p>Hãy chọn vài ly chè yêu thích — chúng tôi sẽ chuẩn bị và giao ngay khi bạn xác nhận.</p>
+                <a asp-controller="Home" asp-action="Index" asp-fragment="menu" class="btn btn-primary">
+                    Khám phá thực đơn
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                </a>
             </div>
         }
         else
         {
-            <div class="row g-4">
-                <div class="col-lg-8">
+            <div class="cart-layout">
+                <div class="cart-items">
                     @foreach (var item in Model)
                     {
-                        <div class="cart-item">
+                        <article class="cart-item">
                             <div class="cart-thumb">
-                                <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80" : item.ImageUrl)" alt="@item.Name" loading="lazy" />
+                                <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80" : item.ImageUrl)"
+                                     alt="@item.Name" loading="lazy" />
                             </div>
+
                             <div class="cart-details">
                                 <h4>@item.Name</h4>
                                 <p>@item.Price.ToString("N0")₫ / ly</p>
                             </div>
+
                             <form asp-action="UpdateQuantity" asp-controller="Cart" method="post" class="cart-qty-form">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="productId" value="@item.ProductId" />
-                                <input type="number" name="quantity" value="@item.Quantity" min="1" max="20" required aria-label="Số lượng @item.Name" />
+                                <div class="qty-stepper">
+                                    <button type="button" data-qty-minus aria-label="Giảm số lượng @item.Name">
+                                        <svg class="icon" aria-hidden="true"><use href="#i-minus" /></svg>
+                                    </button>
+                                    <label class="sr-only" for="qty-@item.ProductId">Số lượng @item.Name</label>
+                                    <input id="qty-@item.ProductId" type="number" name="quantity" value="@item.Quantity" min="1" max="20" required />
+                                    <button type="button" data-qty-plus aria-label="Tăng số lượng @item.Name">
+                                        <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>
+                                    </button>
+                                </div>
                                 <button type="submit" class="btn btn-secondary btn-sm">Cập nhật</button>
                             </form>
-                            <div class="cart-total">@item.LineTotal.ToString("N0")₫</div>
-                            <form asp-action="RemoveItem" asp-controller="Cart" method="post">
+
+                            <span class="cart-total">@item.LineTotal.ToString("N0")₫</span>
+
+                            <form asp-action="RemoveItem" asp-controller="Cart" method="post"
+                                  data-confirm="Món “@item.Name” sẽ được bỏ khỏi giỏ hàng."
+                                  data-confirm-title="Xóa món khỏi giỏ?">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="productId" value="@item.ProductId" />
-                                <button type="submit" class="btn btn-link text-danger">Xóa</button>
+                                <button type="submit" class="remove-btn" aria-label="Xóa @item.Name khỏi giỏ hàng" title="Xóa món">
+                                    <svg class="icon" aria-hidden="true"><use href="#i-trash" /></svg>
+                                </button>
                             </form>
-                        </div>
+                        </article>
                     }
-                </div>
-                <div class="col-lg-4">
-                    <div class="cart-summary">
-                        <h4>Tổng đơn hàng</h4>
-                        <div class="summary-row">
-                            <span>Tạm tính</span>
-                            <strong>@total.ToString("N0")₫</strong>
-                        </div>
-                        <div class="summary-row total-row">
-                            <span>Thành tiền</span>
-                            <strong>@total.ToString("N0")₫</strong>
-                        </div>
-                        <a asp-controller="Cart" asp-action="Checkout" class="btn btn-primary w-100">Tiến hành đặt món</a>
+
+                    <div>
+                        <a asp-controller="Home" asp-action="Index" asp-fragment="menu" class="btn btn-ghost btn-sm">
+                            <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                            Tiếp tục chọn món
+                        </a>
                     </div>
                 </div>
+
+                <aside class="cart-summary">
+                    <h4>Tóm tắt đơn hàng</h4>
+                    <div class="summary-row">
+                        <span>Tạm tính (@itemCount phần)</span>
+                        <strong>@total.ToString("N0")₫</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Phí giao hàng</span>
+                        <strong>@(freeShipping ? "Miễn phí" : "Tính khi giao")</strong>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>Thành tiền</span>
+                        <strong>@total.ToString("N0")₫</strong>
+                    </div>
+
+                    <div class="summary-content">
+                        <p>
+                            <svg class="icon" aria-hidden="true"><use href="#i-truck" /></svg>
+                            @(freeShipping ? "Đơn của bạn được miễn phí giao hàng nội thành." : "Miễn phí giao hàng nội thành cho đơn từ 150.000₫.")
+                        </p>
+                        <p>
+                            <svg class="icon" aria-hidden="true"><use href="#i-shield" /></svg>
+                            Thanh toán khi nhận hàng, kiểm tra món trước khi trả tiền.
+                        </p>
+                    </div>
+
+                    <a asp-controller="Cart" asp-action="Checkout" class="btn btn-primary" style="width:100%">
+                        Tiến hành đặt món
+                        <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                    </a>
+                </aside>
             </div>
         }
     </div>

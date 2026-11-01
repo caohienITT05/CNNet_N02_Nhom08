@@ -1,0 +1,27 @@
+@{
+    ViewData["Title"] = "Không đủ quyền truy cập";
+}
+
+<section class="status-section">
+    <div class="container">
+        <div class="status-card">
+            <span class="status-icon" aria-hidden="true">
+                <svg class="icon" style="width:22px;height:22px"><use href="#i-lock" /></svg>
+            </span>
+            <span class="eyebrow">403 — Không đủ quyền</span>
+            <h1>Khu vực này chỉ dành cho quản trị viên.</h1>
+            <p>
+                Tài khoản của bạn không có quyền truy cập trang này. Hãy quay về trang chủ
+                để tiếp tục chọn món, hoặc đăng nhập bằng tài khoản quản trị.
+            </p>
+
+            <div class="status-actions">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                    Về trang chủ
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                </a>
+                <a asp-controller="Account" asp-action="Login" class="btn btn-outline">Đăng nhập</a>
+            </div>
+        </div>
+    </div>
+</section>

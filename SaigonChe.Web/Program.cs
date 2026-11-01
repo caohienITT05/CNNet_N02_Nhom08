@@ -23,6 +23,15 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ReturnUrlParameter = "returnUrl";
+    options.SlidingExpiration = true;
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();

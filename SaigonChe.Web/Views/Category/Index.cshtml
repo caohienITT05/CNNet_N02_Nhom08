@@ -1,74 +1,71 @@
 ﻿@model List<SaigonChe.Web.ViewModels.CategoryViewModel>
-
 @{
-    ViewData["Title"] = "Quản lý danh mục";
+    ViewData["Title"] = "Category API";
 }
 
-<div class="container mt-4">
+<div class="admin-page-head">
+    <div>
+        <span class="eyebrow">Kênh thử nghiệm</span>
+        <h1>Danh mục qua Web API</h1>
+        <p>Dữ liệu lấy từ <span class="cell-mono">/api/categories</span> của SaigonChe.Api.</p>
+    </div>
+    <div class="btn-row">
+        <a asp-action="Create" class="btn btn-primary">
+            <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>
+            Thêm danh mục
+        </a>
+    </div>
+</div>
 
-    <h2>Quản lý danh mục</h2>
+<div class="stat-grid">
+    <div class="stat-card">
+        <span class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-tag" /></svg>Tổng danh mục</span>
+        <p class="stat-value">@Model.Count</p>
+        <span class="stat-hint">Từ API</span>
+    </div>
+</div>
 
-    <a asp-controller="Category"
-       asp-action="Create"
-       class="btn btn-primary mb-3">
-
-        + Thêm danh mục
-
-    </a>
-
-    <table class="table table-bordered table-striped">
-
+<div class="admin-table-wrap">
+    <table class="table admin-table">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Tên danh mục</th>
+                <th>Danh mục</th>
                 <th>Mô tả</th>
                 <th>Thao tác</th>
             </tr>
         </thead>
-
         <tbody>
-
             @foreach (var category in Model)
             {
                 <tr>
-
-                    <td>@category.Id</td>
-
-                    <td>@category.Name</td>
-
-                    <td>@category.Description</td>
-
                     <td>
-
-                        <a asp-controller="Category"
-                           asp-action="Edit"
-                           asp-route-id="@category.Id"
-                           class="btn btn-warning btn-sm">
-                            Sửa
-                        </a>
-
-                        <form asp-controller="Category"
-                              asp-action="Delete"
-                              asp-route-id="@category.Id"
-                              method="post"
-                              class="d-inline"
-                              onsubmit="return confirm('Bạn có chắc muốn xóa danh mục này?');">
-
-                            <button type="submit"
-                                    class="btn btn-danger btn-sm">
-                                Xóa
-                            </button>
-
-                        </form>
-
+                        <span class="cell-strong">@category.Name</span>
+                        <div class="cell-muted">#@category.Id</div>
                     </td>
-
+                    <td class="cell-muted contact-message-content">@(string.IsNullOrWhiteSpace(category.Description) ? "Chưa có mô tả" : category.Description)</td>
+                    <td>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a asp-action="Edit" asp-route-id="@category.Id" class="btn btn-secondary btn-sm">Sửa</a>
+                            <form asp-action="Delete" asp-route-id="@category.Id" method="post"
+                                  data-confirm="Danh mục “@category.Name” sẽ bị xóa khỏi hệ thống API."
+                                  data-confirm-title="Xóa danh mục?">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
             }
-
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="3">
+                        <div class="empty-state" style="border:0;background:transparent">
+                            <p>API chưa trả về danh mục nào.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
         </tbody>
-
     </table>
-
 </div>

@@ -103,6 +103,14 @@ namespace SaigonChe.Web.Controllers
             return RedirectToLocal(model.ReturnUrl);
         }
 
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            Response.StatusCode = StatusCodes.Status403Forbidden;
+            return View();
+        }
+
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]

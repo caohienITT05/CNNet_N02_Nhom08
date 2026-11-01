@@ -1,91 +1,129 @@
 @model List<SaigonChe.Web.Models.Order>
 @using SaigonChe.Web.Models
 @{
-    ViewData["Title"] = "Quản trị đơn hàng";
+    ViewData["Title"] = "Đơn hàng";
+    var pending = Model.Count(order => order.Status is OrderStatus.Pending or OrderStatus.Confirmed or OrderStatus.Preparing);
+    var completed = Model.Count(order => order.Status == OrderStatus.Completed);
+    var revenue = Model.Where(order => order.Status != OrderStatus.Cancelled).Sum(order => order.Total);
 }
 
-<section class="section-spacing">
-    <div class="container admin-layout">
-        <div class="admin-header">
-            <div>
-                <span class="eyebrow accent">Quản trị</span>
-                <h2>Đơn Hàng</h2>
-            </div>
-            <div class="d-flex flex-wrap gap-2">
-                <a asp-action="Products" class="btn btn-secondary">Sản phẩm</a>
-                <a asp-action="Categories" class="btn btn-secondary">Danh mục</a>
-                <a asp-action="ContactMessages" class="btn btn-secondary">Liên hệ</a>
-            </div>
-        </div>
-
-        @if (TempData["AdminSuccess"] is string success)
-        {
-            <div class="alert alert-success mt-3" role="status">@success</div>
-        }
-        @if (TempData["AdminError"] is string error)
-        {
-            <div class="alert alert-danger mt-3" role="alert">@error</div>
-        }
-
-        <div class="table-responsive mt-4">
-            <table class="table table-striped align-middle admin-table">
-                <thead>
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Khách hàng</th>
-                        <th>Liên hệ / Địa chỉ</th>
-                        <th>Ngày đặt</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Cập nhật</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var order in Model)
-                    {
-                        <tr>
-                            <td>
-                                <details>
-                                    <summary>#@order.Id · @order.Items.Count món</summary>
-                                    <ul class="mb-0 mt-2 ps-3">
-                                        @foreach (var item in order.Items)
-                                        {
-                                            <li>@item.ProductName × @item.Quantity — @((item.Price * item.Quantity).ToString("N0"))₫</li>
-                                        }
-                                    </ul>
-                                </details>
-                            </td>
-                            <td>@order.CustomerName</td>
-                            <td>
-                                <div>@order.Phone</div>
-                                <small class="text-muted">@order.Address</small>
-                            </td>
-                            <td>@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>@order.Total.ToString("N0")₫</td>
-                            <td>@Html.DisplayFor(_ => order.Status)</td>
-                            <td>
-                                <form asp-action="UpdateOrderStatus" method="post" class="d-flex gap-2">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="OrderId" value="@order.Id" />
-                                    <select name="Status" class="form-select form-select-sm" aria-label="Trạng thái đơn hàng @order.Id">
-                                        @foreach (var status in Html.GetEnumSelectList<OrderStatus>())
-                                        {
-                                            <option value="@status.Value" selected="@(status.Value == ((int)order.Status).ToString())">@status.Text</option>
-                                        }
-                                    </select>
-                                    <button type="submit" class="btn btn-primary btn-sm">Lưu</button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                    @if (Model.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+<div class="admin-page-head">
+    <div>
+        <span class="eyebrow">Vận hành</span>
+        <h1>Đơn hàng</h1>
+        <p>Theo dõi đơn mới, cập nhật trạng thái và xem chi tiết từng đơn.</p>
     </div>
-</section>
+    <div class="btn-row">
+        <a asp-action="Products" class="btn btn-secondary btn-sm">Thực đơn</a>
+        <a asp-action="ContactMessages" class="btn btn-ghost btn-sm">Tin nhắn</a>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card">
+        <span class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>Tổng đơn</span>
+        <p class="stat-value">@Model.Count</p>
+        <span class="stat-hint">Toàn bộ thời gian</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-clock" /></svg>Đang xử lý</span>
+        <p class="stat-value">@pending</p>
+        <span class="stat-hint">Chờ xác nhận hoặc đang chuẩn bị</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Hoàn thành</span>
+        <p class="stat-value">@completed</p>
+        <span class="stat-hint">Đã giao thành công</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-tag" /></svg>Doanh thu</span>
+        <p class="stat-value">@revenue.ToString("N0")₫</p>
+        <span class="stat-hint">Không gồm đơn đã hủy</span>
+    </div>
+</div>
+
+<div class="admin-table-wrap">
+    <table class="table admin-table">
+        <thead>
+            <tr>
+                <th>Đơn</th>
+                <th>Khách hàng</th>
+                <th>Liên hệ / Địa chỉ</th>
+                <th>Ngày đặt</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Cập nhật</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                var statusText = order.Status switch
+                {
+                    OrderStatus.Pending => "Chờ xác nhận",
+                    OrderStatus.Confirmed => "Đã xác nhận",
+                    OrderStatus.Preparing => "Đang chuẩn bị",
+                    OrderStatus.Completed => "Đã hoàn thành",
+                    _ => "Đã hủy"
+                };
+                var statusClass = order.Status switch
+                {
+                    OrderStatus.Pending => "badge-warning",
+                    OrderStatus.Confirmed => "badge",
+                    OrderStatus.Preparing => "badge",
+                    OrderStatus.Completed => "badge-success",
+                    _ => "badge-danger"
+                };
+
+                <tr>
+                    <td>
+                        <details>
+                            <summary>#@order.Id · @order.Items.Count món</summary>
+                            <ul>
+                                @foreach (var item in order.Items)
+                                {
+                                    <li>@item.ProductName × @item.Quantity — @((item.Price * item.Quantity).ToString("N0"))₫</li>
+                                }
+                            </ul>
+                        </details>
+                    </td>
+                    <td>
+                        <span class="cell-strong">@order.CustomerName</span>
+                    </td>
+                    <td>
+                        <span class="cell-mono">@order.Phone</span>
+                        <div class="cell-muted">@order.Address</div>
+                    </td>
+                    <td class="cell-muted">@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="cell-mono">@order.Total.ToString("N0")₫</td>
+                    <td>
+                        <span class="badge @statusClass">@statusText</span>
+                    </td>
+                    <td>
+                        <form asp-action="UpdateOrderStatus" method="post" class="d-flex gap-2 align-items-center">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="OrderId" value="@order.Id" />
+                            <select name="Status" class="form-select form-select-sm" aria-label="Trạng thái đơn hàng @order.Id" style="min-width:148px">
+                                @foreach (var status in Html.GetEnumSelectList<OrderStatus>())
+                                {
+                                    <option value="@status.Value" selected="@(status.Value == ((int)order.Status).ToString())">@status.Text</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm">Lưu</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state" style="border:0;background:transparent">
+                            <p>Chưa có đơn hàng nào. Đơn mới sẽ xuất hiện ở đây ngay khi khách đặt món.</p>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

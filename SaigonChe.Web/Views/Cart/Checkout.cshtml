@@ -3,60 +3,108 @@
     ViewData["Title"] = "Đặt món";
 }
 
-<section class="section-spacing">
+<section class="section">
     <div class="container">
-        <div class="section-heading text-center">
-            <span class="eyebrow accent">Đặt món</span>
-            <h2>Thông Tin Giao Hàng</h2>
+        <div class="page-head">
+            <span class="eyebrow">Đặt món</span>
+            <h1>Thông tin giao hàng</h1>
+            <p>Chỉ còn một bước nữa để ly chè đến tay bạn.</p>
         </div>
 
-        <form asp-action="Checkout" method="post" class="checkout-form">
+        <div class="checkout-progress" aria-label="Tiến trình đặt hàng">
+            <span class="step">
+                <span class="num">1</span>
+                Giỏ hàng
+            </span>
+            <span class="line" aria-hidden="true"></span>
+            <span class="step is-active" aria-current="step">
+                <span class="num">2</span>
+                Thông tin
+            </span>
+            <span class="line" aria-hidden="true"></span>
+            <span class="step">
+                <span class="num">3</span>
+                Hoàn tất
+            </span>
+        </div>
+
+        <form asp-action="Checkout" method="post" class="checkout-layout">
             @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="row g-4">
-                <div class="col-lg-6">
-                    <div class="form-group">
-                        <label asp-for="CustomerName" class="form-label"></label>
-                        <input asp-for="CustomerName" class="form-control" autocomplete="name" maxlength="100" />
-                        <span asp-validation-for="CustomerName" class="text-danger"></span>
-                    </div>
-                    <div class="form-group">
-                        <label asp-for="Phone" class="form-label"></label>
-                        <input asp-for="Phone" class="form-control" autocomplete="tel" maxlength="30" />
-                        <span asp-validation-for="Phone" class="text-danger"></span>
-                    </div>
-                    <div class="form-group">
-                        <label asp-for="Address" class="form-label"></label>
-                        <textarea asp-for="Address" class="form-control" rows="4" autocomplete="street-address" maxlength="500"></textarea>
-                        <span asp-validation-for="Address" class="text-danger"></span>
-                    </div>
+
+            <div class="checkout-card">
+                <h4>Người nhận</h4>
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger auth-validation" role="alert"></div>
+
+                <div class="form-group">
+                    <label asp-for="CustomerName" class="form-label"></label>
+                    <input asp-for="CustomerName" class="form-control" autocomplete="name" maxlength="100" placeholder="Nguyễn Văn A" />
+                    <span asp-validation-for="CustomerName" class="text-danger small"></span>
                 </div>
-                <div class="col-lg-6">
-                    <div class="checkout-summary">
-                        <h4>Đơn hàng</h4>
-                        <ul class="checkout-items">
-                            @foreach (var item in Model.Items)
-                            {
-                                <li>
-                                    <span>@item.Name × @item.Quantity</span>
-                                    <strong>@item.LineTotal.ToString("N0")₫</strong>
-                                </li>
-                            }
-                        </ul>
-                        <div class="summary-row total-row">
-                            <span>Tổng cộng</span>
-                            <strong>@Model.Total.ToString("N0")₫</strong>
-                        </div>
-                        <div class="summary-content">
-                            <p>Thanh toán khi nhận hàng.</p>
-                            <p>Phí vận chuyển sẽ được xác nhận khi gọi điện.</p>
-                            <p>Thời gian chuẩn bị: 15–20 phút.</p>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Xác nhận đặt món</button>
-                        <a asp-action="Index" class="btn btn-secondary w-100 mt-2">Quay lại giỏ hàng</a>
-                    </div>
+
+                <div class="form-group">
+                    <label asp-for="Phone" class="form-label"></label>
+                    <input asp-for="Phone" class="form-control" autocomplete="tel" maxlength="30" placeholder="09xx xxx xxx" />
+                    <span asp-validation-for="Phone" class="text-danger small"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Address" class="form-label"></label>
+                    <textarea asp-for="Address" class="form-control" rows="4" autocomplete="street-address" maxlength="500"
+                              placeholder="Số nhà, đường, phường, quận…"></textarea>
+                    <span asp-validation-for="Address" class="text-danger small"></span>
+                    <small class="form-text">Chúng tôi chỉ giao trong nội thành Sài Gòn.</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        Xác nhận đặt món
+                        <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>
+                    </button>
+                    <a asp-action="Index" class="btn btn-ghost">Quay lại giỏ hàng</a>
                 </div>
             </div>
+
+            <aside class="checkout-summary">
+                <h4>Đơn hàng của bạn</h4>
+                <ul class="checkout-items">
+                    @foreach (var item in Model.Items)
+                    {
+                        <li>
+                            <span>@item.Name × @item.Quantity</span>
+                            <strong>@item.LineTotal.ToString("N0")₫</strong>
+                        </li>
+                    }
+                </ul>
+
+                <div class="summary-row">
+                    <span>Tạm tính</span>
+                    <strong>@Model.Total.ToString("N0")₫</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Phí giao hàng</span>
+                    <strong>@(Model.Total >= 150000m ? "Miễn phí" : "Tính khi giao")</strong>
+                </div>
+                <div class="summary-row total-row">
+                    <span>Tổng cộng</span>
+                    <strong>@Model.Total.ToString("N0")₫</strong>
+                </div>
+
+                <div class="summary-content">
+                    <p>
+                        <svg class="icon" aria-hidden="true"><use href="#i-truck" /></svg>
+                        Thanh toán khi nhận hàng. Phí giao sẽ được xác nhận qua điện thoại.
+                    </p>
+                    <p>
+                        <svg class="icon" aria-hidden="true"><use href="#i-clock" /></svg>
+                        Thời gian chuẩn bị và giao: 15–25 phút.
+                    </p>
+                    <p>
+                        <svg class="icon" aria-hidden="true"><use href="#i-phone" /></svg>
+                        Chúng tôi sẽ gọi xác nhận đơn trước khi giao.
+                    </p>
+                </div>
+            </aside>
         </form>
     </div>
 </section>

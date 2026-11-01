@@ -4,29 +4,59 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
-    <li class="nav-item">
-        <a class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
-            Xin chào, @User.Identity?.Name
-        </a>
-    </li>
-    @if (User.IsInRole("Admin"))
-    {
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Admin" asp-action="Products">Quản trị</a>
-        </li>
-    }
-    <li class="nav-item">
-        <form class="d-inline" asp-controller="Account" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post">
-            <button type="submit" class="btn btn-outline-primary btn-sm">Đăng xuất</button>
-        </form>
-    </li>
+    var accountName = User.Identity?.Name ?? string.Empty;
+    var displayName = accountName.Contains('@') ? accountName.Split('@')[0] : accountName;
+    var initials = string.IsNullOrWhiteSpace(displayName)
+        ? "CS"
+        : (displayName.Length >= 2 ? displayName[..2] : displayName).ToUpperInvariant();
+
+    <div class="user-menu" data-user-menu>
+        <button type="button" class="user-trigger" data-user-toggle aria-expanded="false" aria-haspopup="menu">
+            <span class="avatar avatar-sm">@initials</span>
+            <span class="user-name">@displayName</span>
+            <svg class="icon chevron" aria-hidden="true"><use href="#i-chevron-down" /></svg>
+        </button>
+        <div class="dropdown" data-user-panel role="menu" hidden>
+            <div class="dropdown-head">
+                <span class="avatar avatar-sm">@initials</span>
+                <div>
+                    <strong>@displayName</strong>
+                    <small>@accountName</small>
+                </div>
+            </div>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <a class="dropdown-item" asp-controller="Admin" asp-action="Products" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
+                    Bảng quản trị
+                </a>
+            }
+
+            <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" role="menuitem" title="Quản lý tài khoản">
+                <svg class="icon" aria-hidden="true"><use href="#i-user" /></svg>
+                Tài khoản của tôi
+            </a>
+            <a class="dropdown-item" asp-controller="Cart" asp-action="Index" role="menuitem">
+                <svg class="icon" aria-hidden="true"><use href="#i-cart" /></svg>
+                Giỏ hàng
+            </a>
+
+            <div class="dropdown-sep" role="separator"></div>
+
+            <form asp-controller="Account" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post">
+                <button type="submit" class="dropdown-item is-danger" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="#i-logout" /></svg>
+                    Đăng xuất
+                </button>
+            </form>
+        </div>
+    </div>
 }
 else
 {
-    <li class="nav-item">
-        <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
-    </li>
-    <li class="nav-item">
+    <div class="auth-actions">
+        <a class="btn btn-ghost btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
         <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">Đăng ký</a>
-    </li>
+    </div>
 }
