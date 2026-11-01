@@ -3486,6 +3486,10 @@ span.text-danger {
     min-height: 0;
 }
 
+.admin-backdrop {
+    display: none;
+}
+
 .admin-shell {
     display: grid;
     grid-template-columns: 252px minmax(0, 1fr);
