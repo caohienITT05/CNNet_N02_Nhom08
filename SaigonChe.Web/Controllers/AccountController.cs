@@ -99,6 +99,18 @@ namespace SaigonChe.Web.Controllers
                 return View(model);
             }
 
+            var roleResult = await _userManager.AddToRoleAsync(user, "Customer");
+            if (!roleResult.Succeeded)
+            {
+                await _userManager.DeleteAsync(user);
+                foreach (var error in roleResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                return View(model);
+            }
+
             await _signInManager.SignInAsync(user, isPersistent: false);
             return RedirectToLocal(model.ReturnUrl);
         }

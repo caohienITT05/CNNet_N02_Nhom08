@@ -9,6 +9,9 @@ namespace SaigonChe.Web.Models
         public decimal Price { get; set; }
         public int Quantity { get; set; }
 
+        [System.ComponentModel.DataAnnotations.StringLength(500)]
+        public string? Notes { get; set; }
+
         public Order? Order { get; set; }
         public Product? Product { get; set; }
     }

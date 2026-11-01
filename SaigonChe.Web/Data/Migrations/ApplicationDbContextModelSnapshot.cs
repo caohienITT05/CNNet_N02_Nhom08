@@ -279,6 +279,79 @@ namespace SaigonChe.Web.Data.Migrations
                     b.ToTable("ContactMessages");
                 });
 
+            modelBuilder.Entity("SaigonChe.Web.Models.DiningTable", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("DiningTables");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.InventoryMovement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuantityChange")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("OrderId", "ProductId")
+                        .IsUnique()
+                        .HasFilter("[OrderId] IS NOT NULL");
+
+                    b.ToTable("InventoryMovements");
+                });
+
             modelBuilder.Entity("SaigonChe.Web.Models.Order", b =>
                 {
                     b.Property<int>("Id")
@@ -291,6 +364,12 @@ namespace SaigonChe.Web.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("AssignedStaffId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -298,17 +377,57 @@ namespace SaigonChe.Web.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CustomerUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PaymentMethod")
+                        .HasColumnType("int");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TableId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VoucherId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedStaffId");
+
+                    b.HasIndex("CustomerUserId");
+
+                    b.HasIndex("TableId")
+                        .IsUnique()
+                        .HasFilter("[TableId] IS NOT NULL AND [Type] = 1 AND [IsPaid] = 0 AND [Status] <> 4");
+
+                    b.HasIndex("VoucherId");
 
                     b.ToTable("Orders");
                 });
@@ -320,6 +439,10 @@ namespace SaigonChe.Web.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
@@ -344,6 +467,148 @@ namespace SaigonChe.Web.Data.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("OrderItems");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.OrderStatusHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PreviousStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("OrderId", "CreatedAt");
+
+                    b.ToTable("OrderStatusHistory");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.PartyRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Consultation")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CustomerUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("EventAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Headcount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal?>("QuoteAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerUserId");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique()
+                        .HasFilter("[OrderId] IS NOT NULL");
+
+                    b.ToTable("PartyRequests");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.PartyRequestStatusHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("PartyRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PreviousStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("PartyRequestId", "CreatedAt");
+
+                    b.ToTable("PartyRequestStatusHistory");
                 });
 
             modelBuilder.Entity("SaigonChe.Web.Models.Product", b =>
@@ -379,11 +644,59 @@ namespace SaigonChe.Web.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("Stock")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.Voucher", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("MinimumOrderTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UseCount")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UseLimit")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ValidFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ValidTo")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Vouchers");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -437,6 +750,62 @@ namespace SaigonChe.Web.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SaigonChe.Web.Models.InventoryMovement", b =>
+                {
+                    b.HasOne("SaigonChe.Web.Models.ApplicationUser", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SaigonChe.Web.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SaigonChe.Web.Models.Product", "Product")
+                        .WithMany("InventoryMovements")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.Order", b =>
+                {
+                    b.HasOne("SaigonChe.Web.Models.ApplicationUser", "AssignedStaff")
+                        .WithMany()
+                        .HasForeignKey("AssignedStaffId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SaigonChe.Web.Models.ApplicationUser", "CustomerUser")
+                        .WithMany()
+                        .HasForeignKey("CustomerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SaigonChe.Web.Models.DiningTable", "Table")
+                        .WithMany("Orders")
+                        .HasForeignKey("TableId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SaigonChe.Web.Models.Voucher", "Voucher")
+                        .WithMany("Orders")
+                        .HasForeignKey("VoucherId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AssignedStaff");
+
+                    b.Navigation("CustomerUser");
+
+                    b.Navigation("Table");
+
+                    b.Navigation("Voucher");
+                });
+
             modelBuilder.Entity("SaigonChe.Web.Models.OrderItem", b =>
                 {
                     b.HasOne("SaigonChe.Web.Models.Order", "Order")
@@ -456,6 +825,59 @@ namespace SaigonChe.Web.Data.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("SaigonChe.Web.Models.OrderStatusHistory", b =>
+                {
+                    b.HasOne("SaigonChe.Web.Models.ApplicationUser", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SaigonChe.Web.Models.Order", "Order")
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.PartyRequest", b =>
+                {
+                    b.HasOne("SaigonChe.Web.Models.ApplicationUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SaigonChe.Web.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.PartyRequestStatusHistory", b =>
+                {
+                    b.HasOne("SaigonChe.Web.Models.ApplicationUser", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SaigonChe.Web.Models.PartyRequest", "PartyRequest")
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("PartyRequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("PartyRequest");
+                });
+
             modelBuilder.Entity("SaigonChe.Web.Models.Product", b =>
                 {
                     b.HasOne("SaigonChe.Web.Models.Category", "Category")
@@ -472,14 +894,33 @@ namespace SaigonChe.Web.Data.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("SaigonChe.Web.Models.DiningTable", b =>
+                {
+                    b.Navigation("Orders");
+                });
+
             modelBuilder.Entity("SaigonChe.Web.Models.Order", b =>
                 {
                     b.Navigation("Items");
+
+                    b.Navigation("StatusHistory");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.PartyRequest", b =>
+                {
+                    b.Navigation("StatusHistory");
                 });
 
             modelBuilder.Entity("SaigonChe.Web.Models.Product", b =>
                 {
+                    b.Navigation("InventoryMovements");
+
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("SaigonChe.Web.Models.Voucher", b =>
+                {
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

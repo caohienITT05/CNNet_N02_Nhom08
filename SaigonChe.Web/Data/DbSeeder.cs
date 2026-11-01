@@ -15,9 +15,17 @@ namespace SaigonChe.Web.Data
 
             await context.Database.MigrateAsync();
 
-            if (!await roleManager.RoleExistsAsync("Admin"))
+            foreach (var roleName in new[] { "Customer", "Staff", "Admin" })
             {
-                await roleManager.CreateAsync(new IdentityRole("Admin"));
+                if (!await roleManager.RoleExistsAsync(roleName))
+                {
+                    var createRoleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
+                    if (!createRoleResult.Succeeded)
+                    {
+                        throw new InvalidOperationException(
+                            $"Could not create the {roleName} role: {string.Join("; ", createRoleResult.Errors.Select(error => error.Description))}");
+                    }
+                }
             }
 
             const string adminEmail = "admin@gmail.com";
@@ -78,6 +86,22 @@ namespace SaigonChe.Web.Data
                 {
                     var errors = string.Join("; ", roleResult.Errors.Select(error => error.Description));
                     throw new InvalidOperationException($"Could not assign the Admin role: {errors}");
+                }
+            }
+
+            // Preserve existing assignments. Legacy accounts without any role
+            // become regular customers; registration never grants Staff/Admin.
+            var allUsers = await userManager.Users.ToListAsync();
+            foreach (var user in allUsers.Where(user => user.Id != adminUser.Id))
+            {
+                if ((await userManager.GetRolesAsync(user)).Count == 0)
+                {
+                    var customerResult = await userManager.AddToRoleAsync(user, "Customer");
+                    if (!customerResult.Succeeded)
+                    {
+                        throw new InvalidOperationException(
+                            $"Could not assign the Customer role to {user.Email}: {string.Join("; ", customerResult.Errors.Select(error => error.Description))}");
+                    }
                 }
             }
 

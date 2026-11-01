@@ -1,0 +1,17 @@
+@model SaigonChe.Web.ViewModels.StaffEditViewModel
+@{
+    ViewData["Title"] = "Sửa tài khoản nhân viên";
+}
+
+<section class="section container">
+    <p class="eyebrow">Quản trị nhân viên</p><h1>Sửa email nhân viên</h1>
+    <form asp-action="Edit" method="post" class="form-card">
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group"><label asp-for="Email"></label><input asp-for="Email" class="form-control" autocomplete="email"/><span asp-validation-for="Email" class="text-danger"></span></div>
+        <button class="btn btn-primary" type="submit">Lưu thay đổi</button>
+        <a class="btn btn-ghost" asp-action="Index">Quay lại</a>
+    </form>
+</section>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

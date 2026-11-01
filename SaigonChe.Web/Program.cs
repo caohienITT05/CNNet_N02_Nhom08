@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SaigonChe.Web.Data;
 using SaigonChe.Web.Models;
+using SaigonChe.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,10 +11,14 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
+builder.Services.AddScoped<OrderCompletionService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
+    options.Lockout.AllowedForNewUsers = true;
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
@@ -22,6 +27,11 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Apply changed security stamps immediately so a locked staff account cannot
+// continue using a previously issued cookie for the default validation window.
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+    options.ValidationInterval = TimeSpan.Zero);
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

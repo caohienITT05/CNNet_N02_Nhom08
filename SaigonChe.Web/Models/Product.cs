@@ -21,11 +21,16 @@ namespace SaigonChe.Web.Models
 
         public bool IsAvailable { get; set; } = true;
         public bool IsFeatured { get; set; }
+
+        // Null distinguishes existing products whose stock has not been initialized from an empty stock.
+        public int? Stock { get; set; }
         public string? ImageUrl { get; set; }
 
         public int CategoryId { get; set; }
         public Category? Category { get; set; }
 
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+        public ICollection<InventoryMovement> InventoryMovements { get; set; } = new List<InventoryMovement>();
     }
 }
