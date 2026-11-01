@@ -24,6 +24,7 @@ Mục tiêu là hoàn tất 90% trọng số M1–M5; M6 là 10% kiểm thử v�
 - `dotnet ef migrations has-pending-model-changes`: không có thay đổi model chưa migration.
 - `dotnet ef database update`: hai migration mới áp dụng thành công trên LocalDB. Migration chỉ thêm cột, bảng, chỉ mục và khóa ngoại.
 - Website khởi động và chạy seeding được; trang chủ trả HTTP 200. POS, báo cáo, tạo tiệc và hàng đợi yêu cầu đăng nhập (HTTP 302 khi chưa đăng nhập).
+- GitHub xác nhận branch đã có và chưa có PR; lần tạo Draft PR qua connector trả HTTP 403 `Resource not accessible by integration`. Cần cấp quyền tạo pull request cho kết nối GitHub hoặc tạo Draft PR thủ công; đến lúc đó M1 giữ 67% và tổng giữ 88,35%.
 - Chưa xác minh trọn luồng giao dịch bằng tài khoản Staff/Admin hoặc đối chiếu số liệu với bộ dữ liệu chuẩn. Các việc này thuộc nghiệm thu M6.
 
 ## 1. Mục tiêu sản phẩm
