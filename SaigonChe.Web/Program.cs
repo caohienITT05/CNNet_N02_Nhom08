@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SaigonChe.Web.Data;
 using SaigonChe.Web.Models;
+using SaigonChe.Web.Interfaces;
+using SaigonChe.Web.Services.Implementations;
+using SaigonChe.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +13,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
+builder.Services.AddSignalR();
 
+// Identity
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -23,15 +28,27 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// MVC & Razor
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
+
+// Cấu hình Session cho giỏ hàng
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
+    options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+// HttpContextAccessor để truy cập Session trong Service
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IVietQrService, VietQrService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 var app = builder.Build();
 
@@ -54,6 +71,9 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.MapHub<PaymentHub>("/paymentHub");
+
+// Middleware thứ tự bắt buộc: Session -> Authentication -> Authorization
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -65,5 +85,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+app.MapHub<SaigonChe.Web.Hubs.PaymentHub>("/paymentHub");
 
 app.Run();

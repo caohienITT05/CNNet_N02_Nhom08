@@ -1,0 +1,94 @@
+@model List<SaigonChe.Web.Models.Order>
+
+@{
+    ViewData["Title"] = "Tra cứu đơn hàng - Quán Chè Sài Gòn";
+}
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-danger">Tra Cứu Đơn Hàng</h2>
+        <p class="text-muted">Nhập mã đơn hàng hoặc số điện thoại đặt chè để kiểm tra lộ trình giao hàng.</p>
+        
+        <form method="get" class="row justify-content-center g-2 mt-3">
+            <div class="col-md-4">
+                <input type="text" name="orderCode" class="form-control rounded-pill px-4" placeholder="Nhập mã đơn (VD: TF2026...)" />
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="phone" class="form-control rounded-pill px-4" placeholder="Hoặc số điện thoại..." />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-danger w-100 rounded-pill fw-semibold">
+                    <i class="bi bi-search me-1"></i> Tra cứu
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if (Model != null)
+    {
+        if (!Model.Any())
+        {
+            <div class="alert alert-warning text-center rounded-4">
+                Không tìm thấy đơn hàng nào phù hợp với thông tin tra cứu.
+            </div>
+        }
+        else
+        {
+            foreach (var order in Model)
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                        <div>
+                            <h5 class="fw-bold text-danger mb-0">Đơn hàng: #@order.OrderCode</h5>
+                            <small class="text-muted">Ngày đặt: @order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">
+                                @order.Status.ToString()
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Tiến trình đơn hàng -->
+                    <div class="row text-center my-3">
+                        <div class="col text-success">
+                            <i class="bi bi-receipt fs-3"></i>
+                            <div class="small fw-bold">Chờ xác nhận</div>
+                        </div>
+                        <div class="col @(order.Status >= SaigonChe.Web.Models.OrderStatus.Confirmed ? "text-success" : "text-muted")">
+                            <i class="bi bi-check2-circle fs-3"></i>
+                            <div class="small fw-bold">Đã xác nhận</div>
+                        </div>
+                        <div class="col @(order.Status >= SaigonChe.Web.Models.OrderStatus.Preparing ? "text-success" : "text-muted")">
+                            <i class="bi bi-cup-hot fs-3"></i>
+                            <div class="small fw-bold">Bếp đang làm</div>
+                        </div>
+                        <div class="col @(order.Status >= SaigonChe.Web.Models.OrderStatus.Shipping ? "text-success" : "text-muted")">
+                            <i class="bi bi-bicycle fs-3"></i>
+                            <div class="small fw-bold">Đang giao</div>
+                        </div>
+                        <div class="col @(order.Status == SaigonChe.Web.Models.OrderStatus.Completed ? "text-success" : "text-muted")">
+                            <i class="bi bi-house-door fs-3"></i>
+                            <div class="small fw-bold">Đã nhận chè</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-light rounded-3 p-3 mt-2">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Người nhận:</strong> @order.CustomerName</p>
+                                <p class="mb-1"><strong>SĐT:</strong> @order.Phone</p>
+                                <p class="mb-0"><strong>Địa chỉ:</strong> @order.Address</p>
+                            </div>
+                            <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                                <p class="mb-1"><strong>Hình thức:</strong> @order.PaymentMethod.ToString()</p>
+                                <p class="mb-1"><strong>Thanh toán:</strong> <span class="badge bg-info text-dark">@order.PaymentStatus.ToString()</span></p>
+                                <p class="mb-0"><strong>Tổng tiền:</strong> <span class="fs-5 fw-bold text-danger">@order.Total.ToString("N0") đ</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    }
+</div>
