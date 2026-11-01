@@ -1,0 +1,107 @@
+@model SaigonChe.Web.ViewModels.PartyRequestDetailsViewModel
+@using SaigonChe.Web.Models
+@{
+    ViewData["Title"] = $"Yêu cầu tiệc #{Model.Id}";
+    var localEventAt = VietnamTime.ToLocal(Model.EventAt);
+    var terminal = Model.Status is PartyRequestStatus.Cancelled or PartyRequestStatus.Completed;
+}
+
+@if (Model.IsStaffView)
+{
+    <div class="admin-page-head"><div><span class="eyebrow">Đặt tiệc · #@Model.Id</span><h1>Chi tiết yêu cầu</h1><p>Trạng thái hiện tại: <strong>@Model.Status.ToDisplayName()</strong></p></div><a asp-action="Index" class="btn btn-ghost">Về hàng đợi</a></div>
+}
+else
+{
+    <section class="section"><div class="container"><div class="page-head"><span class="eyebrow">Yêu cầu #@Model.Id</span><h1>Chi tiết đặt tiệc</h1><p>Trạng thái: <strong>@Model.Status.ToDisplayName()</strong></p></div></div></section>
+}
+
+@if (TempData["PartyError"] is string partyError)
+{
+    <div class="alert alert-danger" role="alert">@partyError</div>
+}
+@if (TempData["PartySuccess"] is string partySuccess)
+{
+    <div class="alert alert-success" role="status">@partySuccess</div>
+}
+
+<div class="@(Model.IsStaffView ? "report-table-card" : "container report-table-card")">
+    <dl class="party-details-grid">
+        <div><dt>Người liên hệ</dt><dd>@Model.CustomerName</dd></div>
+        @if (Model.IsStaffView) { <div><dt>Điện thoại</dt><dd>@Model.Phone</dd></div> }
+        <div><dt>Thời gian</dt><dd>@localEventAt.ToString("dd/MM/yyyy HH:mm")</dd></div>
+        <div><dt>Địa điểm</dt><dd>@Model.Location</dd></div>
+        <div><dt>Số khách</dt><dd>@Model.Headcount</dd></div>
+        @if (!string.IsNullOrWhiteSpace(Model.Notes)) { <div class="party-notes"><dt>Yêu cầu riêng</dt><dd>@Model.Notes</dd></div> }
+        @if (Model.QuoteAmount.HasValue) { <div><dt>Báo giá</dt><dd>@Model.QuoteAmount.Value.ToString("N0") ₫</dd></div> }
+        @if (!string.IsNullOrWhiteSpace(Model.Consultation)) { <div class="party-notes"><dt>Nội dung tư vấn</dt><dd>@Model.Consultation</dd></div> }
+        @if (!string.IsNullOrWhiteSpace(Model.CancellationReason)) { <div class="party-notes"><dt>Lý do hủy</dt><dd>@Model.CancellationReason</dd></div> }
+        @if (Model.OrderId.HasValue) { <div><dt>Đơn hàng</dt><dd>#@Model.OrderId</dd></div> }
+    </dl>
+</div>
+
+<section class="@(Model.IsStaffView ? "report-table-card" : "container report-table-card")">
+    <h2>Lịch sử trạng thái</h2>
+    <ol class="party-history-list">
+    @foreach (var entry in Model.StatusHistory)
+    {
+        <li><strong>@entry.Status.ToDisplayName()</strong><span>@VietnamTime.ToLocal(entry.CreatedAt).ToString("dd/MM/yyyy HH:mm") · @(entry.IsCustomerAction ? "Khách hàng" : "Nhân viên")</span>@if (!string.IsNullOrWhiteSpace(entry.Note)) { <p>@entry.Note</p> }</li>
+    }
+    </ol>
+</section>
+
+@if (Model.IsStaffView && !terminal)
+{
+    <section class="@(Model.IsStaffView ? "report-table-card" : "container report-table-card")">
+        <h2>Cập nhật yêu cầu</h2>
+        <form asp-action="Update" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+            <div class="form-group"><label class="form-label" for="status">Trạng thái tiếp theo</label>
+                <select class="form-control" name="Status" id="status" required>
+                    @if (Model.Status == PartyRequestStatus.Pending) { <option value="InProgress">Đang xử lý</option> }
+                    @if (Model.Status == PartyRequestStatus.InProgress) { <option value="Confirmed">Đã xác nhận và tạo đơn</option> }
+                    @if (Model.Status == PartyRequestStatus.Confirmed) { <option value="Completed">Hoàn thành</option> }
+                    <option value="Cancelled">Hủy yêu cầu</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label" for="quoteAmount">Báo giá (₫)</label><input class="form-control" type="number" min="0" step="1000" id="quoteAmount" name="QuoteAmount" value="@Model.QuoteAmount" /></div>
+            <div class="form-group"><label class="form-label" for="consultation">Tư vấn / ghi chú cho khách</label><textarea class="form-control" rows="3" maxlength="2000" id="consultation" name="Consultation">@Model.Consultation</textarea></div>
+            <div class="form-group"><label class="form-label" for="cancellationReason">Lý do hủy (bắt buộc khi chọn hủy)</label><input class="form-control" id="cancellationReason" name="CancellationReason" maxlength="500" value="@Model.CancellationReason" /></div>
+            @if (Model.Status == PartyRequestStatus.InProgress)
+            {
+                <fieldset class="party-products"><legend>Chọn món cho đơn đã chốt</legend>
+                    @if (Model.Products.Count == 0) { <p>Chưa có món nào đang bán.</p> }
+                    @for (var i = 0; i < Model.Products.Count; i++)
+                    {
+                        var product = Model.Products[i];
+                        var selected = Model.SelectedLines.FirstOrDefault(line => line.ProductId == product.Id);
+                        <div class="party-product-row">
+                            <input type="hidden" name="Lines[@i].ProductId" value="@product.Id" />
+                            <label><input type="checkbox" name="Lines[@i].Selected" value="true" checked="@(selected?.Selected ?? false)" /> @product.Name · @product.Price.ToString("N0") ₫</label>
+                            <input aria-label="Số lượng @product.Name" class="form-control" type="number" min="0" max="10000" name="Lines[@i].Quantity" value="@(selected?.Quantity ?? 0)" />
+                        </div>
+                    }
+                    <p class="form-text">Giá và trạng thái món được kiểm tra lại từ cơ sở dữ liệu khi xác nhận.</p>
+                </fieldset>
+            }
+            @if (Model.Status == PartyRequestStatus.Confirmed)
+            {
+                <div class="form-group"><label class="form-label" for="paymentMethod">Thanh toán khi hoàn tất</label><select name="PaymentMethod" id="paymentMethod" class="form-control"><option value="">Chọn phương thức</option><option value="Cash">Tiền mặt</option>@if (Model.VietQrUrl is not null) { <option value="VietQr">VietQR (đã xác nhận nhận tiền)</option> }</select><span asp-validation-for="PaymentMethod" class="text-danger small"></span></div>
+                @if (Model.VietQrUrl is not null) { <div class="party-payment-qr"><p>Khách chuyển đúng giá báo. Nhân viên chỉ chọn VietQR sau khi xác nhận đã nhận tiền.</p><img src="@Model.VietQrUrl" alt="Mã QR thanh toán đơn tiệc @Model.OrderId" /></div> }
+                else { <p class="form-text">Chưa cấu hình VietQR; có thể ghi nhận thanh toán tiền mặt.</p> }
+            }
+            <button type="submit" class="btn btn-primary">Lưu cập nhật</button>
+        </form>
+    </section>
+}
+else if (!Model.IsStaffView)
+{
+    <div class="container"><a asp-action="MyRequests" class="btn btn-ghost">Quay lại yêu cầu của tôi</a></div>
+}
+
+@section Head {
+    <style>
+        .party-card{max-width:760px;margin:auto}.party-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:0}.party-details-grid>div{padding:.85rem;border:1px solid var(--line,#333);border-radius:10px}.party-details-grid dt{color:var(--muted,#aaa);font-size:.82rem}.party-details-grid dd{margin:.25rem 0 0;white-space:pre-wrap}.party-notes{grid-column:1/-1}.party-products{margin:1rem 0;padding:1rem;border:1px solid var(--line,#333);border-radius:12px}.party-products legend{float:none;width:auto;padding:0 .4rem;font-weight:700}.party-product-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--line,#333)}.party-product-row .form-control{max-width:110px}.party-payment-qr{padding:.8rem 1rem;border-radius:10px;background:var(--panel,#17171a)}.party-payment-qr img{display:block;width:min(260px,100%);height:auto;margin:.75rem auto;border-radius:10px;background:white}.party-history-list{padding-left:1.25rem}.party-history-list li{margin:.75rem 0;padding-left:.3rem}.party-history-list span{display:block;color:var(--muted,#aaa);font-size:.85rem}.party-history-list p{margin:.3rem 0;white-space:pre-wrap}@@media(max-width:600px){.party-details-grid{grid-template-columns:1fr}.party-notes{grid-column:auto}.party-product-row{align-items:flex-start;flex-direction:column}}
+    </style>
+}

@@ -68,6 +68,7 @@ public sealed class OrderCompletionService(ApplicationDbContext context)
         var previousStatus = order.Status;
         order.IsPaid = true;
         order.PaymentMethod = method;
+        order.AmountReceived ??= order.Total;
         order.PaidAt = completedAt;
         order.CompletedAt = completedAt;
         order.Status = OrderStatus.Completed;
