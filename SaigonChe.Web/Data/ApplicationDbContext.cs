@@ -53,7 +53,7 @@ namespace SaigonChe.Web.Data
                 .HasOne(o => o.CustomerUser)
                 .WithMany()
                 .HasForeignKey(o => o.CustomerUserId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.AssignedStaff)

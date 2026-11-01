@@ -363,7 +363,7 @@ namespace SaigonChe.Web.Data.Migrations
                 column: "CustomerUserId",
                 principalTable: "AspNetUsers",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Orders_DiningTables_TableId",

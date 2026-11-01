@@ -788,7 +788,7 @@ namespace SaigonChe.Web.Data.Migrations
                     b.HasOne("SaigonChe.Web.Models.ApplicationUser", "CustomerUser")
                         .WithMany()
                         .HasForeignKey("CustomerUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("SaigonChe.Web.Models.DiningTable", "Table")
                         .WithMany("Orders")
