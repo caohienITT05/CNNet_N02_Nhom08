@@ -1,0 +1,224 @@
+@model List<SaigonChe.Web.Models.Order>
+
+@{
+    ViewData["Title"] = "Quản lý đơn hàng & Vòng đời";
+}
+
+<div class="container-fluid py-4 px-lg-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-danger mb-0">Quản Lý Đơn Hàng & Vòng Đời</h2>
+            <p class="text-muted small mb-0">Xử lý đơn COD, đối soát VietQR và cập nhật quy trình chế biến/giao chè.</p>
+        </div>
+        <div class="card border-0 bg-warning-subtle text-dark p-3 rounded-4 shadow-sm">
+            <span class="small fw-semibold">Tổng tiền COD đang chờ thu:</span>
+            <strong class="fs-5 text-danger">@(((decimal)ViewBag.TotalCodPending).ToString("N0")) đ</strong>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Bộ lọc tìm kiếm & Phân loại -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control rounded-pill px-3"
+                       placeholder="Mã đơn / SĐT / Tên khách..." value="@ViewBag.CurrentSearch" />
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select rounded-pill">
+                    <option value="">-- Tất cả trạng thái đơn --</option>
+                    @foreach (var val in Enum.GetValues(typeof(SaigonChe.Web.Models.OrderStatus)))
+                    {
+                        var isSel = ViewBag.CurrentStatus != null && (SaigonChe.Web.Models.OrderStatus)ViewBag.CurrentStatus
+                    == (SaigonChe.Web.Models.OrderStatus)val;
+                        <option value="@val" selected="@(isSel ? "selected" : null)">@val</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="paymentMethod" class="form-select rounded-pill">
+                    <option value="">-- Tất cả hình thức thanh toán --</option>
+                    @foreach (var val in Enum.GetValues(typeof(SaigonChe.Web.Models.PaymentMethod)))
+                    {
+                        var isSel = ViewBag.CurrentPaymentMethod != null &&
+                    (SaigonChe.Web.Models.PaymentMethod)ViewBag.CurrentPaymentMethod ==
+                    (SaigonChe.Web.Models.PaymentMethod)val;
+                        <option value="@val" selected="@(isSel ? "selected" : null)">@val</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-danger rounded-pill w-100 fw-semibold">
+                    <i class="bi bi-funnel me-1"></i> Lọc
+                </button>
+                <a href="/AdminOrder" class="btn btn-outline-secondary rounded-pill px-3">Xóa</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bảng danh sách đơn hàng -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Mã đơn & Ngày đặt</th>
+                        <th>Khách hàng</th>
+                        <th>Món chè</th>
+                        <th>Tổng tiền</th>
+                        <th>Thanh toán</th>
+                        <th>Trạng thái vòng đời</th>
+                        <th class="text-center">Thao tác xử lý</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Chưa có đơn hàng nào phù hợp.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <td class="ps-3">
+                                    <strong class="font-monospace text-danger">@order.OrderCode</strong>
+                                    <div class="small text-muted">@order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@order.CustomerName</div>
+                                    <div class="small text-muted"><i class="bi bi-telephone me-1"></i>@order.Phone</div>
+                                    <div class="small text-secondary text-truncate" style="max-width: 200px;"
+                                         title="@order.Address">@order.Address</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary rounded-pill">@order.Items.Count món</span>
+                                    <div class="small text-muted mt-1">
+                                        @string.Join(", ", order.Items.Select(i => $"{i.Quantity}x {i.ProductName}"))
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong class="text-danger">@order.Total.ToString("N0") đ</strong>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge @(order.PaymentMethod == SaigonChe.Web.Models.PaymentMethod.VietQR ? "bg-info text-dark" : "bg-dark")">
+                                        @order.PaymentMethod
+                                    </span>
+                                    <div class="mt-1">
+                                        @if (order.PaymentStatus == SaigonChe.Web.Models.PaymentStatus.Paid)
+                                        {
+                                            <span class="badge bg-success"><i class="bi bi-check2"></i> Đã thanh toán</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Chờ thanh
+                                                toán</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var badgeColor = order.Status switch
+                                            {
+                                                SaigonChe.Web.Models.OrderStatus.Pending => "bg-secondary",
+                                                SaigonChe.Web.Models.OrderStatus.Confirmed => "bg-primary",
+                                                SaigonChe.Web.Models.OrderStatus.Preparing => "bg-warning text-dark",
+                                                SaigonChe.Web.Models.OrderStatus.Shipping => "bg-info text-dark",
+                                                SaigonChe.Web.Models.OrderStatus.Completed => "bg-success",
+                                                SaigonChe.Web.Models.OrderStatus.Cancelled => "bg-danger",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @badgeColor fs-6 px-3 py-2 rounded-pill">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                    <td class="text-center pe-3">
+                                        <div class="d-flex flex-column gap-1 align-items-center">
+                                            <!-- Form đổi trạng thái vòng đời tiếp theo -->
+                                            @if (order.Status == SaigonChe.Web.Models.OrderStatus.Pending)
+                                            {
+                                                <form asp-action="UpdateStatus" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="orderId" value="@order.Id" />
+                                                    <input type="hidden" name="newStatus" value="Confirmed" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill w-100">Xác
+                                                        nhận đơn</button>
+                                                    </form>
+                                                }
+                                        else if (order.Status == SaigonChe.Web.Models.OrderStatus.Confirmed)
+                                                {
+                                                    <form asp-action="UpdateStatus" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                                        <input type="hidden" name="newStatus" value="Preparing" />
+                                                        <button type="submit"
+                                                                class="btn btn-sm btn-outline-warning text-dark rounded-pill w-100">Chuyển làm
+                                                            chè</button>
+                                                        </form>
+                                                    }
+                                        else if (order.Status == SaigonChe.Web.Models.OrderStatus.Preparing)
+                                                    {
+                                                        <form asp-action="UpdateStatus" method="post">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="orderId" value="@order.Id" />
+                                                            <input type="hidden" name="newStatus" value="Shipping" />
+                                                            <button type="submit"
+                                                                    class="btn btn-sm btn-outline-info text-dark rounded-pill w-100">Giao
+                                                                hàng</button>
+                                                            </form>
+                                                        }
+                                        else if (order.Status == SaigonChe.Web.Models.OrderStatus.Shipping)
+                                                        {
+                                                            <form asp-action="UpdateStatus" method="post">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="orderId" value="@order.Id" />
+                                                                <input type="hidden" name="newStatus" value="Completed" />
+                                                                <button type="submit" class="btn btn-sm btn-success rounded-pill w-100">Hoàn
+                                                                    thành</button>
+                                                                </form>
+                                                            }
+
+                                                            <!-- Nút xác nhận thu COD nếu chưa thanh toán -->
+                                                            @if (order.PaymentMethod == SaigonChe.Web.Models.PaymentMethod.COD &&
+                                                    order.PaymentStatus == SaigonChe.Web.Models.PaymentStatus.Pending && order.Status !=
+                                                    SaigonChe.Web.Models.OrderStatus.Cancelled)
+                                                            {
+                                                                <form asp-action="ConfirmCodPayment" method="post">
+                                                                    @Html.AntiForgeryToken()
+                                                                    <input type="hidden" name="orderId" value="@order.Id" />
+                                                                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill w-100 mt-1"
+                                                                            onclick="return confirm('Xác nhận đã nhận tiền mặt từ shipper?')">
+                                                                        Đã thu tiền COD
+                                                                    </button>
+                                                                </form>
+                                                            }
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
