@@ -27,12 +27,36 @@
 
             @if (User.IsInRole("Admin"))
             {
-                <a class="dropdown-item" asp-controller="Admin" asp-action="Products" role="menuitem">
+                <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard" role="menuitem">
                     <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
                     Bảng quản trị
                 </a>
+                <a class="dropdown-item" asp-controller="Staff" asp-action="Orders" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
+                    Vận hành đơn
+                </a>
+                <a class="dropdown-item" asp-controller="Admin" asp-action="Staff" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="#i-user" /></svg>
+                    Nhân viên
+                </a>
+                <a class="dropdown-item" asp-controller="AdminReviews" asp-action="Index" role="menuitem">
+                    Đánh giá
+                </a>
+                <a class="dropdown-item" asp-controller="AdminCustomers" asp-action="Index" role="menuitem">
+                    Khách hàng
+                </a>
+            }
+            else if (User.IsInRole("Staff"))
+            {
+                <a class="dropdown-item" asp-controller="Staff" asp-action="Orders" role="menuitem">
+                    <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
+                    Đơn cần xử lý
+                </a>
             }
 
+            <a class="dropdown-item" asp-controller="Favorite" asp-action="Index" role="menuitem">
+                Yêu thích
+            </a>
             <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" role="menuitem" title="Quản lý tài khoản">
                 <svg class="icon" aria-hidden="true"><use href="#i-user" /></svg>
                 Tài khoản của tôi

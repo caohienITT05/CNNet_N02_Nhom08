@@ -1,13 +1,13 @@
-@using System.Text.Json
 @using Microsoft.AspNetCore.Identity
+@using SaigonChe.Web.Interfaces
 @using SaigonChe.Web.Models
-@using SaigonChe.Web.ViewModels
 @inject SignInManager<ApplicationUser> SignInManager
+@inject ICartService CartService
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var action = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
     var isHomePage = controller == "Home" && action == "Index";
-    var isAdminSection = controller is "Admin" or "Product" or "Category" or "Pos" or "Reports" or "Staff" or "OperationsAdmin" or "OrderOperations"
+    var isAdminSection = controller is "Admin" or "AdminCustomers" or "AdminReviews" or "Product" or "Category" or "Pos" or "Reports" or "Staff" or "OperationsAdmin" or "OrderOperations"
         || (controller == "Party" && (User.IsInRole("Staff") || User.IsInRole("Admin")));
     var homeUrl = Url.Action("Index", "Home") ?? "/";
     var isSignedIn = SignInManager.IsSignedIn(User);
@@ -17,20 +17,9 @@
         ? "CS"
         : (displayName.Length >= 2 ? displayName[..2] : displayName).ToUpperInvariant();
 
-    var cartJson = Context.Session.GetString("Cart");
-    var cartCount = 0;
-    if (!string.IsNullOrWhiteSpace(cartJson))
-    {
-        try
-        {
-            var cartItems = JsonSerializer.Deserialize<List<CartItemViewModel>>(cartJson);
-            cartCount = cartItems?.Sum(item => item.Quantity) ?? 0;
-        }
-        catch
-        {
-            cartCount = 0;
-        }
-    }
+    var cartCount = isAdminSection
+        ? 0
+        : (await CartService.GetCartAsync()).Items.Sum(item => item.Quantity);
 
     string SectionHref(string anchor) => isHomePage ? $"#{anchor}" : $"{homeUrl}#{anchor}";
 }

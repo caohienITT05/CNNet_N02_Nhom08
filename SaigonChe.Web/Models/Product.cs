@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -20,17 +21,24 @@ namespace SaigonChe.Web.Models
         public decimal Price { get; set; }
 
         public bool IsAvailable { get; set; } = true;
+
         public bool IsFeatured { get; set; }
 
         // Null distinguishes existing products whose stock has not been initialized from an empty stock.
         public int? Stock { get; set; }
+
         public string? ImageUrl { get; set; }
 
         public int CategoryId { get; set; }
+
         public Category? Category { get; set; }
 
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
         public ICollection<InventoryMovement> InventoryMovements { get; set; } = new List<InventoryMovement>();
+
+        public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
+
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

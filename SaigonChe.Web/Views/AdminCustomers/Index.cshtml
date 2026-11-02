@@ -1,0 +1,94 @@
+@model SaigonChe.Web.ViewModels.CustomerListViewModel
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+}
+
+<section class="section-spacing">
+    <div class="container admin-layout">
+        <div class="admin-header">
+            <div>
+                <span class="eyebrow accent">Quản trị</span>
+                <h1>Quản Lý Khách Hàng</h1>
+            </div>
+            <a asp-action="Create" class="btn btn-primary">Thêm khách hàng</a>
+        </div>
+
+        @if (TempData["CustomerMessage"] is string message)
+        {
+            <div class="alert alert-success" role="status">@message</div>
+        }
+
+        <form asp-action="Index" method="get" class="row g-2 my-3">
+            <div class="col-md-8">
+                <label for="customer-search" class="visually-hidden">Tìm theo email hoặc tên</label>
+                <input id="customer-search" name="search" value="@Model.Search" class="form-control"
+                       placeholder="Tìm theo email hoặc họ tên" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">Tìm kiếm</button>
+            </div>
+        </form>
+
+        @if (Model.Customers.Count == 0)
+        {
+            <div class="empty-state"><p>Không tìm thấy tài khoản khách hàng.</p></div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle admin-table">
+                    <thead>
+                        <tr>
+                            <th>Họ tên</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var customer in Model.Customers)
+                        {
+                            <tr>
+                                <td>@customer.Name</td>
+                                <td>@customer.Email</td>
+                                <td>@(customer.PhoneNumber ?? "—")</td>
+                                <td>
+                                    <span class="badge @(customer.IsLocked ? "text-bg-danger" : "text-bg-success")">
+                                        @(customer.IsLocked ? "Đã khóa" : "Đang hoạt động")
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <a asp-action="Details" asp-route-id="@customer.Id" class="btn btn-sm btn-secondary">Chi tiết</a>
+                                        <a asp-action="Edit" asp-route-id="@customer.Id" class="btn btn-sm btn-outline-primary">Sửa</a>
+                                        <form asp-action="@(customer.IsLocked ? "Unlock" : "Lock")" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@customer.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                @(customer.IsLocked ? "Mở khóa" : "Khóa")
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Phân trang khách hàng">
+                    <ul class="pagination justify-content-center">
+                        @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                        {
+                            <li class="page-item @(pageNumber == Model.Page ? "active" : string.Empty)">
+                                <a class="page-link" asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@pageNumber">@pageNumber</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+    </div>
+</section>

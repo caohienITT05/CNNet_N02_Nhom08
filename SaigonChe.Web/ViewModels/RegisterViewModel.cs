@@ -4,6 +4,11 @@ namespace SaigonChe.Web.ViewModels
 {
     public sealed class RegisterViewModel
     {
+        [Required(ErrorMessage = "Vui lòng nhập họ tên.")]
+        [StringLength(100, ErrorMessage = "Họ tên không được vượt quá 100 ký tự.")]
+        [Display(Name = "Họ tên")]
+        public string FullName { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Vui lòng nhập email.")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
         [Display(Name = "Email")]

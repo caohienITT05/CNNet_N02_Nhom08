@@ -19,9 +19,11 @@ Trình duyệt → SaigonChe.Web → SQL Server
 - CRUD danh mục và món chè.
 - Liên kết món chè với danh mục.
 - Upload, hiển thị và thay ảnh món chè.
-- Đăng ký, đăng nhập có giao diện đồng bộ với dashboard, hồ sơ tài khoản và phân quyền quản trị bằng ASP.NET Core Identity.
-- Quản trị sản phẩm, danh mục, đơn hàng, trạng thái đơn và hộp thư liên hệ.
+- Đăng ký, đăng nhập, hồ sơ tài khoản; quản trị và nhân viên dùng các vai trò riêng của ASP.NET Core Identity.
+- Quản trị sản phẩm, danh mục, đơn hàng, tài khoản nhân viên và hộp thư liên hệ.
+- Nhân viên nhận đơn, cập nhật tuần tự từ xác nhận đến chuẩn bị, giao hàng và hoàn thành; mỗi lần đổi trạng thái có lịch sử, đơn nhận đồng thời được bảo vệ bằng rowversion.
 - Tìm kiếm thực đơn theo tên, mô tả hoặc danh mục; lọc theo loại chè và món bán chạy.
+- Gợi ý ba món chè theo thời tiết khách tự chọn (nắng nóng, trời mát hoặc trời mưa); không thu thập vị trí hay gọi dịch vụ thời tiết bên ngoài.
 - Giỏ hàng và checkout, xác thực lại giá và tình trạng món trước khi lưu đơn.
 - Lưu liên hệ khách hàng vào database và quản lý trong khu vực quản trị.
 - Vai trò `Customer`, `Staff`, `Admin`; đăng ký công khai chỉ tạo tài khoản `Customer`; Admin quản lý tài khoản Staff.
@@ -29,7 +31,9 @@ Trình duyệt → SaigonChe.Web → SQL Server
 - POS cho đơn tại bàn/mang về, ghi chú món, voucher, tiền mặt hoặc VietQR xác nhận thủ công, trừ tồn và in lại bill.
 - Quản trị tồn kho theo số phần, bàn và voucher.
 - Khách gửi/theo dõi yêu cầu đặt tiệc; Staff/Admin tư vấn, báo giá, xác nhận và hoàn tất.
-- Dashboard Admin lọc doanh thu theo ngày và loại đơn, biểu đồ ngày/tháng, món bán chạy và xuất Excel; có thể in/lưu PDF từ trình duyệt.
+- Dashboard Admin lọc doanh thu theo ngày, thống kê đơn hoàn thành và đang xử lý, món bán chạy; báo cáo có thể xuất Excel hoặc in/lưu PDF từ trình duyệt.
+- Khách có thể theo dõi đơn, xem lịch sử mua hàng và gửi đánh giá; Admin quản lý đánh giá và khách hàng.
+- Ảnh minh họa thực đơn được lưu cục bộ trong `SaigonChe.Web/wwwroot/images/menu`; nguồn và giấy phép ảnh được liệt kê ở cuối thực đơn.
 
 Các giới hạn hiện tại:
 - VietQR chỉ hiển thị yêu cầu chuyển khoản; nhân viên xác nhận đã nhận tiền, chưa có cổng thanh toán tự động.
@@ -74,6 +78,10 @@ dotnet user-secrets set "Payment:AccountName" "<ten-chu-tai-khoan>" --project .\
 ```
 
 Thiếu cấu hình VietQR thì lựa chọn này sẽ bị vô hiệu hóa. Có thể đặt `Payment:QrTemplate` nếu cần chọn mẫu QR khác.
+
+Trong môi trường Development, có thể seed ba tài khoản khách hàng và đánh giá mẫu bằng cách cấp `Seed:SampleCustomerPassword` qua User Secrets hoặc biến môi trường `Seed__SampleCustomerPassword`. Nếu chưa cấu hình mật khẩu này, dữ liệu mẫu sẽ được bỏ qua; không dùng các tài khoản mẫu trong môi trường khác.
+
+Đăng nhập bằng tài khoản Admin để tạo tài khoản Staff trong mục **Nhân viên**. Nhân viên đăng nhập bằng tài khoản được cấp và dùng mục **Đơn cần xử lý** để nhận đơn, chuyển trạng thái và ghi chú.
 
 Áp dụng migration:
 

@@ -11,182 +11,244 @@ namespace SaigonChe.Web.Data
         {
         }
 
-        public DbSet<Category> Categories { get; set; }
-        public DbSet<Product> Products { get; set; }
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
-        public DbSet<OrderStatusHistory> OrderStatusHistory { get; set; }
-        public DbSet<ContactMessage> ContactMessages { get; set; }
-        public DbSet<DiningTable> DiningTables { get; set; }
-        public DbSet<InventoryMovement> InventoryMovements { get; set; }
-        public DbSet<PartyRequest> PartyRequests { get; set; }
-        public DbSet<PartyRequestStatusHistory> PartyRequestStatusHistory { get; set; }
-        public DbSet<Voucher> Vouchers { get; set; }
+        public DbSet<Category> Categories { get; set; } = null!;
+        public DbSet<Product> Products { get; set; } = null!;
+        public DbSet<Order> Orders { get; set; } = null!;
+        public DbSet<OrderItem> OrderItems { get; set; } = null!;
+        public DbSet<OrderStatusHistory> OrderStatusHistory { get; set; } = null!;
+        public DbSet<StaffOrderStatusHistory> OrderStatusHistories { get; set; } = null!;
+        public DbSet<ContactMessage> ContactMessages { get; set; } = null!;
+        public DbSet<DiningTable> DiningTables { get; set; } = null!;
+        public DbSet<InventoryMovement> InventoryMovements { get; set; } = null!;
+        public DbSet<PartyRequest> PartyRequests { get; set; } = null!;
+        public DbSet<PartyRequestStatusHistory> PartyRequestStatusHistory { get; set; } = null!;
+        public DbSet<Voucher> Vouchers { get; set; } = null!;
         public DbSet<Cart> Carts { get; set; } = null!;
         public DbSet<CartItem> CartItems { get; set; } = null!;
         public DbSet<PaymentTransaction> PaymentTransactions { get; set; } = null!;
         public DbSet<Coupon> Coupons { get; set; } = null!;
+        public DbSet<Favorite> Favorites { get; set; } = null!;
+        public DbSet<Review> Reviews { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Category>()
-                .HasMany(c => c.Products)
-                .WithOne(p => p.Category)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasMany(category => category.Products)
+                .WithOne(product => product.Category)
+                .HasForeignKey(product => product.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Product>()
-                .Property(p => p.Price)
+                .Property(product => product.Price)
                 .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Order>()
-                .Property(o => o.Total)
+                .Property(order => order.Total)
                 .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Order>()
-                .Property(o => o.DiscountAmount)
+                .Property(order => order.DiscountAmount)
                 .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Order>()
-                .Property(o => o.RowVersion)
+                .Property(order => order.RowVersion)
                 .IsRowVersion();
 
             modelBuilder.Entity<Order>()
-                .HasOne(o => o.CustomerUser)
+                .HasOne(order => order.CustomerUser)
                 .WithMany()
-                .HasForeignKey(o => o.CustomerUserId)
+                .HasForeignKey(order => order.CustomerUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Order>()
-                .HasOne(o => o.AssignedStaff)
-                .WithMany()
-                .HasForeignKey(o => o.AssignedStaffId)
+                .HasOne(order => order.Customer)
+                .WithMany(user => user.CustomerOrders)
+                .HasForeignKey(order => order.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Order>()
+                .HasOne(order => order.AssignedStaff)
+                .WithMany(user => user.AssignedOrders)
+                .HasForeignKey(order => order.AssignedStaffId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Order>()
-                .HasOne(o => o.Table)
-                .WithMany(t => t.Orders)
-                .HasForeignKey(o => o.TableId)
+                .HasOne(order => order.Table)
+                .WithMany(table => table.Orders)
+                .HasForeignKey(order => order.TableId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Order>()
-                .HasOne(o => o.Voucher)
-                .WithMany(v => v.Orders)
-                .HasForeignKey(o => o.VoucherId)
+                .HasOne(order => order.Voucher)
+                .WithMany(voucher => voucher.Orders)
+                .HasForeignKey(order => order.VoucherId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Order>()
-                .HasIndex(o => o.TableId)
+                .HasIndex(order => order.TableId)
                 .IsUnique()
                 .HasFilter("[TableId] IS NOT NULL AND [Type] = 1 AND [IsPaid] = 0 AND [Status] <> 4");
 
             modelBuilder.Entity<OrderItem>()
-                .Property(oi => oi.Price)
+                .Property(orderItem => orderItem.Price)
                 .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<OrderItem>()
-                .HasOne(oi => oi.Order)
-                .WithMany(o => o.Items)
-                .HasForeignKey(oi => oi.OrderId)
+                .HasOne(orderItem => orderItem.Order)
+                .WithMany(order => order.Items)
+                .HasForeignKey(orderItem => orderItem.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<OrderItem>()
-                .HasOne(oi => oi.Product)
-                .WithMany(p => p.OrderItems)
-                .HasForeignKey(oi => oi.ProductId)
+                .HasOne(orderItem => orderItem.Product)
+                .WithMany(product => product.OrderItems)
+                .HasForeignKey(orderItem => orderItem.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OrderStatusHistory>()
-                .HasOne(h => h.Order)
-                .WithMany(o => o.StatusHistory)
-                .HasForeignKey(h => h.OrderId)
+                .ToTable("OrderStatusHistory");
+
+            modelBuilder.Entity<OrderStatusHistory>()
+                .HasOne(history => history.Order)
+                .WithMany(order => order.StatusHistory)
+                .HasForeignKey(history => history.OrderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OrderStatusHistory>()
-                .HasOne(h => h.Actor)
+                .HasOne(history => history.Actor)
                 .WithMany()
-                .HasForeignKey(h => h.ActorId)
+                .HasForeignKey(history => history.ActorId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<OrderStatusHistory>()
-                .HasIndex(h => new { h.OrderId, h.CreatedAt });
+                .HasIndex(history => new { history.OrderId, history.CreatedAt });
+
+            modelBuilder.Entity<StaffOrderStatusHistory>()
+                .ToTable("OrderStatusHistories");
+
+            modelBuilder.Entity<StaffOrderStatusHistory>()
+                .HasOne(history => history.Order)
+                .WithMany(order => order.StaffStatusHistory)
+                .HasForeignKey(history => history.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<StaffOrderStatusHistory>()
+                .HasIndex(history => history.OrderId);
 
             modelBuilder.Entity<DiningTable>()
-                .HasIndex(t => t.Code)
+                .HasIndex(table => table.Code)
                 .IsUnique();
 
             modelBuilder.Entity<InventoryMovement>()
-                .HasOne(m => m.Product)
-                .WithMany(p => p.InventoryMovements)
-                .HasForeignKey(m => m.ProductId)
+                .HasOne(movement => movement.Product)
+                .WithMany(product => product.InventoryMovements)
+                .HasForeignKey(movement => movement.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<InventoryMovement>()
-                .HasOne(m => m.Order)
+                .HasOne(movement => movement.Order)
                 .WithMany()
-                .HasForeignKey(m => m.OrderId)
+                .HasForeignKey(movement => movement.OrderId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<InventoryMovement>()
-                .HasOne(m => m.Actor)
+                .HasOne(movement => movement.Actor)
                 .WithMany()
-                .HasForeignKey(m => m.ActorId)
+                .HasForeignKey(movement => movement.ActorId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<InventoryMovement>()
-                .HasIndex(m => new { m.OrderId, m.ProductId })
+                .HasIndex(movement => new { movement.OrderId, movement.ProductId })
                 .IsUnique()
                 .HasFilter("[OrderId] IS NOT NULL");
 
             modelBuilder.Entity<Voucher>()
-                .HasIndex(v => v.Code)
+                .HasIndex(voucher => voucher.Code)
                 .IsUnique();
 
             modelBuilder.Entity<Voucher>()
-                .Property(v => v.Amount)
+                .Property(voucher => voucher.Amount)
                 .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Voucher>()
-                .Property(v => v.MinimumOrderTotal)
+                .Property(voucher => voucher.MinimumOrderTotal)
                 .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<PartyRequest>()
-                .Property(r => r.QuoteAmount)
+                .Property(request => request.QuoteAmount)
                 .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<PartyRequest>()
-                .HasOne(r => r.Customer)
+                .HasOne(request => request.Customer)
                 .WithMany()
-                .HasForeignKey(r => r.CustomerUserId)
+                .HasForeignKey(request => request.CustomerUserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<PartyRequest>()
-                .HasOne(r => r.Order)
+                .HasOne(request => request.Order)
                 .WithMany()
-                .HasForeignKey(r => r.OrderId)
+                .HasForeignKey(request => request.OrderId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<PartyRequest>()
-                .HasIndex(r => r.OrderId)
+                .HasIndex(request => request.OrderId)
                 .IsUnique()
                 .HasFilter("[OrderId] IS NOT NULL");
 
             modelBuilder.Entity<PartyRequestStatusHistory>()
-                .HasOne(h => h.PartyRequest)
-                .WithMany(r => r.StatusHistory)
-                .HasForeignKey(h => h.PartyRequestId)
+                .HasOne(history => history.PartyRequest)
+                .WithMany(request => request.StatusHistory)
+                .HasForeignKey(history => history.PartyRequestId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<PartyRequestStatusHistory>()
-                .HasOne(h => h.Actor)
+                .HasOne(history => history.Actor)
                 .WithMany()
-                .HasForeignKey(h => h.ActorId)
+                .HasForeignKey(history => history.ActorId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<PartyRequestStatusHistory>()
-                .HasIndex(h => new { h.PartyRequestId, h.CreatedAt });
+                .HasIndex(history => new { history.PartyRequestId, history.CreatedAt });
+
+            modelBuilder.Entity<Favorite>()
+                .HasIndex(favorite => new { favorite.UserId, favorite.ProductId })
+                .IsUnique();
+
+            modelBuilder.Entity<Favorite>()
+                .HasOne(favorite => favorite.User)
+                .WithMany(user => user.Favorites)
+                .HasForeignKey(favorite => favorite.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Favorite>()
+                .HasOne(favorite => favorite.Product)
+                .WithMany(product => product.Favorites)
+                .HasForeignKey(favorite => favorite.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Review>()
+                .HasIndex(review => new { review.ProductId, review.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<Review>()
+                .HasOne(review => review.Product)
+                .WithMany(product => product.Reviews)
+                .HasForeignKey(review => review.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(review => review.User)
+                .WithMany(user => user.CustomerReviews)
+                .HasForeignKey(review => review.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Review>()
+                .HasOne(review => review.RepliedBy)
+                .WithMany(user => user.RepliedReviews)
+                .HasForeignKey(review => review.RepliedById)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

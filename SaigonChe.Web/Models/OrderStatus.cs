@@ -14,12 +14,15 @@ namespace SaigonChe.Web.Models
         Preparing = 3,
 
         [Display(Name = "Đang giao hàng")]
-        Shipping = 4, // <-- Thành viên 2 bổ sung để đúng luồng giao chè
+        Shipping = 4,
 
         [Display(Name = "Đã hoàn thành")]
         Completed = 5,
 
         [Display(Name = "Đã hủy")]
-        Cancelled = 6
+        Cancelled = 6,
+
+        [Display(Name = "Đang giao")]
+        Delivering = 7
     }
 }

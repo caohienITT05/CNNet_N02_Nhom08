@@ -290,6 +290,7 @@ namespace SaigonChe.Web.Controllers
             _context.OrderStatusHistory.Add(new OrderStatusHistory
             {
                 OrderId = order.Id,
+                PreviousStatus = null,
                 Status = OrderStatus.Pending,
                 ActorId = userId,
                 Note = "Khách tạo đơn online.",

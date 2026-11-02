@@ -1,7 +1,6 @@
 @model SaigonChe.Web.ViewModels.RegisterViewModel
 @{
     ViewData["Title"] = "Đăng ký";
-    ViewData["Description"] = "Tạo tài khoản Chè Sài Gòn để đặt món nhanh hơn và nhận ưu đãi thành viên.";
 }
 
 <section class="auth-section">
@@ -10,70 +9,56 @@
             <aside class="auth-aside">
                 <span class="eyebrow light">Thành viên Chè Sài Gòn</span>
                 <h1>Mở đầu hành trình ngọt ngào.</h1>
-                <p>Tạo tài khoản để lưu món yêu thích, nhận ưu đãi thành viên và đặt món thuận tiện hơn mỗi ngày.</p>
+                <p>Tạo tài khoản để lưu lại những món chè yêu thích và đặt món thuận tiện hơn.</p>
                 <div class="auth-aside-note">
                     <span class="auth-aside-mark">CS</span>
-                    <span>Ngọt ngào hương vị Việt · Từ 1998</span>
+                    <span>Ngọt ngào hương vị Việt</span>
                 </div>
             </aside>
 
             <div class="auth-form-panel">
                 <div class="auth-form-heading">
-                    <span class="eyebrow">Tạo tài khoản mới</span>
+                    <span class="eyebrow accent">Tạo tài khoản mới</span>
                     <h2>Đăng ký</h2>
-                    <p>Chỉ mất một phút để bắt đầu.</p>
+                    <p>Điền thông tin bên dưới để bắt đầu.</p>
                 </div>
 
                 <form asp-controller="Account" asp-action="Register" method="post">
                     <input asp-for="ReturnUrl" type="hidden" />
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger auth-validation" role="alert"></div>
 
-                    <div class="form-group">
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" autocomplete="name" maxlength="100" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
                         <label asp-for="Email" class="form-label"></label>
                         <input asp-for="Email" class="form-control" autocomplete="email" placeholder="ban@email.com" />
                         <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
 
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label asp-for="Password" class="form-label"></label>
-                        <div class="password-field">
-                            <input asp-for="Password" class="form-control" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" />
-                            <button type="button" class="password-toggle" data-password-toggle="Password" aria-label="Hiện mật khẩu" aria-pressed="false">
-                                <svg class="icon eye-open" aria-hidden="true"><use href="#i-eye" /></svg>
-                                <svg class="icon eye-off" aria-hidden="true" hidden><use href="#i-eye-off" /></svg>
-                            </button>
-                        </div>
+                        <input asp-for="Password" class="form-control" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" />
                         <span asp-validation-for="Password" class="text-danger small"></span>
                         <small class="form-text">Cần có chữ hoa, chữ thường, số và ký tự đặc biệt.</small>
                     </div>
 
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label asp-for="ConfirmPassword" class="form-label"></label>
-                        <div class="password-field">
-                            <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" placeholder="Nhập lại mật khẩu" />
-                            <button type="button" class="password-toggle" data-password-toggle="ConfirmPassword" aria-label="Hiện mật khẩu" aria-pressed="false">
-                                <svg class="icon eye-open" aria-hidden="true"><use href="#i-eye" /></svg>
-                                <svg class="icon eye-off" aria-hidden="true" hidden><use href="#i-eye-off" /></svg>
-                            </button>
-                        </div>
+                        <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" placeholder="Nhập lại mật khẩu" />
                         <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                     </div>
 
-                    <button type="submit" class="btn btn-primary auth-submit">
-                        Tạo tài khoản
-                        <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
-                    </button>
+                    <button type="submit" class="btn btn-primary auth-submit">Tạo tài khoản</button>
                 </form>
 
                 <p class="auth-switch">
                     Đã có tài khoản?
                     <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Đăng nhập</a>
                 </p>
-
-                <div class="auth-footnote">
-                    <svg class="icon" aria-hidden="true"><use href="#i-lock" /></svg>
-                    <span>Bảo mật bởi ASP.NET Core Identity</span>
-                </div>
             </div>
         </div>
     </div>

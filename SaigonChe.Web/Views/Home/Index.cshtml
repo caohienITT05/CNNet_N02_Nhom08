@@ -1,103 +1,72 @@
 @model SaigonChe.Web.ViewModels.LandingPageViewModel
+@using SaigonChe.Web.Models
 @{
     ViewData["Title"] = "Trang chủ";
 }
 
-<section id="home" class="hero">
+<section id="home" class="hero-section section-spacing">
     <div class="container">
         @if (TempData["OrderSuccess"] is string orderSuccess)
         {
             <div class="alert alert-success" role="status">
-                <span>
-                    @orderSuccess
-                    @if (TempData["OrderId"] is int orderId)
-                    {
-                        <strong>Mã đơn hàng: #@orderId</strong>
-                    }
-                </span>
+                @orderSuccess
+                @if (TempData["OrderId"] is int orderId)
+                {
+                    <strong>Mã đơn hàng: #@orderId</strong>
+                }
             </div>
         }
 
-        <div class="hero-inner">
-            <span class="eyebrow">Chè Việt · Thủ công mỗi ngày</span>
-            <h1 class="hero-title">
-                <span class="line">Ngọt ngào</span>
-                <span class="line text-gradient">từ Sài Gòn</span>
-            </h1>
-            <p class="hero-sub">
-                Từ ly chè ba màu quen thuộc đến những món tráng miệng hiện đại, mỗi phần chè đều được nấu
-                thủ công bằng nguyên liệu tươi, công thức gia truyền và sự tận tâm của người Sài Gòn.
-            </p>
-            <div class="hero-actions">
-                <a href="#menu" class="btn btn-primary btn-lg">
-                    Khám phá thực đơn
-                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
-                </a>
-                <a href="#about" class="btn btn-outline btn-lg">Câu chuyện của quán</a>
-            </div>
-            <div class="hero-meta">
-                <div class="avatar-stack" aria-hidden="true">
-                    <span class="avatar">MA</span>
-                    <span class="avatar">HT</span>
-                    <span class="avatar">DN</span>
-                    <span class="avatar">LH</span>
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6 hero-copy">
+                <span class="eyebrow accent">Chè Việt · Thủ công mỗi ngày</span>
+                <h1>Ngọt ngào từ Sài Gòn</h1>
+                <p>
+                    Từ ly chè ba màu quen thuộc đến những món tráng miệng hiện đại, mỗi phần chè đều được nấu
+                    thủ công bằng nguyên liệu tươi, công thức gia truyền và sự tận tâm của người Sài Gòn.
+                </p>
+                <div class="hero-actions">
+                    <a href="#menu" class="btn btn-primary btn-lg">
+                        Khám phá thực đơn
+                        <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                    </a>
+                    <a href="#about" class="btn btn-outline btn-lg">Câu chuyện của quán</a>
                 </div>
-                <div class="stars" aria-label="Đánh giá 4.9 trên 5">
-                    @for (var i = 0; i < 5; i++)
-                    {
-                        <svg class="icon" aria-hidden="true"><use href="#i-star" /></svg>
-                    }
+                <div class="hero-badges">
+                    <span>Nguyên liệu chọn lọc</span>
+                    <span>Chế biến mỗi ngày</span>
+                    <span>Hương vị Việt</span>
                 </div>
-                <span>4.9/5 từ hơn 1.200 thực khách</span>
-            </div>
-
-            <div class="hero-window">
-                <div class="window-bar">
-                    <div class="window-dots" aria-hidden="true">
-                        <span></span><span></span><span></span>
-                    </div>
-                    <span class="window-title">chesaigon.vn/thuc-don</span>
-                    <span class="badge">
-                        <span class="dot" aria-hidden="true"></span>
-                        Đang mở cửa
-                    </span>
-                </div>
-                <div class="window-body">
-                    <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1600&q=80"
-                         alt="Ly chè Sài Gòn với topping tươi mát" fetchpriority="high" />
-                    <div class="floating-card card-rating">
-                        <span class="icon-wrap">
+                <div class="hero-meta mt-3">
+                    <div class="stars" aria-label="Đánh giá 4.9 trên 5">
+                        @for (var i = 0; i < 5; i++)
+                        {
                             <svg class="icon" aria-hidden="true"><use href="#i-star" /></svg>
-                        </span>
-                        <div>
-                            <div class="stars" aria-hidden="true">
-                                <svg class="icon"><use href="#i-star" /></svg>
-                                <svg class="icon"><use href="#i-star" /></svg>
-                                <svg class="icon"><use href="#i-star" /></svg>
-                                <svg class="icon"><use href="#i-star" /></svg>
-                                <svg class="icon"><use href="#i-star" /></svg>
-                            </div>
-                            <small>1.200+ đánh giá thật</small>
-                        </div>
+                        }
                     </div>
-                    <div class="floating-card card-order">
-                        <span class="icon-wrap">
-                            <svg class="icon" aria-hidden="true"><use href="#i-truck" /></svg>
-                        </span>
-                        <div>
-                            <strong>Đơn #1284 đang giao</strong>
-                            <small>Dự kiến 18 phút nữa</small>
-                        </div>
-                    </div>
+                    <span>4.9/5 từ hơn 1.200 thực khách</span>
                 </div>
             </div>
-
-            <ul class="hero-note">
-                <li><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Nguyên liệu tươi mỗi ngày</li>
-                <li><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Không chất bảo quản</li>
-                <li><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Giao nhanh trong 30 phút</li>
-            </ul>
+            <div class="col-lg-6 hero-visual">
+                <div class="image-card main-card">
+                    <img src="/images/menu/che-ba-mau.jpg"
+                         alt="Chè ba màu nhiều tầng thạch, đậu và nước cốt dừa" fetchpriority="high" />
+                </div>
+                <div class="floating-badge badge-one">
+                    <strong>Vị Việt</strong>
+                    <small>Ngọt ngào thân quen</small>
+                </div>
+                <div class="floating-badge badge-two">
+                    <strong>Đang mở cửa</strong>
+                    <small>Giao nhanh trong 30 phút</small>
+                </div>
+            </div>
         </div>
+        <ul class="hero-note">
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Nguyên liệu tươi mỗi ngày</li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Không chất bảo quản</li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Giao nhanh trong 30 phút</li>
+        </ul>
     </div>
 </section>
 
@@ -195,7 +164,88 @@
     </div>
 </section>
 
-<section id="menu" class="section section-muted">
+<section class="weather-recommendation section-spacing">
+    <div class="container">
+        <div class="section-heading text-center">
+            <span class="eyebrow accent">Món ngon theo thời tiết</span>
+            <h2>Hôm Nay Ăn Chè Gì?</h2>
+            <p>Chọn thời tiết hiện tại để xem những món chè phù hợp nhất.</p>
+        </div>
+        <form asp-controller="Home" asp-action="Index" method="get" class="weather-selector">
+            <label for="weather" class="form-label">Thời tiết chỗ bạn</label>
+            <select id="weather" name="weather" class="form-select">
+                <option value="">Chọn thời tiết</option>
+                @foreach (var condition in Html.GetEnumSelectList<WeatherCondition>())
+                {
+                    var selected = Model.SelectedWeather.HasValue
+                        && int.TryParse(condition.Value, out var weatherValue)
+                        && (int)Model.SelectedWeather.Value == weatherValue;
+                    <option value="@condition.Value" selected="@selected">@condition.Text</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-primary">Gợi ý món</button>
+        </form>
+
+        @if (Model.SelectedWeather.HasValue)
+        {
+            <p class="weather-description text-center mt-3" role="status">@Model.WeatherDescription</p>
+            @if (Model.WeatherRecommendations.Count > 0)
+            {
+                <div class="row g-4 mt-2">
+                    @foreach (var item in Model.WeatherRecommendations)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <article class="menu-card weather-card">
+                                <div class="card-image-wrap">
+                                    @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                                    {
+                                        <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id">
+                                            <img src="@item.ImageUrl" alt="@item.Name" loading="lazy" />
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id">
+                                            <img src="/images/menu/che-ba-mau.jpg" alt="@item.Name" loading="lazy" />
+                                        </a>
+                                    }
+                                    <form asp-controller="Favorite" asp-action="Toggle" method="post" class="favorite-toggle-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productId" value="@item.Id" />
+                                        <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                                        <button type="submit" class="favorite-toggle-button @(item.IsFavorite ? "is-favorite" : string.Empty)"
+                                                aria-label="@(item.IsFavorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích")"
+                                                aria-pressed="@item.IsFavorite" title="@(item.IsFavorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích")">
+                                            <span aria-hidden="true">@(item.IsFavorite ? "♥" : "♡")</span>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="card-body">
+                                    <div class="card-head">
+                                        <h4><a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id">@item.Name</a></h4>
+                                        <span class="price">@item.Price.ToString("N0")₫</span>
+                                    </div>
+                                    <p>@item.Description</p>
+                                    <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productId" value="@item.Id" />
+                                        <button type="submit" class="btn btn-primary">Đặt món</button>
+                                    </form>
+                                </div>
+                            </article>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="empty-menu-message">Hiện chưa có món phù hợp trong thực đơn.</p>
+            }
+        }
+    </div>
+</section>
+
+<section id="menu" class="menu-section section-spacing section-muted">
     <div class="container">
         <div class="section-head">
             <div>
@@ -247,11 +297,15 @@
                         <div class="product-media">
                             @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
                             {
-                                <img src="@item.ImageUrl" alt="@item.Name" loading="lazy" />
+                                <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id">
+                                    <img src="@item.ImageUrl" alt="@item.Name" loading="lazy" />
+                                </a>
                             }
                             else
                             {
-                                <img src="https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80" alt="@item.Name" loading="lazy" />
+                                <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id">
+                                    <img src="/images/menu/che-ba-mau.jpg" alt="@item.Name" loading="lazy" />
+                                </a>
                             }
                             <div class="product-badges">
                                 @if (item.IsFeatured)
@@ -263,6 +317,16 @@
                                 }
                                 <span class="product-cat">@item.CategoryName</span>
                             </div>
+                            <form asp-controller="Favorite" asp-action="Toggle" method="post" class="favorite-toggle-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@item.Id" />
+                                <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                                <button type="submit" class="favorite-toggle-button @(item.IsFavorite ? "is-favorite" : string.Empty)"
+                                        aria-label="@(item.IsFavorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích")"
+                                        aria-pressed="@item.IsFavorite" title="@(item.IsFavorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích")">
+                                    <span aria-hidden="true">@(item.IsFavorite ? "♥" : "♡")</span>
+                                </button>
+                            </form>
                         </div>
                         <div class="product-body">
                             <h3>@item.Name</h3>
@@ -270,6 +334,7 @@
                             <div class="product-foot">
                                 <span class="price">@item.Price.ToString("N0")<small>₫</small></span>
                                 <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="productId" value="@item.Id" />
                                     <button type="submit" class="add-btn" aria-label="Thêm @item.Name vào giỏ">
                                         <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>
@@ -293,6 +358,19 @@
                 </p>
             }
         </div>
+        <details class="image-credits mt-4">
+            <summary>Nguồn ảnh và giấy phép</summary>
+            <ul>
+                <li><a href="https://commons.wikimedia.org/wiki/File:Chendol2.jpg" target="_blank" rel="noopener noreferrer">Chendol2</a> — Jess Lander, CC BY 2.0.</li>
+                <li><a href="https://commons.wikimedia.org/wiki/File:Ch%C3%A8_kh%C3%BAc_b%E1%BA%A1ch_%E1%BB%9F_qu%C3%A1n_Th%E1%BA%A3o_Vy_2020_09_06.jpg" target="_blank" rel="noopener noreferrer">Chè khúc bạch ở quán Thảo Vy</a> — Phương Huy, CC BY-SA 4.0.</li>
+                <li><a href="https://commons.wikimedia.org/wiki/File:Ch%C3%A8_Th%C6%B0ng.jpg" target="_blank" rel="noopener noreferrer">Chè Thưng</a> — Zxcvasdfqwer888, CC BY-SA 3.0.</li>
+                <li><a href="https://commons.wikimedia.org/wiki/File:Ch%C3%A8_%C4%91%E1%BB%97_xanh.jpg" target="_blank" rel="noopener noreferrer">Chè đỗ xanh</a> — Hoangkid, CC BY-SA 4.0.</li>
+                <li><a href="https://commons.wikimedia.org/wiki/File:Ch%C3%A8_B%E1%BA%AFp.jpg" target="_blank" rel="noopener noreferrer">Chè Bắp</a> — Zxcvasdfqwer888, CC BY-SA 3.0.</li>
+                <li><a href="https://commons.wikimedia.org/wiki/File:Ch%C3%A8_b%C3%A0_ba.jpg" target="_blank" rel="noopener noreferrer">Chè bà ba</a> — Zxcvasdfqwer888, CC BY-SA 3.0.</li>
+                <li><a href="https://commons.wikimedia.org/wiki/File:A_cup,_spoon_and_pot_of_Vietnamese_dessert-_banana,_tapioca_pudding.jpg" target="_blank" rel="noopener noreferrer">Vietnamese banana tapioca pudding</a> — HungryHuy, CC BY 2.0.</li>
+            </ul>
+            <p class="mb-0">Ảnh dùng để minh họa món chè; một số ảnh thể hiện món chè gần giống thay vì đúng biến thể trong tên món.</p>
+        </details>
     </div>
 </section>
 
@@ -317,17 +395,30 @@
                 {
                     <article class="best-card" data-reveal>
                         <div class="best-image">
-                            <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80" : item.ImageUrl)" alt="@item.Name" loading="lazy" />
+                            <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id">
+                                <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "/images/menu/che-ba-mau.jpg" : item.ImageUrl)" alt="@item.Name" loading="lazy" />
+                            </a>
+                            <form asp-controller="Favorite" asp-action="Toggle" method="post" class="favorite-toggle-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@item.Id" />
+                                <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                                <button type="submit" class="favorite-toggle-button @(item.IsFavorite ? "is-favorite" : string.Empty)"
+                                        aria-label="@(item.IsFavorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích")"
+                                        aria-pressed="@item.IsFavorite" title="@(item.IsFavorite ? "Bỏ khỏi yêu thích" : "Thêm vào yêu thích")">
+                                    <span aria-hidden="true">@(item.IsFavorite ? "♥" : "♡")</span>
+                                </button>
+                            </form>
                         </div>
                         <div class="best-content">
                             <span class="small-badge">
                                 <svg class="icon" aria-hidden="true"><use href="#i-flame" /></svg>
                                 Được yêu thích
                             </span>
-                            <h4>@item.Name</h4>
+                            <h4><a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id">@item.Name</a></h4>
                             <div class="best-meta">
                                 <span class="price">@item.Price.ToString("N0")<small>₫</small></span>
                                 <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="productId" value="@item.Id" />
                                     <button type="submit" class="add-btn" aria-label="Thêm @item.Name vào giỏ">Đặt món</button>
                                 </form>
@@ -408,7 +499,10 @@
                 </article>
             }
         </div>
-        <p class="sample-note">* Đây là dữ liệu mẫu trong môi trường phát triển.</p>
+        @if (!Model.HasLiveTestimonials)
+        {
+            <p class="sample-note">* Đây là nội dung giới thiệu mẫu, hiển thị khi chưa có đánh giá thực.</p>
+        }
     </div>
 </section>
 

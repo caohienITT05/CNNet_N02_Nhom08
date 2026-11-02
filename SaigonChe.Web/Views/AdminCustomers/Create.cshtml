@@ -1,0 +1,40 @@
+@model SaigonChe.Web.ViewModels.CreateCustomerViewModel
+@{
+    ViewData["Title"] = "Thêm khách hàng";
+}
+
+<section class="section-spacing">
+    <div class="container admin-layout">
+        <div class="section-heading">
+            <span class="eyebrow accent">Quản trị</span>
+            <h1>Thêm Tài Khoản Khách Hàng</h1>
+        </div>
+        <form asp-action="Create" method="post" class="admin-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="PhoneNumber" class="form-label"></label>
+                <input asp-for="PhoneNumber" class="form-control" autocomplete="tel" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+                <small class="form-text">Mật khẩu cần có chữ hoa, chữ thường, số và ký tự đặc biệt.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </form>
+    </div>
+</section>

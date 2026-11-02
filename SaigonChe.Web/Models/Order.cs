@@ -55,6 +55,10 @@ namespace SaigonChe.Web.Models
 
         public ApplicationUser? CustomerUser { get; set; }
 
+        public string? CustomerId { get; set; }
+
+        public ApplicationUser? Customer { get; set; }
+
         public string? AssignedStaffId { get; set; }
 
         public ApplicationUser? AssignedStaff { get; set; }
@@ -73,6 +77,8 @@ namespace SaigonChe.Web.Models
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 
         public ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
+
+        public ICollection<StaffOrderStatusHistory> StaffStatusHistory { get; set; } = new List<StaffOrderStatusHistory>();
 
         public ICollection<PaymentTransaction> Transactions { get; set; } = new List<PaymentTransaction>();
     }
