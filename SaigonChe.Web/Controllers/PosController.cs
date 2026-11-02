@@ -175,7 +175,22 @@ public sealed class PosController : Controller
         var order = await FindOpenOrderAsync(id, cancellationToken);
         if (order == null)
         {
-            return NotFound();
+            var closedOrder = await _db.Orders.AsNoTracking()
+                .FirstOrDefaultAsync(item => item.Id == id && item.Type == OrderType.Pos, cancellationToken);
+            if (closedOrder == null)
+            {
+                return NotFound();
+            }
+
+            if (closedOrder.IsPaid)
+            {
+                return RedirectToAction(nameof(Receipt), new { id });
+            }
+
+            TempData["PosError"] = closedOrder.Status == OrderStatus.Cancelled
+                ? $"Đơn #{id} đã bị hủy."
+                : $"Đơn #{id} không còn mở để chỉnh sửa.";
+            return RedirectToAction(nameof(Index));
         }
 
         var now = DateTime.UtcNow;
@@ -274,6 +289,85 @@ public sealed class PosController : Controller
             return StaleOrder(order.Id);
         }
 
+        TempData["PosSuccess"] = $"Đã thêm {product.Name} vào đơn #{order.Id}.";
+        return RedirectToAction(nameof(Order), new { id = order.Id });
+    }
+
+    [HttpPost("QuickAdd")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> QuickAdd(int productId, CancellationToken cancellationToken)
+    {
+        var product = await _db.Products.FirstOrDefaultAsync(
+            item => item.Id == productId && item.IsAvailable, cancellationToken);
+        if (product == null)
+        {
+            TempData["PosError"] = "Món không tồn tại hoặc đã ngừng bán.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var staffId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var order = await _db.Orders
+            .Include(item => item.Items)
+            .Where(item => item.Type == OrderType.Pos
+                && !item.IsPaid
+                && item.Status != OrderStatus.Cancelled
+                && item.AssignedStaffId == staffId)
+            .OrderByDescending(item => item.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (order == null)
+        {
+            order = new Order
+            {
+                Type = OrderType.Pos,
+                CustomerName = "Khách tại quầy",
+                Phone = "0000000000",
+                Address = "Mua mang về",
+                AssignedStaffId = staffId,
+                Status = OrderStatus.Pending,
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.OrderStatusHistory.Add(new OrderStatusHistory
+            {
+                Order = order,
+                PreviousStatus = null,
+                Status = OrderStatus.Pending,
+                ActorId = staffId,
+                Note = "Tạo đơn nháp POS.",
+                CreatedAt = DateTime.UtcNow
+            });
+            _db.Orders.Add(order);
+        }
+
+        var existing = order.Items.FirstOrDefault(item =>
+            item.ProductId == product.Id && item.Notes == null);
+        if (existing == null)
+        {
+            var item = new OrderItem
+            {
+                OrderId = order.Id,
+                ProductId = product.Id,
+                ProductName = product.Name,
+                Price = product.Price,
+                Quantity = 1
+            };
+            order.Items.Add(item);
+            _db.OrderItems.Add(item);
+        }
+        else if (existing.Quantity >= MaxQuantityPerProduct)
+        {
+            TempData["PosError"] = $"Đơn đã có tối đa {MaxQuantityPerProduct} phần cho {product.Name}.";
+            return RedirectToAction(nameof(Order), new { id = order.Id });
+        }
+        else
+        {
+            existing.Quantity += 1;
+            existing.ProductName = product.Name;
+            existing.Price = product.Price;
+        }
+
+        RecalculateOrder(order);
+        await _db.SaveChangesAsync(cancellationToken);
         TempData["PosSuccess"] = $"Đã thêm {product.Name} vào đơn #{order.Id}.";
         return RedirectToAction(nameof(Order), new { id = order.Id });
     }

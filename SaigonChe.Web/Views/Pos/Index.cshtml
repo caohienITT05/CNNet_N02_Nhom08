@@ -8,6 +8,10 @@
 
 .pos-wrap input,.pos-wrap select,.pos-wrap textarea{background:var(--card);color:var(--foreground);border-color:var(--input)}
 .pos-form button,.pos-btn{color:var(--primary-foreground)}
+.pos-product{display:flex;flex-direction:column;transition:border-color 160ms var(--ease),box-shadow 160ms var(--ease)}
+.pos-product:hover{border-color:color-mix(in oklab,var(--primary) 45%,var(--border));box-shadow:0 10px 26px #1b2a3a14}
+.pos-product form{margin-top:auto;padding-top:.6rem}
+.pos-add{width:100%;padding:.5rem .6rem;font-size:.85rem}
 </style>
 <main class="pos-wrap">
     <header class="pos-head">
@@ -75,6 +79,11 @@
                     <div class="pos-muted">@product.Category?.Name</div>
                     <div style="margin-top:.45rem;font-weight:700">@product.Price.ToString("N0") ₫</div>
                     <div class="pos-muted">Tồn kho: @(product.Stock.HasValue ? product.Stock.Value.ToString("N0") + " phần" : "chưa khởi tạo")</div>
+                    <form asp-action="QuickAdd" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@product.Id" />
+                        <button type="submit" class="pos-btn pos-add">+ Thêm vào đơn</button>
+                    </form>
                 </article>
             }
             @if (Model.Products.Count == 0) { <p class="pos-muted">Chưa có món đang bán.</p> }

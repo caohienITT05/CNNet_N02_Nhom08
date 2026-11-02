@@ -165,30 +165,6 @@
                     </nav>
                 </div>
 
-                @if (User.IsInRole("Admin"))
-                {
-                <div>
-                    <p class="admin-nav-label">Kênh thử nghiệm</p>
-                    <nav>
-                        <ul class="admin-nav">
-                            <li>
-                                <a asp-controller="Product" asp-action="Index" class="@(controller == "Product" ? "is-active" : null)">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
-                                    Product API
-                                </a>
-                            </li>
-                            <li>
-                                <a asp-controller="Category" asp-action="Index" class="@(controller == "Category" ? "is-active" : null)">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
-                                    Category API
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-
-                }
-
                 <div class="admin-sidebar__foot">
                     <div class="admin-user">
                         <span class="avatar avatar-sm">@initials</span>

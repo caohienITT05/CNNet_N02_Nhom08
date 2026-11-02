@@ -149,6 +149,39 @@ public sealed class AuditFlowTests(AuditHost host) : IClassFixture<AuditHost>
     }
 
     [Fact]
+    public async Task Pos_QuickAdd_CreatesDraft_AndPaidOrderRedirectsToReceipt()
+    {
+        var email = $"audit.staff.{Guid.NewGuid():N}@example.test";
+        await host.WithUsers(async manager =>
+        {
+            var user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
+            AuditHost.Check(await manager.CreateAsync(user, AuditHost.Password));
+            AuditHost.Check(await manager.AddToRoleAsync(user, "Staff"));
+        });
+        using var staff = await host.Login(email);
+        var product = await host.Product(10);
+
+        var quickAdd = await AuditHost.Post(staff, "/Pos", "/Pos/QuickAdd", new() { ["productId"] = product.Id.ToString() });
+        Assert.Equal(HttpStatusCode.Redirect, quickAdd.StatusCode);
+        var orderId = int.Parse(System.Text.RegularExpressions.Regex.Match(quickAdd.Headers.Location!.ToString(), @"(\d+)$").Value);
+
+        await using var db = host.Db();
+        var order = await db.Orders.Include(item => item.Items).SingleAsync(item => item.Id == orderId);
+        Assert.False(order.IsPaid);
+        Assert.Contains(order.Items, item => item.ProductId == product.Id);
+
+        var page = await staff.GetStringAsync("/Pos/Order/" + orderId);
+        var pay = await AuditHost.Post(staff, "/Pos/Order/" + orderId, "/Pos/Pay", new() {
+            ["orderId"] = orderId.ToString(), ["rowVersion"] = AuditHost.Field(page, "rowVersion"),
+            ["method"] = ((int)PaymentMethod.Cash).ToString(), ["amountReceived"] = "30000" });
+        Assert.Equal(HttpStatusCode.Redirect, pay.StatusCode);
+
+        var closed = await staff.GetAsync("/Pos/Order/" + orderId);
+        Assert.Equal(HttpStatusCode.Redirect, closed.StatusCode);
+        Assert.EndsWith("/Pos/Receipt/" + orderId, closed.Headers.Location!.ToString());
+    }
+
+    [Fact]
     public async Task Party_OwnerIsolation_StaleUpdate_And_PaymentPersist()
     {
         using var customer = await host.Login("audit.customer@example.test");

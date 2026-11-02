@@ -8,7 +8,7 @@
     @@media print{.admin-sidebar,.admin-topbar,.skip-link{display:none!important}.admin-shell{display:block!important}.admin-content{padding:0!important;max-width:none!important}body{background:#fff!important}.receipt-wrap{margin:0 auto;padding:0}.receipt-actions{display:none}.receipt{border:0;box-shadow:none;padding:.5cm}.container{max-width:none!important;padding:0!important}}
 </style>
 <div class="receipt-wrap">
-    <nav class="receipt-actions"><a asp-action="Order" asp-route-id="@order.Id" class="receipt-btn">← Quay lại đơn</a><button class="receipt-btn" type="button" onclick="window.print()">In / Lưu PDF</button></nav>
+    <nav class="receipt-actions"><a asp-action="Index" class="receipt-btn">← Về bán hàng</a><button class="receipt-btn" type="button" onclick="window.print()">In / Lưu PDF</button></nav>
     <article class="receipt">
         <h1>SAIGONCHE</h1><p class="receipt-muted">PHIẾU THANH TOÁN TẠI QUẦY</p>
         <p><strong>Đơn #@order.Id</strong><br/>@VietnamTime.ToLocal(order.PaidAt ?? order.CreatedAt).ToString("dd/MM/yyyy HH:mm")</p>
