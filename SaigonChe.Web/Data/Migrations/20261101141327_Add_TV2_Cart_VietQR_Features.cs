@@ -11,19 +11,6 @@ namespace SaigonChe.Web.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<DateTime>(
-                name: "CompletedAt",
-                table: "Orders",
-                type: "datetime2",
-                nullable: true);
-
-            migrationBuilder.AddColumn<decimal>(
-                name: "DiscountAmount",
-                table: "Orders",
-                type: "decimal(18,2)",
-                nullable: false,
-                defaultValue: 0m);
-
             migrationBuilder.AddColumn<string>(
                 name: "Note",
                 table: "Orders",
@@ -37,19 +24,6 @@ namespace SaigonChe.Web.Data.Migrations
                 maxLength: 50,
                 nullable: false,
                 defaultValue: "");
-
-            migrationBuilder.AddColumn<DateTime>(
-                name: "PaidAt",
-                table: "Orders",
-                type: "datetime2",
-                nullable: true);
-
-            migrationBuilder.AddColumn<int>(
-                name: "PaymentMethod",
-                table: "Orders",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
 
             migrationBuilder.AddColumn<int>(
                 name: "PaymentStatus",
@@ -186,27 +160,11 @@ namespace SaigonChe.Web.Data.Migrations
                 name: "Carts");
 
             migrationBuilder.DropColumn(
-                name: "CompletedAt",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "DiscountAmount",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
                 name: "Note",
                 table: "Orders");
 
             migrationBuilder.DropColumn(
                 name: "OrderCode",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "PaidAt",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "PaymentMethod",
                 table: "Orders");
 
             migrationBuilder.DropColumn(

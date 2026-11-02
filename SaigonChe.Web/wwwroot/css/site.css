@@ -1695,6 +1695,10 @@ main {
 }
 
 @media (max-width: 991px) {
+    .container > .row.g-5 {
+        --bs-gutter-x: 1.5rem;
+    }
+
     .site-header .navbar {
         min-height: 72px;
     }

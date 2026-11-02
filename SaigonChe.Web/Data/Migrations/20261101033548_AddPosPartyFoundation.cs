@@ -17,12 +17,6 @@ namespace SaigonChe.Web.Data.Migrations
                 type: "int",
                 nullable: true);
 
-            migrationBuilder.AddColumn<string>(
-                name: "AssignedStaffId",
-                table: "Orders",
-                type: "nvarchar(450)",
-                nullable: true);
-
             migrationBuilder.AddColumn<DateTime>(
                 name: "CompletedAt",
                 table: "Orders",
@@ -60,14 +54,6 @@ namespace SaigonChe.Web.Data.Migrations
                 table: "Orders",
                 type: "int",
                 nullable: true);
-
-            migrationBuilder.AddColumn<byte[]>(
-                name: "RowVersion",
-                table: "Orders",
-                type: "rowversion",
-                rowVersion: true,
-                nullable: false,
-                defaultValue: new byte[0]);
 
             migrationBuilder.AddColumn<int>(
                 name: "TableId",
@@ -267,11 +253,6 @@ namespace SaigonChe.Web.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Orders_AssignedStaffId",
-                table: "Orders",
-                column: "AssignedStaffId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Orders_CustomerUserId",
                 table: "Orders",
                 column: "CustomerUserId");
@@ -350,14 +331,6 @@ namespace SaigonChe.Web.Data.Migrations
                 unique: true);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Orders_AspNetUsers_AssignedStaffId",
-                table: "Orders",
-                column: "AssignedStaffId",
-                principalTable: "AspNetUsers",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
-
-            migrationBuilder.AddForeignKey(
                 name: "FK_Orders_AspNetUsers_CustomerUserId",
                 table: "Orders",
                 column: "CustomerUserId",
@@ -385,10 +358,6 @@ namespace SaigonChe.Web.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Orders_AspNetUsers_AssignedStaffId",
-                table: "Orders");
-
             migrationBuilder.DropForeignKey(
                 name: "FK_Orders_AspNetUsers_CustomerUserId",
                 table: "Orders");
@@ -420,10 +389,6 @@ namespace SaigonChe.Web.Data.Migrations
                 name: "PartyRequests");
 
             migrationBuilder.DropIndex(
-                name: "IX_Orders_AssignedStaffId",
-                table: "Orders");
-
-            migrationBuilder.DropIndex(
                 name: "IX_Orders_CustomerUserId",
                 table: "Orders");
 
@@ -438,10 +403,6 @@ namespace SaigonChe.Web.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "Stock",
                 table: "Products");
-
-            migrationBuilder.DropColumn(
-                name: "AssignedStaffId",
-                table: "Orders");
 
             migrationBuilder.DropColumn(
                 name: "CompletedAt",
@@ -465,10 +426,6 @@ namespace SaigonChe.Web.Data.Migrations
 
             migrationBuilder.DropColumn(
                 name: "PaymentMethod",
-                table: "Orders");
-
-            migrationBuilder.DropColumn(
-                name: "RowVersion",
                 table: "Orders");
 
             migrationBuilder.DropColumn(

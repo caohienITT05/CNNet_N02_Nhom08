@@ -1,443 +1,106 @@
-@using Microsoft.AspNetCore.Identity
 @using SaigonChe.Web.Interfaces
-@using SaigonChe.Web.Models
-@inject SignInManager<ApplicationUser> SignInManager
 @inject ICartService CartService
 @{
-    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
-    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
-    var isHomePage = controller == "Home" && action == "Index";
-    var isAdminSection = controller is "Admin" or "AdminCustomers" or "AdminReviews" or "Product" or "Category" or "Pos" or "Reports" or "Staff" or "OperationsAdmin" or "OrderOperations"
-        || (controller == "Party" && (User.IsInRole("Staff") || User.IsInRole("Admin")));
+    var isHomePage = ViewContext.RouteData.Values["controller"]?.ToString() == "Home"
+        && ViewContext.RouteData.Values["action"]?.ToString() == "Index";
     var homeUrl = Url.Action("Index", "Home") ?? "/";
-    var isSignedIn = SignInManager.IsSignedIn(User);
-    var accountName = User.Identity?.Name ?? string.Empty;
-    var displayName = accountName.Contains('@') ? accountName.Split('@')[0] : accountName;
-    var initials = string.IsNullOrWhiteSpace(displayName)
-        ? "CS"
-        : (displayName.Length >= 2 ? displayName[..2] : displayName).ToUpperInvariant();
-
-    var cartCount = isAdminSection
-        ? 0
-        : (await CartService.GetCartAsync()).Items.Sum(item => item.Quantity);
-
-    string SectionHref(string anchor) => isHomePage ? $"#{anchor}" : $"{homeUrl}#{anchor}";
+    var cartCount = (await CartService.GetCartAsync()).Items.Sum(item => item.Quantity);
 }
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="@(ViewData["Description"] ?? "Chè Sài Gòn – Ngọt ngào hương vị Việt. Thực đơn chè truyền thống và hiện đại, ưu đãi hấp dẫn, phong cách Sài Gòn.")" />
-    <meta name="theme-color" content="#0b0b0d" />
-    <title>@ViewData["Title"] – Chè Sài Gòn</title>
-    <script>
-        (function () {
-            try {
-                var saved = localStorage.getItem("csg-theme");
-                document.documentElement.setAttribute("data-theme", saved === "light" ? "light" : "dark");
-            } catch (error) {
-                document.documentElement.setAttribute("data-theme", "dark");
-            }
-        })();
-    </script>
+    <meta name="description" content="Chè Sài Gòn – Ngọt ngào hương vị Việt. Thực đơn chè truyền thống và hiện đại, ưu đãi hấp dẫn, phong cách Sài Gòn." />
+    <title>@ViewData["Title"] - Chè Sài Gòn</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    @await RenderSectionAsync("Head", required: false)
 </head>
-<body class="@(isAdminSection ? "admin-body" : "site-body") @ViewData["BodyClass"]">
-    <a class="skip-link" href="#main-content">Bỏ qua điều hướng</a>
-
-    <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
-        <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16" /></symbol>
-        <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></symbol>
-        <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></symbol>
-        <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></symbol>
-        <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></symbol>
-        <symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></symbol>
-        <symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></symbol>
-        <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></symbol>
-        <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></symbol>
-        <symbol id="i-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></symbol>
-        <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-5-9 5v8l9 5 9-5z" /><path d="m3 8 9 5 9-5" /><path d="M12 13v8" /></symbol>
-        <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /><circle cx="7.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
-        <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M16 13H8M16 17H8M10 9H8" /></symbol>
-        <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></symbol>
-        <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></symbol>
-        <symbol id="i-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7" /><path d="M7 7h10v10" /></symbol>
-        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></symbol>
-        <symbol id="i-star" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" /></symbol>
-        <symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></symbol>
-        <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol>
-        <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></symbol>
-        <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.11 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></symbol>
-        <symbol id="i-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3z" /><path d="M5 3v4M3 5h4M19 17v4M17 19h4" /></symbol>
-        <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></symbol>
-        <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /></symbol>
-        <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /></symbol>
-        <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></symbol>
-        <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" /><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" /><path d="M2 2l20 20" /></symbol>
-        <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z" /><path d="M12 9v4M12 17h.01" /></symbol>
-        <symbol id="i-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" /><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" /></symbol>
-        <symbol id="i-store" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-6h15L21 9" /><path d="M3 9v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9" /><path d="M3 9h18" /><path d="M9 21v-6h6v6" /></symbol>
-        <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></symbol>
-        <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h1" /><path d="M10 18h4" /><path d="M14 9h4l3 3v5a1 1 0 0 1-1 1h-1" /><circle cx="7" cy="18" r="2" /><circle cx="17" cy="18" r="2" /></symbol>
-        <symbol id="i-facebook" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></symbol>
-        <symbol id="i-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><path d="M17.5 6.5h.01" /></symbol>
-        <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></symbol>
-        <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></symbol>
-        <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
-    </svg>
-
-    @if (isAdminSection)
-    {
-        <div class="admin-shell">
-            <div class="admin-backdrop" data-admin-backdrop></div>
-
-            <aside class="admin-sidebar" id="adminSidebar" aria-label="Điều hướng quản trị">
-                <a class="admin-brand" asp-controller="Admin" asp-action="Products">
-                    <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf" /></svg></span>
-                    <span>
-                        <span class="brand-text">Chè Sài Gòn</span>
-                        <span class="brand-tag">Admin console</span>
-                    </span>
-                </a>
-
-                <div>
-                    <p class="admin-nav-label">Vận hành cửa hàng</p>
-                    <nav>
-                        <ul class="admin-nav">
-                            @if (User.IsInRole("Staff") || User.IsInRole("Admin"))
-                            {
-                                <li><a asp-controller="Pos" asp-action="Index" class="@(controller == "Pos" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-store" /></svg> Bán hàng tại quầy</a></li>
-                                <li><a asp-controller="OrderOperations" asp-action="Index" class="@(controller == "OrderOperations" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-file" /></svg> Đơn giao hàng</a></li>
-                                <li><a asp-controller="Party" asp-action="Index" class="@(controller == "Party" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-file" /></svg> Yêu cầu đặt tiệc</a></li>
-                            }
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <li><a asp-controller="OperationsAdmin" asp-action="Inventory" class="@(controller == "OperationsAdmin" && action == "Inventory" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-box" /></svg> Tồn kho</a></li>
-                                <li><a asp-controller="OperationsAdmin" asp-action="DiningTables" class="@(controller == "OperationsAdmin" && action == "DiningTables" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-store" /></svg> Bàn tại quầy</a></li>
-                                <li><a asp-controller="OperationsAdmin" asp-action="Vouchers" class="@(controller == "OperationsAdmin" && action == "Vouchers" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-tag" /></svg> Voucher</a></li>
-                            <li>
-                                <a asp-controller="Admin" asp-action="Products" class="@(controller == "Admin" && action == "Products" ? "is-active" : null)">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-box" /></svg>
-                                    Món trong thực đơn
-                                </a>
-                            </li>
-                            <li>
-                                <a asp-controller="Admin" asp-action="Categories" class="@(controller == "Admin" && action.StartsWith("Categor") ? "is-active" : null)">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-tag" /></svg>
-                                    Danh mục
-                                </a>
-                            </li>
-                            <li>
-                                <a asp-controller="Admin" asp-action="Orders" class="@(controller == "Admin" && action == "Orders" ? "is-active" : null)">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>
-                                    Đơn hàng
-                                </a>
-                            </li>
-                            <li>
-                                <a asp-controller="Admin" asp-action="ContactMessages" class="@(controller == "Admin" && action == "ContactMessages" ? "is-active" : null)">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-mail" /></svg>
-                                    Tin nhắn liên hệ
-                                </a>
-                            </li>
-                                <li><a asp-controller="Reports" asp-action="Index" class="@(controller == "Reports" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg> Dashboard báo cáo</a></li>
-                                <li><a asp-controller="Staff" asp-action="Index" class="@(controller == "Staff" ? "is-active" : null)"><svg class="icon" aria-hidden="true"><use href="#i-user" /></svg> Tài khoản nhân viên</a></li>
-                            }
-                        </ul>
-                    </nav>
-                </div>
-
-                <div>
-                    <p class="admin-nav-label">Kênh thử nghiệm</p>
-                    <nav>
-                        <ul class="admin-nav">
-                            <li>
-                                <a asp-controller="Product" asp-action="Index" class="@(controller == "Product" ? "is-active" : null)">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
-                                    Product API
-                                </a>
-                            </li>
-                            <li>
-                                <a asp-controller="Category" asp-action="Index" class="@(controller == "Category" ? "is-active" : null)">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
-                                    Category API
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-
-                <div class="admin-sidebar__foot">
-                    <div class="admin-user">
-                        <span class="avatar avatar-sm">@initials</span>
-                        <div>
-                            <strong>@(string.IsNullOrWhiteSpace(displayName) ? "Quản trị viên" : displayName)</strong>
-                            <small>@(User.IsInRole("Admin") ? "Quản trị viên" : "Nhân viên")</small>
-                        </div>
-                    </div>
-                    <div class="admin-sidebar__links">
-                        <a asp-controller="Home" asp-action="Index">
-                            <svg class="icon" aria-hidden="true"><use href="#i-store" /></svg>
-                            Về cửa hàng
-                        </a>
-                        <form asp-controller="Account" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post">
-                            <button type="submit" class="dropdown-item is-danger">
-                                <svg class="icon" aria-hidden="true"><use href="#i-logout" /></svg>
-                                Đăng xuất
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </aside>
-
-            <div class="admin-main">
-                <header class="admin-topbar">
-                    <div class="admin-topbar__start">
-                        <button type="button" class="theme-toggle admin-menu-btn" data-admin-toggle aria-expanded="false" aria-controls="adminSidebar" aria-label="Mở menu quản trị">
-                            <svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg>
-                        </button>
-                        <ol class="breadcrumb">
-                            <li><a asp-controller="Admin" asp-action="Products">Quản trị</a></li>
-                            <li class="sep" aria-hidden="true">/</li>
-                            <li class="current" aria-current="page">@ViewData["Title"]</li>
-                        </ol>
-                    </div>
-                    <div class="admin-topbar__actions">
-                        <a class="btn btn-ghost btn-sm" asp-controller="Home" asp-action="Index">
-                            <svg class="icon" aria-hidden="true"><use href="#i-store" /></svg>
-                            Xem cửa hàng
-                        </a>
-                        <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false">
-                            <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon" /></svg>
-                            <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun" /></svg>
-                        </button>
-                        <partial name="_LoginPartial" />
-                    </div>
-                </header>
-
-                <main class="admin-content" id="main-content">
-                    @if (TempData["AdminSuccess"] is string adminSuccess)
-                    {
-                        <div class="alert alert-success" role="status">
-                            <span>@adminSuccess</span>
-                        </div>
-                    }
-                    @if (TempData["AdminError"] is string adminError)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            <span>@adminError</span>
-                        </div>
-                    }
-                    @RenderBody()
-                </main>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="announcement">
-            <svg class="icon" aria-hidden="true"><use href="#i-truck" /></svg>
-            <span><strong>Freeship nội thành</strong> cho đơn từ 150.000₫ · Giao trong 30 phút</span>
-        </div>
-
-        <header class="site-header">
+<body>
+    <header class="site-header">
+        <nav class="navbar navbar-expand-xl navbar-light">
             <div class="container">
-                <nav class="navbar" aria-label="Điều hướng chính">
-                    <a class="navbar-brand" asp-controller="Home" asp-action="Index" aria-label="Chè Sài Gòn – Trang chủ">
-                        <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf" /></svg></span>
-                        <span>
-                            <span class="brand-text">Chè Sài Gòn</span>
-                            <span class="brand-tag">Ngọt ngào hương vị Việt</span>
-                        </span>
-                    </a>
-
-                    <ul class="nav-primary">
-                        <li><a class="nav-link" href="@SectionHref("home")" data-nav-section="home">Trang chủ</a></li>
-                        <li><a class="nav-link" href="@SectionHref("about")" data-nav-section="about">Câu chuyện</a></li>
-                        <li><a class="nav-link" href="@SectionHref("menu")" data-nav-section="menu">Thực đơn</a></li>
-                        <li><a class="nav-link" href="@SectionHref("offers")" data-nav-section="offers">Ưu đãi</a></li>
-                        <li><a class="nav-link" href="@SectionHref("contact")" data-nav-section="contact">Liên hệ</a></li>
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark">CS</span>
+                    <span class="brand-text">Chè Sài Gòn</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="siteNav">
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#home" : $"{homeUrl}#home")">Trang chủ</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#about" : $"{homeUrl}#about")">Giới thiệu</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Menu" asp-action="Index">Thực đơn</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#offers" : $"{homeUrl}#offers")">Ưu đãi</a></li>
+                        <li class="nav-item"><a class="nav-link" href="@(isHomePage ? "#contact" : $"{homeUrl}#contact")">Liên hệ</a></li>
                         @if (User.IsInRole("Customer"))
                         {
-                            <li><a class="nav-link" asp-controller="Party" asp-action="Create">Đặt tiệc</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Party" asp-action="Create">Đặt tiệc</a></li>
                         }
-                    </ul>
-
-                    <div class="nav-actions">
-                        <button type="button" class="search-trigger" data-search-focus data-search-href="@SectionHref("menu")" aria-label="Tìm món trong thực đơn">
-                            <svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>
-                            <span>Tìm món chè…</span>
-                            <kbd>Ctrl K</kbd>
-                        </button>
-
-                        <a class="cart-link" asp-controller="Cart" asp-action="Index" aria-label="Giỏ hàng (@cartCount món)">
-                            <svg class="icon" aria-hidden="true"><use href="#i-cart" /></svg>
-                            <span class="cart-label">Giỏ hàng</span>
-                            @if (cartCount > 0)
-                            {
-                                <span class="cart-count">@cartCount</span>
-                            }
-                        </a>
-
-                        <span class="divider-v" aria-hidden="true"></span>
-
-                        <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false">
-                            <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon" /></svg>
-                            <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun" /></svg>
-                        </button>
-
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link cart-nav-link" asp-controller="Cart" asp-action="Index">
+                                Giỏ hàng
+                                @if (cartCount > 0)
+                                {
+                                    <span class="badge rounded-pill bg-primary-subtle text-primary">@cartCount</span>
+                                }
+                            </a>
+                        </li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-primary btn-order" asp-controller="Menu" asp-action="Index">Đặt món ngay</a>
+                        </li>
                         <partial name="_LoginPartial" />
-
-                        <button type="button" class="theme-toggle nav-toggle" data-sheet-open aria-label="Mở menu" aria-controls="mobileNav" aria-expanded="false">
-                            <svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg>
-                        </button>
-                    </div>
-                </nav>
-            </div>
-        </header>
-
-        <main id="main-content">
-            @RenderBody()
-        </main>
-
-        <footer class="site-footer">
-            <div class="container">
-                <div class="footer-grid">
-                    <div class="footer-brand-col">
-                        <div class="footer-brand">
-                            <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf" /></svg></span>
-                            <span>
-                                <span class="brand-text">Chè Sài Gòn</span>
-                                <span class="brand-tag">Since 1998</span>
-                            </span>
-                        </div>
-                        <p class="footer-copy">Mang hương vị Sài Gòn ngọt ngào qua từng ly chè thủ công, nguyên liệu tươi mỗi ngày và công thức gia truyền ba thế hệ.</p>
-                        <span class="footer-status"><span class="dot" aria-hidden="true"></span>Đang mở cửa · 08:00 – 22:00</span>
-                    </div>
-
-                    <div>
-                        <h5>Khám phá</h5>
-                        <ul class="footer-links">
-                            <li><a href="@SectionHref("about")">Câu chuyện của quán</a></li>
-                            <li><a href="@SectionHref("menu")">Thực đơn hôm nay</a></li>
-                            <li><a href="@SectionHref("offers")">Ưu đãi thành viên</a></li>
-                            <li><a asp-controller="Cart" asp-action="Index">Giỏ hàng của bạn</a></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h5>Liên hệ</h5>
-                        <ul class="footer-links">
-                            <li>Địa chỉ: đang cập nhật</li>
-                            <li>Điện thoại: đang cập nhật</li>
-                            <li>Email: xinchao&#64;chesaigon.vn</li>
-                            <li>Giao hàng: 08:00 – 22:00</li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h5>Theo dõi</h5>
-                        <p class="footer-copy">Nhận thông báo món mới và ưu đãi mỗi tuần.</p>
-                        <div class="social-row">
-                            <a href="#" aria-label="Facebook"><svg class="icon" aria-hidden="true"><use href="#i-facebook" /></svg></a>
-                            <a href="#" aria-label="Instagram"><svg class="icon" aria-hidden="true"><use href="#i-instagram" /></svg></a>
-                            <a href="#" aria-label="Zalo"><svg class="icon" aria-hidden="true"><use href="#i-chat" /></svg></a>
-                            <a href="@SectionHref("contact")" aria-label="Gửi tin nhắn"><svg class="icon" aria-hidden="true"><use href="#i-mail" /></svg></a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="footer-bottom">
-                    <span>© 2026 Chè Sài Gòn · Ngọt ngào hương vị Việt</span>
-                    <span>Thiết kế lấy cảm hứng từ Linear &amp; Vercel</span>
+                    </ul>
                 </div>
             </div>
-        </footer>
+        </nav>
+    </header>
 
-        <div class="mobile-sheet" id="mobileNav" role="dialog" aria-modal="true" aria-label="Menu di động">
-            <div class="mobile-sheet__overlay" data-sheet-close></div>
-            <div class="mobile-sheet__panel">
-                <div class="mobile-sheet__head">
-                    <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                        <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf" /></svg></span>
-                        <span>
-                            <span class="brand-text">Chè Sài Gòn</span>
-                            <span class="brand-tag">Ngọt ngào hương vị Việt</span>
-                        </span>
-                    </a>
-                    <button type="button" class="theme-toggle" data-sheet-close aria-label="Đóng menu">
-                        <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
-                    </button>
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-4">
+                    <div class="footer-brand">
+                        <span class="brand-mark">CS</span>
+                        <span class="brand-text">Chè Sài Gòn</span>
+                    </div>
+                    <p class="footer-copy">Mang hương vị Sài Gòn ngọt ngào qua từng ly chè được chế biến thủ công từ nguyên liệu tươi ngon mỗi ngày.</p>
                 </div>
-
-                <ul class="mobile-nav">
-                    <li><a href="@SectionHref("home")"><span>Trang chủ</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a></li>
-                    <li><a href="@SectionHref("about")"><span>Câu chuyện</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a></li>
-                    <li><a href="@SectionHref("menu")"><span>Thực đơn</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a></li>
-                    <li><a href="@SectionHref("offers")"><span>Ưu đãi</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a></li>
-                    <li><a href="@SectionHref("contact")"><span>Liên hệ</span><svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg></a></li>
-                    <li>
-                        <a asp-controller="Cart" asp-action="Index">
-                            <span>Giỏ hàng @(cartCount > 0 ? $"({cartCount})" : "")</span>
-                            <svg class="icon" aria-hidden="true"><use href="#i-cart" /></svg>
-                        </a>
-                    </li>
-                </ul>
-
-                <div class="mobile-sheet__footer">
-                    <button type="button" class="btn btn-outline btn-sm" data-theme-toggle>
-                        <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon" /></svg>
-                        <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun" /></svg>
-                        Đổi giao diện sáng / tối
-                    </button>
-
-                    @if (isSignedIn)
-                    {
-                        <a class="btn btn-primary" asp-controller="Cart" asp-action="Checkout">
-                            Thanh toán ngay
-                            <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
-                        </a>
-                        <div class="auth-actions" style="margin-top:.4rem">
-                            <a class="btn btn-ghost btn-sm" asp-area="Identity" asp-page="/Account/Manage/Index">Tài khoản</a>
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <a class="btn btn-ghost btn-sm" asp-controller="Admin" asp-action="Products">Quản trị</a>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Tạo tài khoản</a>
-                        <div class="auth-actions">
-                            <a class="btn btn-outline btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
-                            <a class="btn btn-ghost btn-sm" asp-controller="Account" asp-action="Register">Đăng ký</a>
-                        </div>
-                    }
+                <div class="col-md-4 col-lg-2">
+                    <h5>Liên kết</h5>
+                    <ul class="footer-links">
+                        <li><a href="@(isHomePage ? "#home" : $"{homeUrl}#home")">Trang chủ</a></li>
+                        <li><a href="@(isHomePage ? "#about" : $"{homeUrl}#about")">Giới thiệu</a></li>
+                        <li><a asp-controller="Menu" asp-action="Index">Thực đơn</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 col-lg-3">
+                    <h5>Liên hệ</h5>
+                    <ul class="footer-links">
+                        <li>Địa chỉ: sẽ được cập nhật</li>
+                        <li>Điện thoại: sẽ được cập nhật</li>
+                        <li>Giờ mở cửa: sẽ được cập nhật</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 col-lg-3">
+                    <h5>Mạng xã hội</h5>
+                    <p class="footer-copy">Thông tin mạng xã hội sẽ được cập nhật.</p>
                 </div>
             </div>
+            <div class="footer-bottom">© 2026 Chè Sài Gòn – Ngọt ngào hương vị Việt.</div>
         </div>
-    }
-
-    <dialog class="modal" id="confirmDialog" aria-labelledby="confirmDialogTitle">
-        <div class="modal__body">
-            <span class="modal__icon">
-                <svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg>
-            </span>
-            <h3 id="confirmDialogTitle" data-confirm-title>Xác nhận thao tác</h3>
-            <p data-confirm-message>Bạn có chắc chắn muốn tiếp tục?</p>
-        </div>
-        <div class="modal__actions">
-            <button type="button" class="btn btn-ghost btn-sm" data-confirm-cancel>Hủy</button>
-            <button type="button" class="btn btn-danger btn-sm" data-confirm-accept>Xác nhận</button>
-        </div>
-    </dialog>
+    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
