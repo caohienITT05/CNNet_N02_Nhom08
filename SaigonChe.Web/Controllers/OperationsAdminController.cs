@@ -35,7 +35,7 @@ public sealed class OperationsAdminController(ApplicationDbContext context) : Co
         var product = await context.Products.SingleOrDefaultAsync(item => item.Id == model.ProductId);
         if (product is null) return NotFound();
         var currentStock = product.Stock ?? 0;
-        if (currentStock + model.QuantityChange < 0)
+        if ((long)currentStock + model.QuantityChange < 0 || (long)currentStock + model.QuantityChange > int.MaxValue)
         {
             TempData["AdminError"] = "Tồn kho không thể nhỏ hơn 0.";
             return RedirectToAction(nameof(Inventory));
@@ -66,6 +66,8 @@ public sealed class OperationsAdminController(ApplicationDbContext context) : Co
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveDiningTable(DiningTableFormViewModel model)
     {
+        if (!ModelState.IsValid)
+            return View("DiningTables", await context.DiningTables.AsNoTracking().OrderBy(table => table.Code).ToListAsync());
         var code = model.Code.Trim().ToUpperInvariant();
         if (await context.DiningTables.AnyAsync(table => table.Code == code && table.Id != model.Id))
             ModelState.AddModelError(nameof(model.Code), "Mã bàn đã tồn tại.");
@@ -73,6 +75,12 @@ public sealed class OperationsAdminController(ApplicationDbContext context) : Co
 
         var table = model.Id == 0 ? new DiningTable() : await context.DiningTables.FindAsync(model.Id);
         if (table is null) return NotFound();
+        if (table.IsActive && !model.IsActive && await context.Orders.AnyAsync(order =>
+                order.TableId == table.Id && order.Type == OrderType.Pos && !order.IsPaid && order.Status != OrderStatus.Cancelled))
+        {
+            ModelState.AddModelError(string.Empty, "Không thể ngừng bàn đang có đơn POS chưa thanh toán.");
+            return View("DiningTables", await context.DiningTables.AsNoTracking().OrderBy(item => item.Code).ToListAsync());
+        }
         table.Code = code;
         table.Name = model.Name.Trim();
         table.Capacity = model.Capacity;
@@ -120,7 +128,7 @@ public sealed class OperationsAdminController(ApplicationDbContext context) : Co
         return View("VoucherForm", new VoucherFormViewModel
         {
             Id = voucher.Id, Code = voucher.Code, Type = voucher.Type, Amount = voucher.Amount,
-            ValidFrom = voucher.ValidFrom, ValidTo = voucher.ValidTo, MinimumOrderTotal = voucher.MinimumOrderTotal,
+            ValidFrom = VietnamTime.ToLocal(voucher.ValidFrom).Date, ValidTo = VietnamTime.ToLocal(voucher.ValidTo).Date, MinimumOrderTotal = voucher.MinimumOrderTotal,
             UseLimit = voucher.UseLimit, UseCount = voucher.UseCount, IsActive = voucher.IsActive
         });
     }
@@ -128,6 +136,10 @@ public sealed class OperationsAdminController(ApplicationDbContext context) : Co
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveVoucher(VoucherFormViewModel model)
     {
+        if (!ModelState.IsValid) return View("VoucherForm", model);
+        if (!Enum.IsDefined(model.Type)) ModelState.AddModelError(nameof(model.Type), "Loại voucher không hợp lệ.");
+        if (model.ValidFrom.Date == DateTime.MinValue.Date || model.ValidTo.Date == DateTime.MaxValue.Date)
+            ModelState.AddModelError(nameof(model.ValidTo), "Khoảng ngày nằm ngoài giới hạn được hỗ trợ.");
         model.Code = model.Code.Trim().ToUpperInvariant();
         if (await context.Vouchers.AnyAsync(voucher => voucher.Code == model.Code && voucher.Id != model.Id))
             ModelState.AddModelError(nameof(model.Code), "Mã voucher đã tồn tại.");

@@ -217,20 +217,13 @@
 
         <div class="filter-row">
             <div class="filter-pills" role="group" aria-label="Bộ lọc món ăn">
-                @foreach (var filter in Model.Categories)
+                <button type="button" class="filter-btn active" data-filter="all" aria-pressed="true">Tất cả</button>
+                @foreach (var filter in Model.Categories.Where(filter => !string.Equals(filter.Name, "Món bán chạy", StringComparison.OrdinalIgnoreCase)))
                 {
-                    var filterValue = filter switch
-                    {
-                        "Chè truyền thống" => "traditional",
-                        "Chè hiện đại" => "modern",
-                        "Món bán chạy" => "featured",
-                        _ => "all"
-                    };
-                    <button type="button" class="filter-btn @(filterValue == "all" ? "active" : string.Empty)"
-                            data-filter="@filterValue" aria-pressed="@(filterValue == "all" ? "true" : "false")">
-                        @filter
-                    </button>
+                    var filterValue = $"category-{filter.Id}";
+                    <button type="button" class="filter-btn" data-filter="@filterValue" aria-pressed="false">@filter.Name</button>
                 }
+                <button type="button" class="filter-btn" data-filter="featured" aria-pressed="false">Món bán chạy</button>
             </div>
             <span id="menuResultCount" class="menu-result-count" aria-live="polite"></span>
         </div>
@@ -239,7 +232,7 @@
             @foreach (var item in Model.Products)
             {
                 <div class="menu-card-wrapper"
-                     data-category="@item.CategoryTag"
+                     data-category="@(item.CategoryId.HasValue ? $"category-{item.CategoryId}" : string.Empty)"
                      data-featured="@(item.IsFeatured ? "featured" : "normal")"
                      data-search="@($"{item.Name} {item.Description} {item.CategoryName}")"
                      data-reveal>

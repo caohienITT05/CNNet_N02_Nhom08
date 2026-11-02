@@ -32,6 +32,7 @@ public sealed class PartyRequestCreateViewModel
 
 public sealed class PartyRequestUpdateViewModel
 {
+    [Required] public string RowVersion { get; set; } = string.Empty;
     public int Id { get; set; }
     public PartyRequestStatus Status { get; set; }
 
@@ -76,6 +77,7 @@ public sealed class PartyRequestQueueRowViewModel
 
 public sealed class PartyRequestDetailsViewModel
 {
+    public string RowVersion { get; init; } = string.Empty;
     public int Id { get; init; }
     public string CustomerName { get; init; } = string.Empty;
     public string Phone { get; init; } = string.Empty;

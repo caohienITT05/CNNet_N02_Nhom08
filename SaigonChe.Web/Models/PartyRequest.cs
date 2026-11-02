@@ -6,6 +6,7 @@ namespace SaigonChe.Web.Models
     public class PartyRequest
     {
         public int Id { get; set; }
+        [Timestamp] public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
         public string? CustomerUserId { get; set; }
         public ApplicationUser? Customer { get; set; }

@@ -5,6 +5,7 @@
     ViewData["BodyClass"] = "reports-page";
 }
 
+<div class="report-print-heading"><h1>Báo cáo doanh thu</h1><p>@Model.From.ToString("dd/MM/yyyy") - @Model.To.ToString("dd/MM/yyyy") · @(Model.Type ?? "Tất cả loại đơn") · Giờ Việt Nam</p></div>
 <div class="admin-page-head report-screen-only">
     <div>
         <span class="eyebrow">Phân tích kinh doanh</span>
@@ -17,6 +18,7 @@
     </div>
 </div>
 
+<div asp-validation-summary="All" class="text-danger report-screen-only"></div>
 <form method="get" class="report-filters report-screen-only">
     <label>Từ ngày <input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" /></label>
     <label>Đến ngày <input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" /></label>
@@ -39,8 +41,8 @@
 </div>
 
 <div class="report-chart-grid">
-    <section class="report-chart-card"><h2>Doanh thu theo ngày</h2><canvas id="dailyRevenueChart" aria-label="Biểu đồ doanh thu theo ngày" role="img"></canvas></section>
-    <section class="report-chart-card"><h2>Doanh thu theo tháng</h2><canvas id="monthlyRevenueChart" aria-label="Biểu đồ doanh thu theo tháng" role="img"></canvas></section>
+    <section class="report-chart-card"><h2>Doanh thu theo ngày</h2><div class="report-chart-frame"><canvas id="dailyRevenueChart" aria-label="Biểu đồ doanh thu theo ngày" role="img"></canvas></div></section>
+    <section class="report-chart-card"><h2>Doanh thu theo tháng</h2><div class="report-chart-frame"><canvas id="monthlyRevenueChart" aria-label="Biểu đồ doanh thu theo tháng" role="img"></canvas></div></section>
 </div>
 
 <section class="report-table-card">
@@ -61,21 +63,41 @@
 
 @section Head {
     <style>
-        .report-filters{display:flex;gap:1rem;align-items:end;flex-wrap:wrap;margin:0 0 1.25rem;padding:1rem;border:1px solid var(--line,#333);border-radius:14px;background:var(--panel,#17171a)}
-        .report-filters label{display:grid;gap:.35rem;font-size:.82rem;color:var(--muted,#a8a8b0)}
-        .report-filters input,.report-filters select{min-height:42px;padding:.5rem .7rem;border-radius:8px;border:1px solid var(--line,#333);background:var(--surface,#101012);color:inherit}
+        .report-filters{display:flex;gap:1rem;align-items:end;flex-wrap:wrap;margin:0 0 1.25rem;padding:1rem;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+        .report-filters label{display:grid;gap:.35rem;font-size:.82rem;color:var(--muted-foreground)}
+        .report-filters input,.report-filters select{min-height:42px;padding:.5rem .7rem;border-radius:8px;border:1px solid var(--border);background:var(--background);color:inherit}
         .report-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1rem 0}
-        .report-chart-card,.report-table-card{margin:1rem 0;padding:1rem;border:1px solid var(--line,#333);border-radius:14px;background:var(--panel,#17171a)}
+        .report-chart-card,.report-table-card{margin:1rem 0;padding:1rem;border:1px solid var(--border);border-radius:14px;background:var(--card)}
         .report-chart-card h2,.report-table-card h2{font-size:1.05rem;margin:0 0 1rem}
-        .report-chart-card canvas{max-height:290px}
-        .report-section-head{margin-bottom:.8rem}.report-section-head p{margin:0;color:var(--muted,#a8a8b0)}
+        .report-chart-frame{position:relative;width:100%;height:260px}.report-chart-frame canvas{width:100%!important;height:100%!important}
+        .report-section-head{margin-bottom:.8rem}.report-section-head p{margin:0;color:var(--muted-foreground)}
         @@media(max-width:760px){.report-chart-grid{grid-template-columns:1fr}}
-        @@media print{.report-screen-only,header,footer,.admin-sidebar,.admin-topbar,.skip-link{display:none!important}.admin-main,.admin-content{margin:0!important;padding:0!important}.report-table-card,.stat-card{break-inside:avoid;background:white!important;color:#111!important;border-color:#bbb!important}.stat-label,.stat-hint{color:#444!important}body{background:#fff!important;color:#111!important}}
+        .report-print-heading,.print-chart-image{display:none}
+        @@media print{
+            @@page{size:A4;margin:12mm}
+            html:root,html:root[data-theme]{color-scheme:light!important;--background:#fff!important;--foreground:#111!important;--card:#fff!important;--muted-foreground:#444!important;--surface-1:#eee!important;--border:#bbb!important}
+            body::before{display:none!important}
+            .report-screen-only,header,footer,.admin-sidebar,.admin-topbar,.skip-link{display:none!important}
+            .report-print-heading{display:block!important;margin-bottom:12pt}.report-print-heading h1{font-size:20pt}.report-print-heading p{font-size:10pt}
+            html,body,.admin-shell,.admin-main,main{min-height:0!important;height:auto!important}
+            .admin-shell{display:block!important}.admin-main,.admin-content{margin:0!important;padding:0!important;max-width:none!important}
+            .admin-content>:last-child{margin-bottom:0!important}.admin-content{overflow:visible!important}
+            .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6pt}.stat-card{padding:8pt;box-shadow:none!important}.stat-value{font-size:14pt}
+            .report-chart-grid{display:block!important}.report-chart-card{break-inside:avoid;margin:10pt 0;padding:8pt;background:#fff!important}
+            .report-chart-frame{height:auto!important}.report-chart-card canvas{display:none!important}.print-chart-image{display:block!important;width:100%;height:auto}
+            .report-chart-card h2,.report-table-card h2{color:#111!important}
+            .report-table-card{break-inside:avoid;background:#fff!important;box-shadow:none!important}
+            .table-responsive{overflow:visible!important;box-shadow:none!important;background:#fff!important}
+            .admin-table{min-width:0!important;width:100%!important;color:#111!important}
+            .admin-table th,.admin-table td{white-space:normal!important;overflow-wrap:anywhere;padding:4pt!important;font-size:8pt!important;color:#111!important}
+            .admin-table thead{display:table-header-group}.admin-table tr{break-inside:avoid}.admin-table th{background:#eee!important}
+            body{background:#fff!important;color:#111!important}
+        }
     </style>
 }
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="/lib/chartjs/chart.umd.min.js"></script>
     <script>
         const daily = @Html.Raw(JsonSerializer.Serialize(Model.DailyRevenue, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
         const monthly = @Html.Raw(JsonSerializer.Serialize(Model.MonthlyRevenue, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
@@ -83,9 +105,56 @@
         function renderRevenueChart(id, items) {
             const node = document.getElementById(id);
             if (!node || !window.Chart) return;
-            new Chart(node, { type: 'bar', data: { labels: items.map(item => item.label), datasets: [{ data: items.map(item => item.revenue), backgroundColor: '#dc6b8a', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => money(context.raw) } } }, scales: { y: { ticks: { callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value) } } } } });
+            new Chart(node, { type: 'bar', data: { labels: items.map(item => item.label), datasets: [{ data: items.map(item => item.revenue), backgroundColor: '#dc6b8a', borderRadius: 6 }] }, options: { responsive: true, animation: false, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => money(context.raw) } } }, scales: { y: { ticks: { callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value) } } } } });
         }
         renderRevenueChart('dailyRevenueChart', daily);
         renderRevenueChart('monthlyRevenueChart', monthly);
+        function updateChartTheme() {
+            if (!window.Chart) return;
+            const printing = window.matchMedia('print').matches;
+            const tokens = getComputedStyle(document.documentElement);
+            const text = printing ? '#444' : tokens.getPropertyValue('--muted-foreground').trim();
+            const line = printing ? '#ddd' : tokens.getPropertyValue('--border').trim();
+            Object.values(Chart.instances).forEach(chart => {
+                ['x','y'].forEach(axis => {
+                    chart.options.scales[axis].ticks.color = text;
+                    chart.options.scales[axis].grid.color = line;
+                });
+                chart.update('none');
+                if (printing) preparePrintChart(chart);
+                else chart.resize();
+            });
+        }
+        function preparePrintChart(chart) {
+            const frame = chart.canvas.parentElement;
+            frame.querySelector('.print-chart-image')?.remove();
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 150;
+            const snapshot = new Chart(canvas, {
+                type: 'bar',
+                data: {labels: [...chart.data.labels], datasets: chart.data.datasets.map(set => ({...set, data: [...set.data]}))},
+                options: {
+                    responsive: false, animation: false, devicePixelRatio: 2,
+                    plugins: {legend: {display: false}},
+                    scales: {
+                        x: {ticks: {color: '#444'}, grid: {color: '#ddd'}},
+                        y: {ticks: {maxTicksLimit: 6, color: '#444', callback: value => new Intl.NumberFormat('vi-VN', {notation:'compact'}).format(value)}, grid: {color: '#ddd'}}
+                    }
+                }
+            });
+            const image = document.createElement('img');
+            image.className = 'print-chart-image';
+            image.alt = chart.canvas.getAttribute('aria-label') || 'Biểu đồ doanh thu';
+            image.src = canvas.toDataURL('image/png');
+            snapshot.destroy();
+            frame.append(image);
+        }
+        updateChartTheme();
+        new MutationObserver(updateChartTheme).observe(document.documentElement, {attributes:true,attributeFilter:['data-theme']});
+        window.matchMedia('print').addEventListener('change', updateChartTheme);
+        window.addEventListener('beforeprint', updateChartTheme);
+        window.addEventListener('afterprint', updateChartTheme);
+
     </script>
 }

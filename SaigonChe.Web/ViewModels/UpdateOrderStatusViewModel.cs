@@ -6,6 +6,7 @@ namespace SaigonChe.Web.ViewModels
     public class UpdateOrderStatusViewModel
     {
         public int OrderId { get; set; }
+        [Required] public string RowVersion { get; set; } = string.Empty;
 
         [EnumDataType(typeof(OrderStatus), ErrorMessage = "Trạng thái đơn hàng không hợp lệ.")]
         [Display(Name = "Trạng thái")]

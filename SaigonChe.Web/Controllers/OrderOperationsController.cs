@@ -46,7 +46,7 @@ public sealed class OrderOperationsController(
             return RedirectToAction(nameof(Index));
         }
 
-        if (!IsAllowed(order.Status, model.Status) ||
+        if (!OrderWorkflowRules.IsAllowed(order.Status, model.Status) ||
             (model.Status == OrderStatus.Cancelled && string.IsNullOrWhiteSpace(model.Note)))
         {
             TempData["AdminError"] = "Trạng thái không hợp lệ; nhập lý do khi hủy đơn.";
@@ -109,13 +109,7 @@ public sealed class OrderOperationsController(
         return RedirectToAction(nameof(Index));
     }
 
-    private static bool IsAllowed(OrderStatus current, OrderStatus next) => current switch
-    {
-        OrderStatus.Pending => next is OrderStatus.Confirmed or OrderStatus.Cancelled,
-        OrderStatus.Confirmed => next is OrderStatus.Preparing or OrderStatus.Cancelled,
-        OrderStatus.Preparing => next is OrderStatus.Completed or OrderStatus.Cancelled,
-        _ => false
-    };
+
 
     private static bool TryMatchVersion(string submitted, byte[] current)
     {

@@ -81,11 +81,17 @@
                     OrderStatus.Preparing => new[] { OrderStatus.Completed, OrderStatus.Cancelled },
                     _ => Array.Empty<OrderStatus>()
                 };
+                var typeText = order.Type switch
+                {
+                    OrderType.Pos => "Tại quầy",
+                    OrderType.Party => "Đặt tiệc",
+                    _ => "Giao online"
+                };
 
                 <tr>
                     <td>
                         <details>
-                            <summary>#@order.Id · @order.Type · @order.Items.Count món</summary>
+                            <summary>#@order.Id · @typeText · @order.Items.Count món</summary>
                             <ul>
                                 @foreach (var item in order.Items)
                                 {
@@ -119,6 +125,7 @@
                         {
                         <form asp-action="UpdateOrderStatus" method="post" class="d-flex gap-2 align-items-center">
                             @Html.AntiForgeryToken()
+                            <input type="hidden" name="RowVersion" value="@Convert.ToBase64String(order.RowVersion)" />
                             <input type="hidden" name="OrderId" value="@order.Id" />
                             <select name="Status" class="form-select form-select-sm" aria-label="Trạng thái đơn hàng @order.Id" style="min-width:148px" disabled="@(nextStatuses.Length == 0)">
                                 @foreach (var statusOption in Html.GetEnumSelectList<OrderStatus>().Where(option => nextStatuses.Any(status => ((int)status).ToString() == option.Value)))

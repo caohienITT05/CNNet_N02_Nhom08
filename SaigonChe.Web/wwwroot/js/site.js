@@ -6,6 +6,15 @@
 (function () {
     "use strict";
 
+    function fallbackImage(image) {
+        if (image instanceof HTMLImageElement && !image.src.endsWith("/images/product-placeholder.svg"))
+            image.src = "/images/product-placeholder.svg";
+    }
+    document.addEventListener("error", function (event) { fallbackImage(event.target); }, true);
+    document.querySelectorAll("img").forEach(function (image) {
+        if (image.complete && image.naturalWidth === 0) fallbackImage(image);
+    });
+
     var root = document.documentElement;
     var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -189,18 +198,21 @@
        Admin sidebar (mobile)
        ---------------------------------------------------------------------- */
 
+    var adminBreakpoint = window.matchMedia("(max-width: 1024px)");
     var adminSidebar = document.getElementById("adminSidebar");
     var adminBackdrop = document.querySelector("[data-admin-backdrop]");
     var adminToggle = document.querySelector("[data-admin-toggle]");
 
     function closeAdminNav() {
         if (!adminSidebar) return;
+        if (adminBreakpoint.matches && adminSidebar.contains(document.activeElement) && adminToggle) adminToggle.focus();
         adminSidebar.classList.remove("is-open");
         if (adminBackdrop) adminBackdrop.classList.remove("is-open");
         if (adminToggle) adminToggle.setAttribute("aria-expanded", "false");
         document.body.classList.remove("nav-open");
     }
 
+    adminBreakpoint.addEventListener("change", function (event) { if (!event.matches) closeAdminNav(); });
     if (adminSidebar && adminToggle) {
         adminToggle.addEventListener("click", function () {
             var isOpen = adminSidebar.classList.toggle("is-open");
@@ -461,10 +473,17 @@
                 window.setTimeout(function () { hint.textContent = original; }, 1800);
             };
 
+            var failed = function () {
+                var hint = button.querySelector("[data-copy-label]");
+                if (!hint) return;
+                var original = hint.textContent;
+                hint.textContent = "Chưa thể sao chép";
+                window.setTimeout(function () { hint.textContent = original; }, 1800);
+            };
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(value).then(done).catch(done);
+                navigator.clipboard.writeText(value).then(done).catch(failed);
             } else {
-                done();
+                failed();
             }
         });
     });

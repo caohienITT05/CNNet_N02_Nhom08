@@ -149,6 +149,11 @@ public sealed class PartyController(
         await using var transaction = await context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         var request = await context.PartyRequests.FirstOrDefaultAsync(item => item.Id == model.Id);
         if (request == null) return NotFound();
+        if (!OrderWorkflowRules.Matches(model.RowVersion, request.RowVersion))
+        {
+            TempData["PartyError"] = "Yêu cầu vừa được cập nhật. Hãy tải lại trước khi tiếp tục.";
+            return RedirectToAction(nameof(Details), new { id = model.Id });
+        }
         var previousRequestStatus = request.Status;
 
         if (request.Status is PartyRequestStatus.Completed or PartyRequestStatus.Cancelled ||
@@ -266,7 +271,8 @@ public sealed class PartyController(
         }
         else if (model.Status == PartyRequestStatus.Completed && request.OrderId is int completedOrderId)
         {
-            if (model.PaymentMethod is not (PaymentMethod.Cash or PaymentMethod.VietQr))
+            if (model.PaymentMethod is not (PaymentMethod.Cash or PaymentMethod.VietQr)
+                || (model.PaymentMethod == PaymentMethod.VietQr && !VietQrPayment.IsConfigured(configuration)))
             {
                 await transaction.RollbackAsync();
                 ModelState.AddModelError(nameof(model.PaymentMethod), "Chọn và xác nhận phương thức thanh toán.");
@@ -357,6 +363,7 @@ public sealed class PartyController(
 
         return new PartyRequestDetailsViewModel
         {
+            RowVersion = Convert.ToBase64String(request.RowVersion),
             Id = request.Id,
             CustomerName = request.CustomerName,
             Phone = isStaff ? request.Phone : string.Empty,
@@ -388,21 +395,8 @@ public sealed class PartyController(
         };
     }
 
-    private string? MakeVietQrUrl(int? orderId, decimal? amount)
-    {
-        if (orderId is null || amount is null
-            || string.IsNullOrWhiteSpace(configuration["Payment:BankId"])
-            || string.IsNullOrWhiteSpace(configuration["Payment:AccountNumber"])
-            || string.IsNullOrWhiteSpace(configuration["Payment:AccountName"]))
-            return null;
-
-        var bank = Uri.EscapeDataString(configuration["Payment:BankId"]!);
-        var account = Uri.EscapeDataString(configuration["Payment:AccountNumber"]!);
-        var accountName = Uri.EscapeDataString(configuration["Payment:AccountName"]!);
-        var template = Uri.EscapeDataString(configuration["Payment:QrTemplate"] ?? "compact2");
-        var description = Uri.EscapeDataString($"Party {orderId}");
-        return $"https://img.vietqr.io/image/{bank}-{account}-{template}.png?amount={amount:0}&addInfo={description}&accountName={accountName}";
-    }
+    private string? MakeVietQrUrl(int? orderId, decimal? amount) =>
+        orderId.HasValue && amount.HasValue ? VietQrPayment.MakeUrl(configuration, orderId.Value, amount.Value, "PARTY") : null;
 
     private static bool IsAllowedTransition(PartyRequestStatus current, PartyRequestStatus next) => current switch
     {

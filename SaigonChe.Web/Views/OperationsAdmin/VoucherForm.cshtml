@@ -1,7 +1,7 @@
 @model SaigonChe.Web.ViewModels.VoucherFormViewModel
 @{ ViewData["Title"] = Model.Id == 0 ? "Tạo voucher" : "Sửa voucher"; }
 <div class="admin-page-head"><div><span class="eyebrow">Khuyến mãi</span><h1>@ViewData["Title"]</h1></div></div>
-<form asp-action="SaveVoucher" method="post" class="form-card">@Html.AntiForgeryToken()<input asp-for="Id" type="hidden"/><div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<form asp-action="SaveVoucher" method="post" class="form-card">@Html.AntiForgeryToken()<input asp-for="Id" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div>
 <div class="mb-3"><label asp-for="Code" class="form-label">Mã voucher</label><input asp-for="Code" class="form-control" maxlength="40"/><span asp-validation-for="Code" class="text-danger"></span></div>
 <div class="mb-3"><label asp-for="Type" class="form-label">Loại</label><select asp-for="Type" asp-items="Html.GetEnumSelectList<SaigonChe.Web.Models.VoucherType>()" class="form-select"></select></div>
 <div class="mb-3"><label asp-for="Amount" class="form-label">Giá trị giảm</label><input asp-for="Amount" class="form-control"/><span asp-validation-for="Amount" class="text-danger"></span></div>

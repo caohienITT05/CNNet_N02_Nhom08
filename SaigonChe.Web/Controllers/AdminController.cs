@@ -15,13 +15,15 @@ namespace SaigonChe.Web.Controllers
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _environment;
+        private readonly ProductImageService _images;
+        private readonly ILogger<AdminController> _logger;
         private readonly OrderCompletionService _orderCompletion;
 
-        public AdminController(ApplicationDbContext context, IWebHostEnvironment environment, OrderCompletionService orderCompletion)
+        public AdminController(ApplicationDbContext context, ProductImageService images, ILogger<AdminController> logger, OrderCompletionService orderCompletion)
         {
             _context = context;
-            _environment = environment;
+            _images = images;
+            _logger = logger;
             _orderCompletion = orderCompletion;
         }
 
@@ -57,6 +59,7 @@ namespace SaigonChe.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateCategory(CategoryFormViewModel model)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             if (!string.IsNullOrWhiteSpace(model.Name)
                 && await _context.Categories.AnyAsync(category => category.Name == model.Name.Trim()))
             {
@@ -71,10 +74,11 @@ namespace SaigonChe.Web.Controllers
             _context.Categories.Add(new Category
             {
                 Name = model.Name.Trim(),
-                Description = model.Description.Trim()
+                Description = model.Description?.Trim() ?? string.Empty
             });
             await _context.SaveChangesAsync();
 
+            await transaction.CommitAsync();
             TempData["AdminSuccess"] = "Thêm danh mục thành công.";
             return RedirectToAction(nameof(Categories));
         }
@@ -97,6 +101,7 @@ namespace SaigonChe.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditCategory(CategoryFormViewModel model)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             if (!string.IsNullOrWhiteSpace(model.Name)
                 && await _context.Categories.AnyAsync(category =>
                     category.Id != model.Id && category.Name == model.Name.Trim()))
@@ -113,9 +118,10 @@ namespace SaigonChe.Web.Controllers
             if (category == null) return NotFound();
 
             category.Name = model.Name.Trim();
-            category.Description = model.Description.Trim();
+            category.Description = model.Description?.Trim() ?? string.Empty;
             await _context.SaveChangesAsync();
 
+            await transaction.CommitAsync();
             TempData["AdminSuccess"] = "Cập nhật danh mục thành công.";
             return RedirectToAction(nameof(Categories));
         }
@@ -124,6 +130,7 @@ namespace SaigonChe.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteCategory(int id)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             var category = await _context.Categories
                 .Include(item => item.Products)
                 .FirstOrDefaultAsync(item => item.Id == id);
@@ -138,6 +145,7 @@ namespace SaigonChe.Web.Controllers
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
 
+            await transaction.CommitAsync();
             TempData["AdminSuccess"] = "Xóa danh mục thành công.";
             return RedirectToAction(nameof(Categories));
         }
@@ -147,6 +155,10 @@ namespace SaigonChe.Web.Controllers
         {
             var orders = await _context.Orders
                 .Include(order => order.Items)
+                .Where(order => !(order.Type == OrderType.Pos
+                    && !order.IsPaid
+                    && order.Status == OrderStatus.Pending
+                    && !order.Items.Any()))
                 .OrderByDescending(order => order.CreatedAt)
                 .ToListAsync();
 
@@ -202,16 +214,22 @@ namespace SaigonChe.Web.Controllers
                 return RedirectToAction(nameof(Orders));
             }
 
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             var order = await _context.Orders.Include(item => item.Items)
                 .FirstOrDefaultAsync(item => item.Id == model.OrderId);
             if (order == null) return NotFound();
+            if (!OrderWorkflowRules.Matches(model.RowVersion, order.RowVersion))
+            {
+                TempData["AdminError"] = "Đơn vừa được cập nhật. Hãy tải lại trước khi tiếp tục.";
+                return RedirectToAction(nameof(Orders));
+            }
             if (order.Type != OrderType.Online)
             {
                 TempData["AdminError"] = "Cập nhật đơn POS hoặc đặt tiệc tại màn hình nghiệp vụ tương ứng.";
                 return RedirectToAction(nameof(Orders));
             }
 
-            if (!IsValidOrderTransition(order.Status, model.Status))
+            if (!OrderWorkflowRules.IsAllowed(order.Status, model.Status))
             {
                 TempData["AdminError"] = "Luồng trạng thái đơn hàng không hợp lệ hoặc đơn đã kết thúc.";
                 return RedirectToAction(nameof(Orders));
@@ -222,7 +240,6 @@ namespace SaigonChe.Web.Controllers
                 return RedirectToAction(nameof(Orders));
             }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             var actorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (model.Status == OrderStatus.Completed)
             {
@@ -275,13 +292,7 @@ namespace SaigonChe.Web.Controllers
             return RedirectToAction(nameof(Orders));
         }
 
-        private static bool IsValidOrderTransition(OrderStatus current, OrderStatus next) => current switch
-        {
-            OrderStatus.Pending => next is OrderStatus.Confirmed or OrderStatus.Cancelled,
-            OrderStatus.Confirmed => next is OrderStatus.Preparing or OrderStatus.Cancelled,
-            OrderStatus.Preparing => next is OrderStatus.Completed or OrderStatus.Cancelled,
-            _ => false
-        };
+
 
         [HttpGet]
         public async Task<IActionResult> CreateProduct()
@@ -290,61 +301,8 @@ namespace SaigonChe.Web.Controllers
             return View(new ProductFormViewModel());
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateProduct(ProductFormViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                await LoadCategoriesAsync(model.CategoryId);
-                return View(model);
-            }
-
-            var product = new Product
-            {
-                Name = model.Name,
-                Description = model.Description,
-                Price = model.Price,
-                IsAvailable = model.IsAvailable,
-                IsFeatured = model.IsFeatured,
-                CategoryId = model.CategoryId,
-            };
-
-            if (model.ImageFile is { Length: > 0 })
-            {
-                var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-                var ext = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
-
-                if (!allowed.Contains(ext))
-                {
-                    ModelState.AddModelError(nameof(model.ImageFile), "Chỉ chấp nhận JPG, JPEG, PNG, WEBP.");
-                    await LoadCategoriesAsync(model.CategoryId);
-                    return View(model);
-                }
-                if (model.ImageFile.Length > 5 * 1024 * 1024)
-                {
-                    ModelState.AddModelError(nameof(model.ImageFile), "Dung lượng ảnh tối đa là 5MB.");
-                    await LoadCategoriesAsync(model.CategoryId);
-                    return View(model);
-                }
-
-                var uploadDir = Path.Combine(_environment.WebRootPath, "uploads", "products");
-                Directory.CreateDirectory(uploadDir);
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                var filePath = Path.Combine(uploadDir, fileName);
-
-                await using var stream = new FileStream(filePath, FileMode.Create);
-                await model.ImageFile.CopyToAsync(stream);
-
-                product.ImageUrl = $"/uploads/products/{fileName}";
-            }
-
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-
-            TempData["AdminSuccess"] = "Thêm món thành công.";
-            return RedirectToAction(nameof(Products));
-        }
+        [HttpPost, ValidateAntiForgeryToken]
+        public Task<IActionResult> CreateProduct(ProductFormViewModel model) => SaveProductAsync(model, true);
 
         [HttpGet]
         public async Task<IActionResult> EditProduct(int id)
@@ -369,70 +327,59 @@ namespace SaigonChe.Web.Controllers
             return View(model);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditProduct(ProductFormViewModel model)
+        [HttpPost, ValidateAntiForgeryToken]
+        public Task<IActionResult> EditProduct(ProductFormViewModel model) => SaveProductAsync(model, false);
+
+        private async Task<IActionResult> SaveProductAsync(ProductFormViewModel model, bool create)
         {
+            var view = create ? "CreateProduct" : "EditProduct";
+            var product = create ? new Product() : await _context.Products.FindAsync(model.Id);
+            if (product is null) return NotFound();
+            model.ImageUrl = product.ImageUrl;
+            if (model.CategoryId > 0 && !await _context.Categories.AnyAsync(item => item.Id == model.CategoryId))
+                ModelState.AddModelError(nameof(model.CategoryId), "Danh mục không tồn tại. Vui lòng chọn lại.");
             if (!ModelState.IsValid)
             {
                 await LoadCategoriesAsync(model.CategoryId);
-                return View(model);
+                return View(view, model);
             }
 
-            var product = await _context.Products.FindAsync(model.Id);
-            if (product == null) return NotFound();
-
-            var oldImageUrl = product.ImageUrl;
-            product.Name = model.Name;
-            product.Description = model.Description;
-            product.Price = model.Price;
-            product.IsAvailable = model.IsAvailable;
-            product.IsFeatured = model.IsFeatured;
-            product.CategoryId = model.CategoryId;
-
-            if (model.ImageFile is { Length: > 0 })
+            string? newImage = null;
+            var oldImage = product.ImageUrl;
+            var committed = false;
+            try
             {
-                var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-                var ext = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
-
-                if (!allowed.Contains(ext))
-                {
-                    ModelState.AddModelError(nameof(model.ImageFile), "Chỉ chấp nhận JPG, JPEG, PNG, WEBP.");
-                    await LoadCategoriesAsync(model.CategoryId);
-                    return View(model);
-                }
-                if (model.ImageFile.Length > 5 * 1024 * 1024)
-                {
-                    ModelState.AddModelError(nameof(model.ImageFile), "Dung lượng ảnh tối đa là 5MB.");
-                    await LoadCategoriesAsync(model.CategoryId);
-                    return View(model);
-                }
-
-                var uploadDir = Path.Combine(_environment.WebRootPath, "uploads", "products");
-                Directory.CreateDirectory(uploadDir);
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                var filePath = Path.Combine(uploadDir, fileName);
-
-                await using var stream = new FileStream(filePath, FileMode.Create);
-                await model.ImageFile.CopyToAsync(stream);
-
-                product.ImageUrl = $"/uploads/products/{fileName}";
-
+                if (model.ImageFile is { Length: > 0 })
+                    newImage = await _images.SaveAsync(model.ImageFile, HttpContext.RequestAborted);
+                product.Name = model.Name.Trim();
+                product.Description = model.Description.Trim();
+                product.Price = model.Price;
+                product.CategoryId = model.CategoryId;
+                product.IsAvailable = model.IsAvailable;
+                product.IsFeatured = model.IsFeatured;
+                product.ImageUrl = newImage ?? oldImage;
+                if (create) _context.Products.Add(product);
+                await _context.SaveChangesAsync();
+                committed = true;
             }
-            else
+            catch (ProductImageException exception) { ModelState.AddModelError(nameof(model.ImageFile), exception.Message); }
+            catch (Exception exception) when (exception is DbUpdateException or IOException or UnauthorizedAccessException
+                || DatabaseErrors.FindSqlException(exception) is not null)
             {
-                product.ImageUrl = oldImageUrl;
+                _logger.LogWarning("Could not save a product ({ErrorType}).", exception.GetType().Name);
+                ModelState.AddModelError(string.Empty, "Chưa thể lưu món. Hãy kiểm tra dữ liệu và thử lại.");
             }
-
-            await _context.SaveChangesAsync();
-            var oldImagePath = GetUploadedImagePath(oldImageUrl);
-            if (model.ImageFile is { Length: > 0 }
-                && oldImagePath != null
-                && System.IO.File.Exists(oldImagePath))
+            finally
             {
-                System.IO.File.Delete(oldImagePath);
+                if (!committed) _images.Delete(newImage);
             }
-            TempData["AdminSuccess"] = "Cập nhật món thành công.";
+            if (!ModelState.IsValid)
+            {
+                await LoadCategoriesAsync(model.CategoryId);
+                return View(view, model);
+            }
+            if (newImage is not null) _images.Delete(oldImage);
+            TempData["AdminSuccess"] = create ? "Thêm món thành công." : "Cập nhật món thành công.";
             return RedirectToAction(nameof(Products));
         }
 
@@ -442,10 +389,11 @@ namespace SaigonChe.Web.Controllers
         {
             var product = await _context.Products
                 .Include(item => item.OrderItems)
+                .Include(item => item.InventoryMovements)
                 .FirstOrDefaultAsync(item => item.Id == id);
             if (product == null) return NotFound();
 
-            if (product.OrderItems.Count > 0)
+            if (product.OrderItems.Count > 0 || product.InventoryMovements.Count > 0)
             {
                 product.IsAvailable = false;
                 await _context.SaveChangesAsync();
@@ -453,28 +401,14 @@ namespace SaigonChe.Web.Controllers
                 return RedirectToAction(nameof(Products));
             }
 
-            var imagePath = GetUploadedImagePath(product.ImageUrl);
+            var imageUrl = product.ImageUrl;
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
-            if (imagePath != null && System.IO.File.Exists(imagePath))
-            {
-                System.IO.File.Delete(imagePath);
-            }
+            _images.Delete(imageUrl);
 
             TempData["AdminSuccess"] = "Xóa món thành công.";
             return RedirectToAction(nameof(Products));
-        }
-
-        private string? GetUploadedImagePath(string? imageUrl)
-        {
-            if (string.IsNullOrWhiteSpace(imageUrl) || !imageUrl.StartsWith("/uploads/products/", StringComparison.Ordinal))
-            {
-                return null;
-            }
-
-            var fileName = Path.GetFileName(imageUrl);
-            return Path.Combine(_environment.WebRootPath, "uploads", "products", fileName);
         }
 
         private async Task LoadCategoriesAsync(int selectedId = 0)

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Danh mục";
     var totalProducts = Model.Sum(category => category.Products.Count);
+    var emptyCategories = Model.Count(category => category.Products.Count == 0);
 }
 
 <div class="admin-page-head">
@@ -35,9 +36,9 @@
         <span class="stat-hint">Món mỗi danh mục</span>
     </div>
     <div class="stat-card">
-        <span class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Trạng thái</span>
-        <p class="stat-value">Ổn</p>
-        <span class="stat-hint">Không có danh mục trống</span>
+        <span class="stat-label"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>Danh mục trống</span>
+        <p class="stat-value">@emptyCategories</p>
+        <span class="stat-hint">@(emptyCategories == 0 ? "Mọi danh mục đều có món" : "Cần bổ sung món cho danh mục")</span>
     </div>
 </div>
 

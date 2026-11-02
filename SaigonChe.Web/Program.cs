@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using SaigonChe.Web.Data;
 using SaigonChe.Web.Models;
 using SaigonChe.Web.Services;
@@ -12,6 +13,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddScoped<OrderCompletionService>();
+builder.Services.AddScoped<ProductImageService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
@@ -57,7 +59,22 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    await DbSeeder.SeedAsync(services);
+    try
+    {
+        await DbSeeder.SeedAsync(services);
+    }
+    catch (SqlException exception)
+    {
+        app.Logger.LogCritical("Database initialization failed (SQL {Number}). Check the configured SQL Server/LocalDB instance and migration permissions. No database was recreated.", exception.Number);
+        Environment.ExitCode = 1;
+        return;
+    }
+    catch (InvalidOperationException exception)
+    {
+        app.Logger.LogCritical("Database seeding failed: {Message}", exception.Message);
+        Environment.ExitCode = 1;
+        return;
+    }
 }
 
 if (!app.Environment.IsDevelopment())
@@ -70,6 +87,32 @@ else
     app.UseDeveloperExceptionPage();
 }
 
+app.Use(async (context, next) =>
+{
+    try
+    {
+        var path = context.Request.Path.Value?.TrimEnd('/');
+        if (string.Equals(path, "/Identity/Account/Register", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, "/Identity/Account/Login", StringComparison.OrdinalIgnoreCase))
+        {
+            if (HttpMethods.IsGet(context.Request.Method))
+                context.Response.Redirect("/Account/" + (path!.EndsWith("Register", StringComparison.OrdinalIgnoreCase) ? "Register" : "Login") + context.Request.QueryString);
+            else
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+        await next();
+    }
+    catch (Exception failure) when (!context.Response.HasStarted && DatabaseErrors.FindSqlException(failure) is not null)
+    {
+        var exception = DatabaseErrors.FindSqlException(failure)!;
+        app.Logger.LogError("Database request failed (SQL {Number}, trace {TraceId}).", exception.Number, context.TraceIdentifier);
+        context.Response.Clear();
+        context.Response.StatusCode = exception.Number == 1205 ? 409 : 503;
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.WriteAsync("<!doctype html><html lang=\"vi\"><meta charset=\"utf-8\"><title>Tạm thời gián đoạn</title><body><h1>Chưa thể hoàn tất thao tác</h1><p>Dịch vụ đang bận hoặc tạm thời gián đoạn. Vui lòng tải lại trang và kiểm tra kết quả trước khi thử lại.</p></body></html>");
+    }
+});
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();

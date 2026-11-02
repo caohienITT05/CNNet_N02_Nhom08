@@ -3497,6 +3497,8 @@ span.text-danger {
 }
 
 .admin-sidebar {
+    overflow-y: auto;
+    overscroll-behavior: contain;
     position: sticky;
     top: 0;
     z-index: 40;
@@ -4283,6 +4285,7 @@ dialog.modal::backdrop {
     }
 
     .admin-sidebar {
+        visibility: hidden;
         position: fixed;
         top: 0;
         left: 0;
@@ -4295,6 +4298,7 @@ dialog.modal::backdrop {
     }
 
     .admin-sidebar.is-open {
+        visibility: visible;
         transform: translateX(0);
     }
 
@@ -4650,4 +4654,19 @@ dialog.modal::backdrop {
     .stat-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Shared operations panels use the same surfaces in both themes. */
+.report-table-card {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+}
+.admin-table-wrap form.d-flex .form-control,
+.admin-table-wrap form.d-flex .form-select {
+    flex: 1 1 9rem;
+    width: auto;
+    min-width: 0;
 }

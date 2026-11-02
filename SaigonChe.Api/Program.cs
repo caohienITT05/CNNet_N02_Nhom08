@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using SaigonChe.Api.Data;
 using SaigonChe.Api.Models;
 
@@ -13,6 +14,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    try { await next(); }
+    catch (Exception failure) when (!context.Response.HasStarted && FindSql(failure) is not null)
+    {
+        app.Logger.LogError("Catalog database unavailable (SQL {Number}).", FindSql(failure)!.Number);
+        context.Response.Clear();
+        context.Response.StatusCode = 503;
+        await context.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = 503, Title = "Danh mục tạm thời chưa khả dụng.", Detail = "Vui lòng thử lại sau."
+        });
+    }
+});
 app.UseHttpsRedirection();
 // This legacy API has no authentication store. Keep its read-only catalog
 // endpoints available, but disable unauthenticated writes in every environment.
@@ -36,3 +51,10 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static SqlException? FindSql(Exception exception)
+{
+    for (Exception? current = exception; current is not null; current = current.InnerException)
+        if (current is SqlException sql) return sql;
+    return null;
+}

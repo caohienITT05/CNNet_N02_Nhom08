@@ -370,6 +370,9 @@ namespace SaigonChe.Web.Data.Migrations
                     b.Property<string>("AssignedStaffId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<Guid?>("CheckoutToken")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
@@ -423,6 +426,10 @@ namespace SaigonChe.Web.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedStaffId");
+
+                    b.HasIndex("CheckoutToken")
+                        .IsUnique()
+                        .HasFilter("[CheckoutToken] IS NOT NULL");
 
                     b.HasIndex("CustomerUserId");
 
@@ -560,6 +567,12 @@ namespace SaigonChe.Web.Data.Migrations
 
                     b.Property<decimal?>("QuoteAmount")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");

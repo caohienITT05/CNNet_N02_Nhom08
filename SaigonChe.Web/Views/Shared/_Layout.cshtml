@@ -9,6 +9,8 @@
     var isHomePage = controller == "Home" && action == "Index";
     var isAdminSection = controller is "Admin" or "Product" or "Category" or "Pos" or "Reports" or "Staff" or "OperationsAdmin" or "OrderOperations"
         || (controller == "Party" && (User.IsInRole("Staff") || User.IsInRole("Admin")));
+    var workspaceController = User.IsInRole("Admin") ? "Admin" : "Pos";
+    var workspaceAction = User.IsInRole("Admin") ? "Products" : "Index";
     var homeUrl = Url.Action("Index", "Home") ?? "/";
     var isSignedIn = SignInManager.IsSignedIn(User);
     var accountName = User.Identity?.Name ?? string.Empty;
@@ -109,11 +111,11 @@
             <div class="admin-backdrop" data-admin-backdrop></div>
 
             <aside class="admin-sidebar" id="adminSidebar" aria-label="Điều hướng quản trị">
-                <a class="admin-brand" asp-controller="Admin" asp-action="Products">
+                <a class="admin-brand" asp-controller="@workspaceController" asp-action="@workspaceAction">
                     <span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf" /></svg></span>
                     <span>
                         <span class="brand-text">Chè Sài Gòn</span>
-                        <span class="brand-tag">Admin console</span>
+                        <span class="brand-tag">@(User.IsInRole("Admin") ? "Admin console" : "Staff console")</span>
                     </span>
                 </a>
 
@@ -163,6 +165,8 @@
                     </nav>
                 </div>
 
+                @if (User.IsInRole("Admin"))
+                {
                 <div>
                     <p class="admin-nav-label">Kênh thử nghiệm</p>
                     <nav>
@@ -182,6 +186,8 @@
                         </ul>
                     </nav>
                 </div>
+
+                }
 
                 <div class="admin-sidebar__foot">
                     <div class="admin-user">
@@ -213,7 +219,7 @@
                             <svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg>
                         </button>
                         <ol class="breadcrumb">
-                            <li><a asp-controller="Admin" asp-action="Products">Quản trị</a></li>
+                            <li><a asp-controller="@workspaceController" asp-action="@workspaceAction">@(User.IsInRole("Admin") ? "Quản trị" : "Vận hành")</a></li>
                             <li class="sep" aria-hidden="true">/</li>
                             <li class="current" aria-current="page">@ViewData["Title"]</li>
                         </ol>
@@ -418,6 +424,10 @@
                             @if (User.IsInRole("Admin"))
                             {
                                 <a class="btn btn-ghost btn-sm" asp-controller="Admin" asp-action="Products">Quản trị</a>
+                            }
+                            else if (User.IsInRole("Staff"))
+                            {
+                                <a class="btn btn-ghost btn-sm" asp-controller="Pos" asp-action="Index">Khu vực vận hành</a>
                             }
                         </div>
                     }

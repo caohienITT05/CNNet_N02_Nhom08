@@ -138,13 +138,26 @@ namespace SaigonChe.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(CreateCheckoutViewModel(cart));
+            var model = CreateCheckoutViewModel(cart);
+            model.CheckoutToken = EnsureCheckoutToken();
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
+            if (!Guid.TryParse(HttpContext.Session.GetString("CheckoutToken"), out var expected)
+                || model.CheckoutToken is null || model.CheckoutToken == Guid.Empty || model.CheckoutToken != expected)
+            {
+                ModelState.AddModelError(string.Empty, "Phiên thanh toán đã thay đổi. Vui lòng kiểm tra và gửi lại.");
+                model.CheckoutToken = EnsureCheckoutToken();
+                model.Items = (await RefreshCartAsync());
+                return View(model);
+            }
+            var existingId = await _context.Orders.AsNoTracking()
+                .Where(order => order.CheckoutToken == expected).Select(order => (int?)order.Id).SingleOrDefaultAsync();
+            if (existingId.HasValue) return CheckoutSucceeded(existingId.Value, expected);
             var cart = GetCart();
             if (!cart.Any())
             {
@@ -189,6 +202,7 @@ namespace SaigonChe.Web.Controllers
 
             var order = new Order
             {
+                CheckoutToken = expected,
                 CustomerName = model.CustomerName.Trim(),
                 Phone = model.Phone.Trim(),
                 Address = model.Address.Trim(),
@@ -209,10 +223,40 @@ namespace SaigonChe.Web.Controllers
                 Note = "Khách tạo đơn online.",
                 CreatedAt = DateTime.UtcNow
             });
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // A unique checkout key makes simultaneous submits one transaction.
+                var committed = await _context.Orders.AsNoTracking()
+                    .Where(item => item.CheckoutToken == expected).Select(item => (int?)item.Id).SingleOrDefaultAsync();
+                if (committed.HasValue) return CheckoutSucceeded(committed.Value, expected);
+                ModelState.AddModelError(string.Empty, "Chưa thể lưu đơn. Giỏ hàng của bạn vẫn được giữ lại.");
+                model.Items = CreateCheckoutViewModel(cart).Items;
+                return View(model);
+            }
+            return CheckoutSucceeded(order.Id, expected);
+        }
 
+        private Guid EnsureCheckoutToken()
+        {
+            var value = HttpContext.Session.GetString("CheckoutToken");
+            if (!Guid.TryParse(value, out var token)
+                || HttpContext.Session.GetString("CheckoutCompleted") == token.ToString("N"))
+            {
+                token = Guid.NewGuid();
+                HttpContext.Session.SetString("CheckoutToken", token.ToString("N"));
+            }
+            return token;
+        }
+
+        private IActionResult CheckoutSucceeded(int id, Guid token)
+        {
             HttpContext.Session.Remove("Cart");
-            TempData["OrderId"] = order.Id;
+            HttpContext.Session.SetString("CheckoutCompleted", token.ToString("N"));
+            TempData["OrderId"] = id;
             TempData["OrderSuccess"] = "Đặt món thành công. Chúng tôi sẽ liên hệ xác nhận đơn hàng sớm nhất.";
             return RedirectToAction("Index", "Home");
         }

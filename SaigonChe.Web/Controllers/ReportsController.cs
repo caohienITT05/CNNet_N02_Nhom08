@@ -19,6 +19,11 @@ public sealed class ReportsController(ApplicationDbContext context) : Controller
     [HttpGet]
     public async Task<IActionResult> Index(DateOnly? from, DateOnly? to, string? type)
     {
+        if (!ValidateFilter(from, to, type))
+        {
+            var fallback = NormalizeRange(null, null);
+            return View(new ReportDashboardViewModel { From = fallback.From, To = fallback.To });
+        }
         var range = NormalizeRange(from, to);
         var report = await BuildReportAsync(range.From, range.To, type);
         return View(report);
@@ -27,6 +32,10 @@ public sealed class ReportsController(ApplicationDbContext context) : Controller
     [HttpGet]
     public async Task<IActionResult> ExportExcel(DateOnly? from, DateOnly? to, string? type)
     {
+        if (!ValidateFilter(from, to, type))
+        {
+            return BadRequest("Bộ lọc báo cáo không hợp lệ. Vui lòng kiểm tra khoảng ngày và loại đơn.");
+        }
         var range = NormalizeRange(from, to);
         var report = await BuildReportAsync(range.From, range.To, type);
         var bytes = CreateWorkbook(report);
@@ -47,7 +56,7 @@ public sealed class ReportsController(ApplicationDbContext context) : Controller
             .Where(order => order.IsPaid && order.Status == OrderStatus.Completed &&
                 order.CompletedAt != null && order.CompletedAt >= startUtc && order.CompletedAt < endUtc);
         if (Enum.TryParse<OrderType>(type, ignoreCase: true, out var orderType))
-            ordersQuery = ordersQuery.Where(order => order.Type == orderType);
+            { ordersQuery = ordersQuery.Where(order => order.Type == orderType); type = orderType.ToString(); }
         else
             type = null;
 
@@ -79,6 +88,7 @@ public sealed class ReportsController(ApplicationDbContext context) : Controller
         {
             months.Add(new ReportBucket(cursor.ToString("MM/yyyy"),
                 localRows.Where(item => item.LocalDate.Year == cursor.Year && item.LocalDate.Month == cursor.Month).Sum(item => item.Row.Revenue)));
+            if (cursor == lastMonth) break;
             cursor = cursor.AddMonths(1);
         }
 
@@ -109,11 +119,23 @@ public sealed class ReportsController(ApplicationDbContext context) : Controller
         };
     }
 
+    private bool ValidateFilter(DateOnly? from, DateOnly? to, string? type)
+    {
+        var range = NormalizeRange(from, to);
+        if (range.From == DateOnly.MinValue || range.To == DateOnly.MinValue
+            || range.From == DateOnly.MaxValue || range.To == DateOnly.MaxValue)
+            ModelState.AddModelError(string.Empty, "Khoảng ngày nằm ngoài giới hạn được hỗ trợ.");
+        if (!string.IsNullOrWhiteSpace(type)
+            && (!Enum.TryParse<OrderType>(type, true, out var parsed) || !Enum.IsDefined(parsed)))
+            ModelState.AddModelError(nameof(type), "Loại đơn không hợp lệ.");
+        return ModelState.IsValid;
+    }
+
     private static (DateOnly From, DateOnly To) NormalizeRange(DateOnly? from, DateOnly? to)
     {
         var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamTimeZone));
         var end = to ?? today;
-        return (from ?? end.AddDays(-29), end);
+        return (from ?? (end.DayNumber >= 29 ? end.AddDays(-29) : DateOnly.MinValue), end);
     }
 
     private static TimeZoneInfo ResolveVietnamTimeZone()
@@ -172,6 +194,15 @@ public sealed class ReportsController(ApplicationDbContext context) : Controller
 
     private static void AddXml(ZipArchive archive, string path, XDocument document)
     {
+        // XElement names must carry the OOXML namespace, not only an xmlns attribute.
+        if (document.Root?.Attribute("xmlns") is { } declaration)
+        {
+            XNamespace elementNamespace = declaration.Value;
+            declaration.Remove();
+            foreach (var element in document.Root.DescendantsAndSelf())
+                if (element.Name.Namespace == XNamespace.None)
+                    element.Name = elementNamespace + element.Name.LocalName;
+        }
         var entry = archive.CreateEntry(path, CompressionLevel.Fastest);
         using var stream = entry.Open();
         using var writer = XmlWriter.Create(stream, new XmlWriterSettings { Encoding = new System.Text.UTF8Encoding(false), Indent = false });

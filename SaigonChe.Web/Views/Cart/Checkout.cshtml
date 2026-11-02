@@ -29,6 +29,7 @@
         </div>
 
         <form asp-action="Checkout" method="post" class="checkout-layout">
+            <input type="hidden" asp-for="CheckoutToken" />
             @Html.AntiForgeryToken()
 
             <div class="checkout-card">

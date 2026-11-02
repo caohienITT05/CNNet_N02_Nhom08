@@ -4,6 +4,7 @@ namespace SaigonChe.Web.ViewModels
 {
     public class CheckoutViewModel
     {
+        [Required] public Guid? CheckoutToken { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập họ tên.")]
         [StringLength(100, ErrorMessage = "Họ tên không được vượt quá 100 ký tự.")]
         [Display(Name = "Họ tên")]

@@ -33,6 +33,10 @@
                 </a>
             }
 
+            @if (User.IsInRole("Staff") && !User.IsInRole("Admin"))
+            {
+                <a class="dropdown-item" asp-controller="Pos" asp-action="Index" role="menuitem">Khu vực vận hành</a>
+            }
             <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" role="menuitem" title="Quản lý tài khoản">
                 <svg class="icon" aria-hidden="true"><use href="#i-user" /></svg>
                 Tài khoản của tôi

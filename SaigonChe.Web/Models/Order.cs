@@ -6,6 +6,7 @@ namespace SaigonChe.Web.Models
     public class Order
     {
         public int Id { get; set; }
+        public Guid? CheckoutToken { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập họ tên.")]
         public string CustomerName { get; set; } = string.Empty;

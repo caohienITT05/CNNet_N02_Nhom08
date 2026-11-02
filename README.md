@@ -6,7 +6,8 @@ Website đặt món và quản lý Quán Chè Sài Gòn, được xây dựng ch
 
 - `SaigonChe.Api`: ASP.NET Core Web API và Entity Framework Core.
 - `SaigonChe.Web`: ASP.NET Core MVC, ASP.NET Core Identity, Entity Framework Core và SQL Server.
-- `SaigonChe.slnx`: solution chứa hai project.
+- `SaigonChe.Web.Tests`: xUnit, SQL/HTTP integration và Playwright UI tests.
+- `SaigonChe.slnx`: solution chứa ba project.
 
 ```text
 Trình duyệt → SaigonChe.Web → SQL Server
@@ -29,6 +30,7 @@ Trình duyệt → SaigonChe.Web → SQL Server
 - POS cho đơn tại bàn/mang về, ghi chú món, voucher, tiền mặt hoặc VietQR xác nhận thủ công, trừ tồn và in lại bill.
 - Quản trị tồn kho theo số phần, bàn và voucher.
 - Khách gửi/theo dõi yêu cầu đặt tiệc; Staff/Admin tư vấn, báo giá, xác nhận và hoàn tất.
+
 - Dashboard Admin lọc doanh thu theo ngày và loại đơn, biểu đồ ngày/tháng, món bán chạy và xuất Excel; có thể in/lưu PDF từ trình duyệt.
 
 Các giới hạn hiện tại:
@@ -36,8 +38,8 @@ Các giới hạn hiện tại:
 - Tồn kho tính theo số phần món, chưa trừ nguyên liệu.
 - Chưa hỗ trợ hoàn tiền, ghép/tách bàn, đặt cọc tiệc hoặc hóa đơn điện tử.
 - PDF được tạo bằng chức năng in/lưu PDF của trình duyệt; file Excel được xuất trực tiếp.
-- Migration mới đã tạo và kiểm tra tính đồng bộ với model, nhưng cần chạy trên SQL Server trước khi dùng.
-- Kiểm thử tự động và tài liệu API vẫn còn trong lộ trình chung.
+- Migration đã kiểm tra trên SQL Server mới và có dữ liệu cũ trong môi trường audit; database cá nhân cần sao lưu trước khi cập nhật.
+- Kết quả kiểm toán, test SQL/HTTP/UI và phần còn thiếu nằm trong [AUDIT_REPORT.md](AUDIT_REPORT.md).
 
 Lộ trình chi tiết và thứ tự triển khai nằm trong [ROADMAP.md](ROADMAP.md).
 
@@ -111,6 +113,20 @@ dotnet run --project .\SaigonChe.Web\SaigonChe.Web.csproj --launch-profile http
 
 Database cần được cập nhật migration trước khi chạy các luồng mới. Các API ghi dữ liệu danh mục thử nghiệm cũ đã bị khóa; dùng giao diện Admin có bảo vệ quyền để quản lý.
 
+## Chạy kiểm toán tái lập
+
+Dùng PowerShell tại gốc repo, sau khi LocalDB/SQL Server sẵn sàng:
+
+```powershell
+pwsh -NoProfile -File .\scripts\Run-Audit.ps1 -InstallBrowser
+```
+
+Lần tiếp theo bỏ `-InstallBrowser`. Script restore/build/test, dùng Chromium/cache và artifacts trên ổ chứa repository. Test tạo database `SaigonChe_Audit_<RunId>` và tài khoản thử riêng, chỉ dọn DB của fixture. Không trỏ fixture vào DB thật. Có thể đặt `SAIGONCHE_TEST_SQL_CONNECTION` chọn server SQL khác; tên database luôn được fixture thay bằng tên audit.
+
+Kết quả audit 02/11/2026: build 0 warning/0 error, 45/45 test đạt, 0 skipped. Checklist audit đạt 10/11 nhóm (90,91%); Identity nâng cao/khôi phục qua email chưa kiểm chứng. Đây không phải tỷ lệ hoàn thành toàn bộ đặc tả môn học.
+
+Ảnh UI, trace, Excel/PDF và host log nằm trong `artifacts/audit`; TRX trong `artifacts/audit-results`, đều đã gitignore. Nếu Visual Studio giữ khóa DLL, dừng Debug trước khi chạy script. Kết quả/giới hạn: [AUDIT_REPORT.md](AUDIT_REPORT.md).
+
 ## Kiểm thử và ma trận quyền
 
 Chạy kiểm thử tự động trên toàn solution:
@@ -120,7 +136,7 @@ dotnet build .\SaigonChe.slnx
 dotnet test .\SaigonChe.slnx
 ```
 
-Bộ kiểm thử hiện bao phủ tính tổng/giảm giá, voucher hết hạn hoặc hết lượt, tiền thừa và thiếu tiền, thiếu tồn, bán phần cuối theo thứ tự, xác nhận thanh toán lặp và từ chối đơn ở trạng thái kết thúc. Kiểm thử chưa thay thế xác minh cạnh tranh giao dịch trên SQL Server hoặc kiểm thử tích hợp đủ ba vai trò.
+Bộ test gồm nghiệp vụ đơn vị, SQL Server thật, HTTP ba vai trò và browser UI: gửi lặp checkout, cạnh tranh tồn/voucher/bàn, migration giữ snapshot cũ, upload, thu hồi phiên, IDOR, báo cáo/bản in. Kết quả từng lượt trong AUDIT_REPORT.md.
 
 | Quyền | Được phép | Bị chặn |
 |---|---|---|

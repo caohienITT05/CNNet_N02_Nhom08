@@ -74,6 +74,7 @@ public sealed class PosController : Controller
         await using var transaction = await _db.Database.BeginTransactionAsync(
             IsolationLevel.Serializable, cancellationToken);
 
+        var staffId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         DiningTable? table = null;
         if (tableId.HasValue)
         {
@@ -98,6 +99,27 @@ public sealed class PosController : Controller
             {
                 await transaction.CommitAsync(cancellationToken);
                 return RedirectToAction(nameof(Order), new { id = existingOrderId.Value });
+            }
+        }
+        else
+        {
+            // Reuse the current staff's empty takeaway draft instead of creating
+            // a trail of abandoned 0-item orders every time "Tạo đơn POS" is pressed.
+            var emptyDraftId = await _db.Orders
+                .Where(order => order.Type == OrderType.Pos
+                    && order.TableId == null
+                    && !order.IsPaid
+                    && order.Status != OrderStatus.Cancelled
+                    && order.AssignedStaffId == staffId
+                    && !order.Items.Any())
+                .OrderByDescending(order => order.CreatedAt)
+                .Select(order => (int?)order.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (emptyDraftId.HasValue)
+            {
+                await transaction.CommitAsync(cancellationToken);
+                return RedirectToAction(nameof(Order), new { id = emptyDraftId.Value });
             }
         }
 
@@ -221,14 +243,17 @@ public sealed class PosController : Controller
             existing.ProductId == product.Id && existing.Notes == note);
         if (item == null)
         {
-            order.Items.Add(new OrderItem
+            item = new OrderItem
             {
+                OrderId = order.Id,
                 ProductId = product.Id,
                 ProductName = product.Name,
                 Price = product.Price,
                 Quantity = model.Quantity,
                 Notes = note
-            });
+            };
+            order.Items.Add(item);
+            _db.OrderItems.Add(item);
         }
         else
         {
@@ -305,6 +330,12 @@ public sealed class PosController : Controller
         if (order == null) return NotFound();
         if (!TryMatchVersion(rowVersion, order.RowVersion)) return StaleOrder(order.Id);
 
+        if (!ModelState.IsValid || string.IsNullOrWhiteSpace(customerName)
+            || string.IsNullOrWhiteSpace(phone) || string.IsNullOrWhiteSpace(address))
+        {
+            TempData["PosError"] = "Vui lòng nhập đầy đủ thông tin khách hàng.";
+            return RedirectToAction(nameof(Order), new { id = order.Id });
+        }
         customerName = customerName.Trim();
         phone = phone.Trim();
         address = address.Trim();
@@ -360,7 +391,7 @@ public sealed class PosController : Controller
     public async Task<IActionResult> Pay(int orderId, PaymentMethod method, decimal? amountReceived,
         string rowVersion, CancellationToken cancellationToken)
     {
-        if (method is not (PaymentMethod.Cash or PaymentMethod.VietQr))
+        if (!ModelState.IsValid || method is not (PaymentMethod.Cash or PaymentMethod.VietQr))
         {
             TempData["PosError"] = "Phương thức thanh toán không hợp lệ.";
             return RedirectToAction(nameof(Order), new { id = orderId });
@@ -398,7 +429,7 @@ public sealed class PosController : Controller
 
         if (order.Items.Count == 0)
         {
-            TempData["PosError"] = "Thêm ít nhất một món trước khi thanh toán.";
+            TempData["PosError"] = $"Đơn #{order.Id} chưa có món. Hãy thêm ít nhất một món trước khi thanh toán.";
             return RedirectToAction(nameof(Order), new { id = order.Id });
         }
 
@@ -576,26 +607,15 @@ public sealed class PosController : Controller
         order.Total = VoucherPricingService.CalculateTotal(order.Items, order.DiscountAmount);
     }
 
-    private bool IsVietQrConfigured() =>
-        !string.IsNullOrWhiteSpace(_configuration["Payment:BankId"])
-        && !string.IsNullOrWhiteSpace(_configuration["Payment:AccountNumber"])
-        && !string.IsNullOrWhiteSpace(_configuration["Payment:AccountName"]);
-
-    private string? MakeVietQrUrl(Order order)
-    {
-        if (!IsVietQrConfigured()) return null;
-        var bank = Uri.EscapeDataString(_configuration["Payment:BankId"]!);
-        var account = Uri.EscapeDataString(_configuration["Payment:AccountNumber"]!);
-        var accountName = Uri.EscapeDataString(_configuration["Payment:AccountName"]!);
-        var template = Uri.EscapeDataString(_configuration["Payment:QrTemplate"] ?? "compact2");
-        var description = Uri.EscapeDataString($"POS {order.Id}");
-        return $"https://img.vietqr.io/image/{bank}-{account}-{template}.png?amount={order.Total:0}&addInfo={description}&accountName={accountName}";
-    }
+    private bool IsVietQrConfigured() => VietQrPayment.IsConfigured(_configuration);
+    private string? MakeVietQrUrl(Order order) => VietQrPayment.MakeUrl(_configuration, order.Id, order.Total, "POS");
 
     private async Task<bool> SaveWithConcurrencyAsync(Order order, CancellationToken cancellationToken)
     {
         try
         {
+            // Child-only edits must also advance the aggregate concurrency token.
+            _db.Entry(order).Property(item => item.Total).IsModified = true;
             await _db.SaveChangesAsync(cancellationToken);
             return true;
         }

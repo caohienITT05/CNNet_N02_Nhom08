@@ -51,6 +51,10 @@ public sealed class OrderCompletionService(ApplicationDbContext context)
                 if (product.Stock < quantity)
                     throw new OrderCompletionException($"Tồn kho món {product.Name} không đủ; hiện còn {product.Stock} phần.");
 
+            }
+            foreach (var (productId, quantity) in required)
+            {
+                var product = products[productId];
                 product.Stock -= quantity;
                 context.InventoryMovements.Add(new InventoryMovement
                 {

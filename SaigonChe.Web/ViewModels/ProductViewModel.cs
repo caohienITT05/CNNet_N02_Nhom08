@@ -10,7 +10,6 @@ namespace SaigonChe.Web.ViewModels
         public bool IsAvailable { get; set; }
         public int? CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
-        public string CategoryTag { get; set; } = "traditional";
         public bool IsFeatured { get; set; }
         public string? ImageUrl { get; set; }
         [JsonIgnore]

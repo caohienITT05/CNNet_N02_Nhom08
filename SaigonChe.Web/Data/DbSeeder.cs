@@ -117,6 +117,12 @@ namespace SaigonChe.Web.Data
 
             if (!await context.Products.AnyAsync())
             {
+                foreach (var name in new[] { "Chè truyền thống", "Chè hiện đại" })
+                {
+                    if (!await context.Categories.AnyAsync(category => category.Name == name))
+                        context.Categories.Add(new Category { Name = name });
+                }
+                await context.SaveChangesAsync();
                 var categories = await context.Categories.ToListAsync();
                 var traditional = categories.First(c => c.Name == "Chè truyền thống");
                 var modern = categories.First(c => c.Name == "Chè hiện đại");

@@ -1,360 +1,89 @@
-# Lộ trình xây dựng SaigonChe
+# Lộ trình SaigonChe
 
-Tài liệu này hợp nhất đặc tả trong [thư mục Google Drive của dự án](https://drive.google.com/drive/folders/1cpvRw17V_vcU1bbQwkhicA3P75coMmXU) với trạng thái thực tế của repository ngày 01/11/2026.
+Cập nhật 02/11/2026, branch Nhom3_Hoang. Trạng thái này thay cho các checklist khảo sát cũ; bằng chứng chi tiết nằm trong [AUDIT_REPORT.md](AUDIT_REPORT.md).
 
-## Trạng thái Thành viên 3 — branch `Nhom3_Hoang`
+## Phạm vi đợt hiện tại
 
-Mục tiêu là đạt ít nhất 90% tiến độ triển khai có trọng số M1–M6. M1–M5 phản ánh phần chức năng đã được triển khai; M6 theo dõi kiểm thử và nghiệm thu. Vì vậy, tỷ lệ triển khai không đồng nghĩa toàn bộ luồng đã được nghiệm thu end-to-end.
+Sửa và kiểm chứng chức năng đã có, giữ .NET 10/MVC/Identity/EF Core/SQL Server. Các bản sửa ở working tree tại D:/CNNet_N02_Nhom08 để review; không commit, push hoặc tạo PR trong đợt audit.
 
-| Mốc | Trọng số | Tiến độ | Phần đã triển khai |
-|---|---:|---:|---|
-| M1. Branch và nền chạy được | 5% | 67% | Branch `Nhom3_Hoang` đã push, có commit nền riêng; restore/build solution và hướng dẫn cấu hình đã có. Còn Draft PR. |
-| M2. Dữ liệu và phân quyền | 20% | 100% | Role Customer/Staff/Admin, quản lý Staff, bảo vệ luồng ghi, migration cộng thêm. Migration đã chạy trên LocalDB; EF không còn pending model changes. |
-| M3. Bán hàng tại quầy | 30% | 100% | POS, voucher, tiền mặt/VietQR xác nhận tay, tồn kho, xử lý thanh toán dùng chung và bill in lại. |
-| M4. Đặt tiệc | 15% | 100% | Yêu cầu của khách, hàng đợi tư vấn/báo giá, vòng đời trạng thái và tạo tối đa một đơn Party. |
-| M5. Dashboard và báo cáo | 20% | 100% | Lọc ngày/loại đơn, doanh thu theo UTC/VN, biểu đồ ngày/tháng, Excel và in/lưu PDF. |
-| M6. Kiểm thử và bàn giao | 10% | 28,57% | Hoàn thành 2/7 tiêu chí: kiểm thử quy tắc giá/voucher/thanh toán/tồn kho/trạng thái và bổ sung README, hướng dẫn cấu hình/migration, ma trận quyền, kịch bản demo. Còn các kiểm thử tích hợp, báo cáo và UI desktop/tablet. |
+Chỉ số 91,21% M1–M6 trước đây là ghi nhận triển khai lịch sử, chưa phải nghiệm thu. Không tiếp tục cộng tỷ lệ đó vào kết quả audit. Nhánh chưa được merge vào main; không mở PR theo yêu cầu hiện tại.
 
-**Tiến độ triển khai có trọng số hiện tại: 91,21%.** Cách tính: M1 67%, M2–M5 100%, M6 2/7 tiêu chí. Đây là tiến độ triển khai, chưa phải tỷ lệ nghiệm thu toàn bộ hành vi; các kiểm thử tích hợp còn mở bên dưới. Branch vẫn ở `Nhom3_Hoang`, chưa merge vào `main`.
+## Kiến trúc và dữ liệu hiện tại
 
-### Checklist M6
+- SaigonChe.Web: MVC/Razor, Identity cookie, Session giỏ hàng, service và DbContext trực tiếp SQL Server.
+- SaigonChe.Api: catalog thử nghiệm chỉ đọc; không phải đường ghi dữ liệu của Web.
+- SaigonChe.Web.Tests: unit test, HTTP/Kestrel với SQL Server thật và Chromium/Playwright.
+- SaigonChe.slnx chứa cả ba project.
 
-- [x] Kiểm thử tổng tiền/giảm giá, voucher hết hạn/hết lượt/không đạt tối thiểu, tiền thừa/thiếu, thiếu tồn, phần tồn cuối và đơn ở trạng thái kết thúc.
-- [ ] Kiểm thử cạnh tranh hai nhân viên thanh toán đồng thời, bán phần cuối đồng thời và xác nhận lặp bằng SQL Server.
-- [ ] Kiểm thử Customer/Staff/Admin, khóa tài khoản, thu hồi phiên và truy cập dữ liệu người khác.
-- [ ] Kiểm thử migration trên database có dữ liệu cũ và hồi quy giỏ hàng/checkout/quản trị.
-- [ ] Đối chiếu ranh giới ngày/tháng, Excel/PDF và bản in bill với bộ dữ liệu cố định.
-- [ ] Build/test và kiểm tra giao diện desktop/tablet: build/test solution đã đạt; kiểm tra viewport trực quan còn thiếu.
-- [x] README có hướng dẫn chạy, cấu hình, migration, ma trận quyền và kịch bản demo POS → tiệc → báo cáo → phân quyền.
+Browser -> Web MVC -> service/DbContext -> SQL Server.
+API GET catalog -> AppDbContext -> SQL Server.
+Tests -> host riêng + database SaigonChe_Audit_<RunId> + browser riêng.
 
-### Bằng chứng hiện có
+Dữ liệu gồm Category/Product, Identity, Order/OrderItem/OrderStatusHistory, ContactMessage, DiningTable, Voucher, InventoryMovement và PartyRequest. Đơn giữ tên/giá món tại thời điểm mua. Thời gian lưu UTC, nghiệp vụ dùng ngày Việt Nam. Giữ nguyên giá trị số enum đang có.
 
-- `dotnet build .\SaigonChe.slnx --no-restore --verbosity minimal -p:UseSharedCompilation=false`: thành công, 0 lỗi; còn cảnh báo không truy cập được NuGet vulnerability feed và advisory của `System.Security.Cryptography.Pkcs` 9.0.11.
-- `dotnet test .\SaigonChe.slnx --no-restore --verbosity minimal -p:UseSharedCompilation=false`: 19 passed, 0 failed.
-- `dotnet restore .\SaigonChe.slnx -v:minimal`: thành công; tất cả project up-to-date, còn các cảnh báo NuGet/dependency nêu trên.
-- `dotnet ef migrations has-pending-model-changes`: không có thay đổi model chưa migration.
-- `dotnet ef database update`: hai migration mới áp dụng thành công trên LocalDB. Migration chỉ thêm cột, bảng, chỉ mục và khóa ngoại.
-- Website khởi động và chạy seeding được; trang chủ trả HTTP 200. POS, báo cáo, tạo tiệc và hàng đợi yêu cầu đăng nhập (HTTP 302 khi chưa đăng nhập).
-- GitHub xác nhận branch đã có và chưa có PR; lần tạo Draft PR qua connector trả HTTP 403 `Resource not accessible by integration`. Cần cấp quyền tạo pull request cho kết nối GitHub hoặc tạo Draft PR thủ công; đến lúc đó M1 giữ 67% và tổng giữ 88,35%.
-- Chưa xác minh trọn luồng giao dịch bằng tài khoản Staff/Admin, concurrency trên SQL Server hoặc đối chiếu số liệu dashboard với bộ dữ liệu chuẩn. Các việc này còn trong M6.
+Migration audit chỉ thêm PartyRequest.RowVersion và Orders.CheckoutToken với unique filtered index; không sửa migration đã áp dụng. Migration này chưa áp dụng vào database cá nhân trong đợt audit.
 
-## 1. Mục tiêu sản phẩm
+## Checklist nghiệm thu audit
 
-Hệ thống phục vụ ba nhóm người dùng:
+Mỗi dòng có trọng số bằng nhau. Kết quả cuối: 10/11 nhóm đạt (90,91%); build 0 warning/0 error, 45/45 test đạt. Mục 11 chưa kiểm chứng và không tính hoàn thành. Chi tiết và bằng chứng ở mục 13 của AUDIT_REPORT.
 
-- **Khách hàng:** đăng ký, xem và tìm món, chọn topping, quản lý giỏ hàng, đặt hàng, theo dõi đơn, xem lịch sử và đánh giá món.
-- **Nhân viên:** đăng nhập vào khu vực vận hành, tiếp nhận đơn, cập nhật tiến độ pha chế/giao hàng, xem thông tin cần thiết của đơn và cập nhật tình trạng còn hàng.
-- **Quản trị viên:** quản lý danh mục, món, hình ảnh, nhân viên, khách hàng, khuyến mãi, toàn bộ đơn hàng và dashboard doanh thu.
-
-Công nghệ theo đặc tả:
-
-- ASP.NET Core MVC và Web API trên .NET 10.
-- Entity Framework Core và SQL Server.
-- ASP.NET Core Identity cho người dùng và vai trò.
-- HTML, CSS, Bootstrap và JavaScript/jQuery.
-
-## 2. Hiện trạng repository
-
-### Đã hoàn thành một phần
-
-| Hạng mục | Hiện trạng |
-|---|---|
-| Solution | Có `SaigonChe.Api` và `SaigonChe.Web` |
-| Database | Có `Categories`, `Products` và migration ảnh |
-| API danh mục | Có CRUD cơ bản |
-| API sản phẩm | Có CRUD cơ bản và trả tên danh mục |
-| MVC quản trị | Có màn hình CRUD danh mục và sản phẩm |
-| Ảnh sản phẩm | Có tạo, hiển thị và thay ảnh trong `wwwroot/uploads/products` |
-
-### Khoảng trống cần xử lý
-
-- API đang nhận/trả trực tiếp Entity, chưa có DTO, Service và validation.
-- `CategoriesController.Update` gọi `FindAsync()` nhưng không truyền `id`, khiến sửa danh mục không hoạt động đúng.
-- Chưa có xử lý lỗi tập trung; Web dễ lỗi khi API dừng hoặc trả response không hợp lệ.
-- Xóa sản phẩm chưa xóa ảnh; xóa danh mục có thể xung đột khi còn sản phẩm.
-- Chỉ kiểm tra đuôi file ảnh, chưa kiểm tra MIME/signature và chưa gom logic ảnh thành service.
-- Chưa có Swagger/OpenAPI, authentication, authorization theo ba vai trò, pagination hoặc test.
-- Giao diện hiện là CRUD quản trị, chưa phải trải nghiệm mua hàng cho khách.
-- Chưa có màn hình vận hành đơn dành riêng cho nhân viên.
-
-## 3. Phạm vi ưu tiên
-
-### MVP bắt buộc
-
-1. Đăng ký, đăng nhập và phân quyền `Customer`/`Staff`/`Admin`.
-2. Admin quản lý danh mục, sản phẩm và trạng thái còn hàng.
-3. Khách xem, tìm kiếm, lọc và xem chi tiết món.
-4. Giỏ hàng bằng Session.
-5. Checkout COD, tạo đơn và chi tiết đơn trong một transaction.
-6. Khách xem lịch sử/trạng thái đơn; nhân viên tiếp nhận và xử lý đơn; Admin giám sát toàn bộ.
-7. Admin quản lý tài khoản nhân viên và phân công trạng thái hoạt động.
-8. Dashboard cơ bản: số đơn, doanh thu, khách hàng và món bán chạy.
-9. Kiểm thử luồng chính và hoàn thiện báo cáo.
-
-### Sau MVP
-
-- Topping linh hoạt theo từng món.
-- Quên/đổi mật khẩu qua email.
-- Đánh giá và bình luận.
-- Mã giảm giá.
-- Ví điện tử.
-- Thông báo thời gian thực.
-
-## 4. Kiến trúc mục tiêu vừa đủ
-
-Không cần chuyển ngay sang Clean Architecture nhiều project. Giữ hai project hiện tại nhưng tách trách nhiệm rõ ràng:
-
-```text
-SaigonChe.Api/
-├── Controllers/
-├── Data/
-├── DTOs/
-├── Models/
-├── Services/
-├── Enums/
-├── Middleware/
-└── Migrations/
-
-SaigonChe.Web/
-├── Controllers/
-├── Services/
-├── ViewModels/
-├── Views/
-└── wwwroot/
-```
-
-Luồng phụ thuộc:
-
-```text
-Web Controller → API Client Service → HTTP API
-API Controller → Application Service → AppDbContext → SQL Server
-```
-
-Quy tắc:
-
-- Web không truy cập trực tiếp database.
-- API không trả Entity trực tiếp; dùng request/response DTO.
-- Nghiệp vụ tính tiền và chuyển trạng thái nằm trong Service.
-- Tiền dùng `decimal`; thời gian lưu UTC.
-- Dữ liệu đã xuất hiện trong đơn không hard-delete tùy tiện.
-
-## 5. Mô hình dữ liệu mục tiêu
-
-### Nền tảng
-
-- `ApplicationUser`: kế thừa Identity, bổ sung họ tên, địa chỉ, trạng thái tài khoản.
-- Vai trò Identity: `Customer`, `Staff`, `Admin`; tài khoản nhân viên chỉ do Admin tạo hoặc gán quyền.
-- `Category`: thêm `IsActive`.
-- `Product`: giữ `ImageUrl`, thêm thời gian tạo/cập nhật và nên dùng trạng thái thay vì hard delete.
-
-### Giao dịch
-
-- `Order`: khách hàng, nhân viên đang xử lý, người nhận, SĐT, địa chỉ, ghi chú, trạng thái, tổng tiền, thời gian.
-- `OrderItem`: sản phẩm, tên/giá chụp tại thời điểm mua, số lượng và thành tiền.
-- `OrderStatus`: `Pending`, `Confirmed`, `Preparing`, `Delivering`, `Completed`, `Cancelled`.
-- `OrderStatusHistory`: đơn hàng, trạng thái cũ/mới, người cập nhật, thời gian và ghi chú/lý do hủy.
-
-### Mở rộng
-
-- `Topping` và bảng nối `ProductTopping`.
-- `OrderItemTopping` để lưu topping thực tế đã mua.
-- `Review` chỉ cho phép khi đơn hoàn thành.
-- `Promotion` với mã, loại giảm, giá trị, giới hạn và thời gian hiệu lực.
-- `Payment` nếu tích hợp ví điện tử.
-
-## 6. Lộ trình triển khai
-
-### Giai đoạn 0 — Ổn định phần hiện có
-
-- [ ] Sửa lỗi `CategoriesController.Update`.
-- [ ] Thêm validation cho Category/Product và hiển thị lỗi trên Web.
-- [ ] Không cho xóa danh mục đang có sản phẩm; ưu tiên `IsActive`.
-- [ ] Gom xử lý upload/xóa ảnh vào một service dùng chung.
-- [ ] Kiểm tra MIME, giới hạn 5 MB, tên file ngẫu nhiên và đường dẫn an toàn.
-- [ ] Xóa ảnh khi xóa sản phẩm thành công.
-- [ ] Dùng typed/named `HttpClient` và xử lý API không khả dụng.
-- [ ] Bật Swagger/OpenAPI cho API.
-
-**Hoàn thành khi:** Category/Product CRUD chạy trọn vẹn, lỗi được hiển thị rõ, build sạch và kiểm thử thủ công đầy đủ.
-
-### Giai đoạn 1 — Chuẩn hóa API và database
-
-- [ ] Tạo DTO cho Category và Product.
-- [ ] Tạo Service; Controller chỉ nhận request và trả response.
-- [ ] Thêm `IsActive`, `CreatedAt`, `UpdatedAt` và cấu hình Fluent API.
-- [ ] Seed danh mục, món mẫu và dữ liệu demo.
-- [ ] Thêm middleware trả `ProblemDetails` thống nhất.
-- [ ] Viết migration mới, không sửa migration đã áp dụng.
-
-**Hoàn thành khi:** API không còn nhận/trả trực tiếp Entity và database có dữ liệu demo tái lập được.
-
-### Giai đoạn 2 — Identity, đăng nhập và phân quyền
-
-- [ ] Tích hợp ASP.NET Core Identity vào API.
-- [ ] Tạo role `Customer`, `Staff`, `Admin`; seed tài khoản Admin và một Staff demo.
-- [ ] Làm đăng ký, đăng nhập, đăng xuất và hồ sơ cá nhân.
-- [ ] API phát hành token; Web lưu phiên đăng nhập bằng cookie an toàn và gắn token khi gọi API.
-- [ ] Tài khoản đăng ký công khai luôn nhận role `Customer`; không cho client tự gửi role.
-- [ ] Bảo vệ endpoint theo policy; Customer không thấy khu vực nội bộ, Staff không vào trang quản trị hệ thống.
-- [ ] Thêm khóa/mở khóa tài khoản.
-- [ ] Admin tạo, sửa, khóa/mở khóa tài khoản nhân viên; không hard-delete tài khoản đã xử lý đơn.
-
-**Hoàn thành khi:** Customer không gọi được API nội bộ; Staff chỉ truy cập nghiệp vụ vận hành; Admin quản lý được catalog và nhân viên; mật khẩu không lưu dạng rõ.
-
-### Giai đoạn 3 — Trải nghiệm xem món
-
-- [ ] Thiết kế lại layout, navbar, footer và trang chủ.
-- [ ] Hiển thị món mới, nổi bật và đang bán.
-- [ ] Tìm kiếm theo tên.
-- [ ] Lọc theo danh mục và sắp xếp giá.
-- [ ] Thêm phân trang.
-- [ ] Làm trang chi tiết món.
-- [ ] Thiết kế dữ liệu topping; chỉ triển khai topping sau khi luồng sản phẩm ổn định.
-
-**Hoàn thành khi:** khách có thể tìm được món phù hợp trên desktop/mobile mà không thấy màn hình CRUD Admin.
-
-### Giai đoạn 4 — Giỏ hàng
-
-- [ ] Bật Session trong Web.
-- [ ] Tạo `CartItemViewModel` và `CartService`.
-- [ ] Thêm món/topping vào giỏ.
-- [ ] Tăng, giảm, xóa và tính tạm tính.
-- [ ] Kiểm tra lại giá/trạng thái món từ API trước checkout.
-- [ ] Thêm phí giao hàng theo quy tắc thống nhất.
-
-**Hoàn thành khi:** giỏ giữ được dữ liệu trong phiên và không tin giá gửi từ trình duyệt.
-
-### Giai đoạn 5 — Checkout và đơn hàng
-
-- [ ] Tạo `Order`, `OrderItem` và migration.
-- [ ] Checkout gồm họ tên, SĐT, địa chỉ, ghi chú và COD.
-- [ ] API lấy giá từ database và tạo toàn bộ đơn trong transaction.
-- [ ] Xóa giỏ chỉ sau khi tạo đơn thành công.
-- [ ] Khách xem chi tiết, trạng thái và lịch sử đơn của chính mình.
-- [ ] Tạo màn hình `Staff/Orders` tối ưu cho thao tác nhanh: đơn mới, đang pha chế, đang giao và đã xong.
-- [ ] Nhân viên nhận đơn và hệ thống lưu `AssignedStaffId`; tránh hai nhân viên xử lý trùng.
-- [ ] Staff cập nhật trạng thái theo luồng hợp lệ; chỉ thấy thông tin khách hàng cần để hoàn thành đơn.
-- [ ] Admin lọc đơn theo trạng thái, thời gian, nhân viên và xem lịch sử xử lý.
-- [ ] Lưu mọi lần đổi trạng thái vào `OrderStatusHistory`, bao gồm người thực hiện và lý do hủy.
-- [ ] Dùng kiểm soát đồng thời để cảnh báo khi đơn vừa được người khác cập nhật.
-
-**Hoàn thành khi:** chạy trọn luồng `xem món → giỏ → checkout → Staff tiếp nhận/pha chế/giao → hoàn thành`, Admin theo dõi được người xử lý và lịch sử trạng thái.
-
-### Giai đoạn 6 — Dashboard và nghiệp vụ mở rộng
-
-- [ ] Tổng số đơn, doanh thu, khách hàng và sản phẩm.
-- [ ] Biểu đồ doanh thu ngày/tháng.
-- [ ] Danh sách món bán chạy.
-- [ ] Dashboard Staff trong ca: số đơn mới, đang xử lý, hoàn thành và đơn quá thời gian dự kiến.
-- [ ] Staff báo món hết/tạm hết; Admin quyết định thay đổi thông tin hoặc ngừng bán dài hạn.
-- [ ] Đánh giá món sau khi đơn hoàn thành.
-- [ ] Mã giảm giá có thời gian hiệu lực và giới hạn sử dụng.
-- [ ] Chỉ tích hợp ví điện tử sau khi COD ổn định.
-
-**Hoàn thành khi:** số liệu dashboard khớp dữ liệu đơn hoàn thành và các quy tắc mở rộng có test.
-
-### Giai đoạn 7 — Kiểm thử, bảo mật và chất lượng
-
-- [ ] Tạo project test.
-- [ ] Unit test tính tiền, giảm giá và chuyển trạng thái.
-- [ ] Integration test đăng nhập, CRUD sản phẩm và tạo đơn.
-- [ ] Authorization test cho ma trận quyền Customer/Staff/Admin.
-- [ ] Test hai nhân viên cùng nhận hoặc cập nhật một đơn.
-- [ ] Kiểm tra IDOR: khách không xem được đơn của người khác.
-- [ ] Kiểm tra Staff không xem/sửa được tài khoản, khuyến mãi hoặc báo cáo quản trị.
-- [ ] Kiểm tra upload file giả, file lớn và path traversal.
-- [ ] Thêm logging, trang lỗi thân thiện và health check.
-- [ ] Kiểm tra responsive, accessibility và các trường hợp dữ liệu rỗng.
-
-**Hoàn thành khi:** `dotnet build` và `dotnet test` đều thành công; luồng chính có kiểm thử tự động.
-
-### Giai đoạn 8 — Báo cáo và bảo vệ
-
-- [ ] Viết báo cáo theo khung: yêu cầu → phân tích thiết kế → triển khai → kiểm thử → kết luận.
-- [ ] Bổ sung Use Case diagram, ERD, sơ đồ kiến trúc và luồng đặt hàng.
-- [ ] Chụp màn hình các chức năng đã hoàn thành, không đưa mockup chưa chạy vào phần kết quả.
-- [ ] Tạo dữ liệu demo ổn định.
-- [ ] Làm slide và kịch bản demo 5–10 phút.
-- [ ] Gắn tag phiên bản dùng để bảo vệ.
-
-**Hoàn thành khi:** một máy mới có thể làm theo README để chạy và nhóm demo được toàn bộ luồng không cần sửa dữ liệu thủ công.
-
-## 7. Use case bổ sung cho nhân viên
-
-Đặc tả Drive ban đầu có 19 use case cho Customer và Admin. Khi bổ sung Staff, thêm các use case sau:
-
-| Use case mới | Tác nhân | Giai đoạn |
+| STT | Nhóm nghiệm thu | Bằng chứng |
 |---|---|---|
-| UC20: Nhân viên đăng nhập và xem màn hình ca làm | Staff | 2, 5 |
-| UC21: Xem/lọc danh sách đơn cần xử lý | Staff | 5 |
-| UC22: Tiếp nhận đơn | Staff | 5 |
-| UC23: Cập nhật trạng thái pha chế/giao hàng | Staff | 5 |
-| UC24: Hủy/từ chối đơn kèm lý do theo quyền được cấp | Staff, Admin | 5 |
-| UC25: Báo món tạm hết | Staff | 6 |
-| UC26: Quản lý tài khoản nhân viên | Admin | 2 |
-| UC27: Theo dõi hiệu quả xử lý đơn theo nhân viên | Admin | 6 |
+| 1 | Bản đồ source, route/form/action/entity và phân loại chức năng | Báo cáo mục 1–2 |
+| 2 | Khởi động SQL, database test riêng, migration giữ dữ liệu | Fresh/legacy/custom-category SQL tests |
+| 3 | Dependency, restore/build sạch | NuGet audit và build toàn solution |
+| 4 | CRUD, validation, ảnh và rollback file/DB | HTTP + SQL + filesystem |
+| 5 | Thanh toán, idempotency, version, tồn/voucher/bàn đồng thời | Request trên connection độc lập |
+| 6 | Role, CSRF, IDOR, Staff, khóa/reset/thu hồi cookie, last Admin | HTTP + Identity + SQL |
+| 7 | UTC/VN, voucher và báo cáo/Excel/PDF | Dataset biên ngày/tháng/năm; PDF thật |
+| 8 | Desktop/tablet/mobile, theme, menu, các form chính và bill | Chromium + screenshot + PDF render |
+| 9 | Regression tự động toàn solution | TRX giữ theo từng lượt chạy |
+| 10 | README, báo cáo, kịch bản chạy lại và backlog | Tài liệu tại gốc và Run-Audit.ps1 |
+| 11 | Identity nâng cao/khôi phục qua email end-to-end | Chưa kiểm chứng: chưa có SMTP/provider tích hợp |
 
-### Ma trận quyền tối thiểu
+Các luồng chính đã kiểm chứng và giới hạn của từng nhóm xem AUDIT_REPORT. Không tính mục 11 là hoàn thành.
 
-| Chức năng | Customer | Staff | Admin |
-|---|:---:|:---:|:---:|
-| Xem thực đơn, đặt hàng, xem đơn của mình | Có | Không | Không bắt buộc |
-| Xem hàng đợi và xử lý đơn | Không | Có | Có |
-| Báo món tạm hết | Không | Có | Có |
-| Quản lý danh mục/sản phẩm | Không | Không | Có |
-| Quản lý nhân viên/khách hàng/khuyến mãi | Không | Không | Có |
-| Xem báo cáo doanh thu đầy đủ | Không | Không | Có |
+## Các chức năng đang có
 
-Nguyên tắc: API kiểm tra quyền ở server; việc ẩn nút trên giao diện không được xem là cơ chế bảo mật.
+- Catalog và ảnh: quản trị CRUD, tìm/lọc thực đơn, empty state và ảnh dự phòng.
+- Giỏ Session và checkout COD: server lấy giá, token chống gửi lặp, giữ giỏ khi lưu thất bại.
+- Customer/Staff/Admin: đăng ký công khai Customer; Admin tạo/sửa/khóa/reset Staff; hồ sơ và đổi mật khẩu.
+- Đơn online: hàng đợi Staff/Admin, chuyển trạng thái hợp lệ, lịch sử, thanh toán COD và trừ tồn dùng chung.
+- POS: bàn/mang về, món/notes, nháp, voucher, cash/QR xác nhận tay, trừ tồn một lần, hủy nháp, in lại.
+- Đặt tiệc: yêu cầu khách, owner isolation, tư vấn/báo giá, version, xác nhận một đơn Party, hoàn tất/hủy.
+- Quản trị bàn, tồn theo phần và voucher có hiệu lực/giới hạn.
+- Báo cáo Admin: paid + completed theo CompletedAt giờ Việt Nam, lọc loại/ngày, biểu đồ ngày/tháng, Excel và in PDF.
+- Liên hệ và hộp thư quản trị.
+- API GET catalog giữ response cũ; mọi verb ghi tiếp tục bị chặn.
 
-## 8. Ánh xạ 19 use case ban đầu
+## Backlog sau audit
 
-| Use case | Giai đoạn |
-|---|---|
-| UC01–UC04: đăng nhập, đăng ký, hồ sơ, mật khẩu | 2 |
-| UC05–UC08: trang chủ, tìm/lọc, danh sách, chi tiết | 3 |
-| UC09: giỏ hàng | 4 |
-| UC10–UC12: checkout, theo dõi, lịch sử | 5 |
-| UC13: đánh giá/bình luận | 6 |
-| UC14: dashboard | 6 |
-| UC15–UC16: danh mục và sản phẩm | 0–1 |
-| UC17: quản lý đơn | 5 (Admin giám sát, Staff vận hành) |
-| UC18: quản lý khách hàng | 2 |
-| UC19: khuyến mãi | 6 |
+Chưa triển khai trong đợt này; không coi nội dung landing hoặc roadmap là nghiệp vụ đã hoạt động:
 
-## 9. Thứ tự công việc cho mỗi tính năng
+1. Lịch sử/chi tiết đơn online riêng của Customer.
+2. Chi tiết món, topping, sắp xếp/phân trang nâng cao theo đặc tả được duyệt.
+3. Review sau mua và quản lý Customer riêng.
+4. SMTP/quên mật khẩu email, 2FA và nghiệm thu Identity nâng cao.
+5. Ví/cổng thanh toán tự động, hoàn tiền, đặt cọc, ghép/tách bàn, nguyên liệu, hóa đơn điện tử.
+6. Realtime, dashboard ca làm và đo tải lớn.
+7. Hồ sơ báo cáo môn học, ERD/Use Case/slide theo tài liệu Drive khi có quyền truy cập.
 
-1. Viết user story và tiêu chí chấp nhận.
-2. Thiết kế Entity/DTO và quyền truy cập.
-3. Viết migration nếu schema thay đổi.
-4. Viết Service và quy tắc nghiệp vụ.
-5. Viết API Controller.
-6. Viết API client, MVC Controller, ViewModel và View.
-7. Test đường thành công và các trường hợp lỗi.
-8. Build toàn solution, review rồi tạo pull request nhỏ.
+Voucher hiện có áp dụng cho luồng vận hành đã kiểm chứng; không tự coi đó là khuyến mãi online đầy đủ.
 
-## 10. Definition of Done
+## Cách kiểm chứng và bước tiếp theo
 
-Một chức năng chỉ hoàn thành khi:
+Chạy bằng PowerShell từ gốc repo:
 
-- Đúng tiêu chí chấp nhận và phân quyền.
-- Đã kiểm tra cả ba vai trò `Customer`, `Staff`, `Admin` nếu chức năng liên quan quyền truy cập.
-- Có validation phía server; lỗi hiển thị được trên giao diện.
-- Trả đúng HTTP status code và không lộ stack trace/secret.
-- Không tin giá, role hoặc user ID do client tự gửi.
-- Có test cho nghiệp vụ quan trọng.
-- Migration có thể áp dụng trên database mới.
-- `dotnet build` và `dotnet test` thành công.
-- README/API docs được cập nhật nếu cách chạy hoặc endpoint thay đổi.
+    pwsh -NoProfile -File .\scripts\Run-Audit.ps1 -InstallBrowser
 
-## 11. Việc nên làm ngay tiếp theo
+Lần sau bỏ InstallBrowser. LocalDB/SQL Server cần sẵn sàng; cache và artifacts nằm trên ổ chứa repository. Test chỉ xóa database đúng tên riêng của fixture. Cấu hình thật và tài khoản thật không được dùng cho test.
 
-Theo đúng phụ thuộc, thứ tự 5 pull request tiếp theo nên là:
+Sau audit: review working tree và cấu hình local; sao lưu trước khi chạy ứng dụng có auto-migration trên database thật; chạy kịch bản demo trong README. Các thay đổi Git tiếp theo thực hiện khi người dùng yêu cầu, không tự đưa lên main.
 
-1. `fix/category-product-crud`: sửa Category Update, validation, xóa ảnh và lỗi API.
-2. `refactor/catalog-dtos-services`: DTO, Service, `ProblemDetails`, Swagger.
-3. `feature/identity-auth`: Identity, ba role, seed Admin/Staff, đăng nhập Web/API.
-4. `feature/customer-menu`: trang chủ, tìm kiếm, lọc, chi tiết món.
-5. `feature/cart`: Session và toàn bộ thao tác giỏ hàng.
+## Quy tắc cho công việc tiếp theo
 
-Sau năm bước trên, triển khai `feature/staff-order-workflow` cùng mô hình Order; không dồn màn hình vận hành của Staff vào khu vực Admin.
+- Chốt tiêu chí chấp nhận, route, quyền và ranh giới dữ liệu trước khi thêm tính năng.
+- Giữ nghiệp vụ giao dịch trong Web/service hiện tại; không mặc định chuyển sang API/token.
+- Không tin giá/role/user ID từ client; mọi form ghi có validation và anti-forgery.
+- Giữ snapshot giá/tên, enum cũ và migration cộng thêm.
+- Build và test đúng hành vi bị ảnh hưởng; chỉ đánh dấu hoàn thành khi có bằng chứng.

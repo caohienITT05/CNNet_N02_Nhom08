@@ -13,6 +13,6 @@ namespace SaigonChe.Web.ViewModels
 
         [StringLength(500, ErrorMessage = "Mô tả không được vượt quá 500 ký tự.")]
         [Display(Name = "Mô tả")]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; }
     }
 }

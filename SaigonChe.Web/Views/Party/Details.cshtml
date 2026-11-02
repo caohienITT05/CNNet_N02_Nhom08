@@ -54,6 +54,7 @@ else
     <section class="@(Model.IsStaffView ? "report-table-card" : "container report-table-card")">
         <h2>Cập nhật yêu cầu</h2>
         <form asp-action="Update" method="post">
+            <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
             @Html.AntiForgeryToken()
             <input type="hidden" name="Id" value="@Model.Id" />
             <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>

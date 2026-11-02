@@ -26,6 +26,9 @@ namespace SaigonChe.Web.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Order>().HasIndex(order => order.CheckoutToken).IsUnique()
+                .HasFilter("[CheckoutToken] IS NOT NULL");
+            modelBuilder.Entity<PartyRequest>().Property(request => request.RowVersion).IsRowVersion();
 
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Products)

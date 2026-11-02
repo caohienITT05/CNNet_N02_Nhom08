@@ -1,3 +1,5 @@
+using System.Data;
+using SaigonChe.Web.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +13,12 @@ namespace SaigonChe.Web.Controllers;
 public sealed class StaffController : Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ApplicationDbContext _context;
 
-    public StaffController(UserManager<ApplicationUser> userManager)
+    public StaffController(UserManager<ApplicationUser> userManager, ApplicationDbContext context)
     {
         _userManager = userManager;
+        _context = context;
     }
 
     [HttpGet]
@@ -42,6 +46,8 @@ public sealed class StaffController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(StaffFormViewModel model)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+        if (!ModelState.IsValid) return View(model);
         var email = model.Email.Trim();
         if (await _userManager.FindByEmailAsync(email) is not null)
         {
@@ -69,6 +75,7 @@ public sealed class StaffController : Controller
             return View(model);
         }
 
+        await transaction.CommitAsync();
         TempData["AdminSuccess"] = "Đã tạo tài khoản nhân viên.";
         return RedirectToAction(nameof(Index));
     }
@@ -86,9 +93,11 @@ public sealed class StaffController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(StaffEditViewModel model)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         var user = await FindStaffAsync(model.Id);
         if (user is null) return NotFound();
 
+        if (!ModelState.IsValid) return View(model);
         var email = model.Email.Trim();
         var existing = await _userManager.FindByEmailAsync(email);
         if (existing is not null && existing.Id != user.Id)
@@ -107,7 +116,13 @@ public sealed class StaffController : Controller
             return View(model);
         }
 
-        await _userManager.UpdateSecurityStampAsync(user);
+        var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+        if (!stampResult.Succeeded)
+        {
+            TempData["AdminError"] = "Chưa thể thu hồi phiên đăng nhập. Vui lòng thử lại.";
+            return RedirectToAction(nameof(Index));
+        }
+        await transaction.CommitAsync();
         TempData["AdminSuccess"] = "Đã cập nhật tài khoản nhân viên.";
         return RedirectToAction(nameof(Index));
     }
@@ -123,6 +138,7 @@ public sealed class StaffController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ResetPassword(StaffPasswordViewModel model)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         var user = await FindStaffAsync(model.Id);
         if (user is null) return NotFound();
         if (!ModelState.IsValid) return View(model);
@@ -135,7 +151,13 @@ public sealed class StaffController : Controller
             return View(model);
         }
 
-        await _userManager.UpdateSecurityStampAsync(user);
+        var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+        if (!stampResult.Succeeded)
+        {
+            TempData["AdminError"] = "Chưa thể thu hồi phiên đăng nhập. Vui lòng thử lại.";
+            return RedirectToAction(nameof(Index));
+        }
+        await transaction.CommitAsync();
         TempData["AdminSuccess"] = "Đã đặt lại mật khẩu và thu hồi phiên đăng nhập cũ.";
         return RedirectToAction(nameof(Index));
     }
@@ -144,19 +166,35 @@ public sealed class StaffController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SetLocked(string id, bool locked)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         var user = await FindStaffAsync(id);
         if (user is null) return NotFound();
-
-        await _userManager.SetLockoutEnabledAsync(user, true);
-        await _userManager.SetLockoutEndDateAsync(
-            user,
-            locked ? DateTimeOffset.UtcNow.AddYears(100) : null);
-        await _userManager.ResetAccessFailedCountAsync(user);
-        await _userManager.UpdateSecurityStampAsync(user);
-
-        TempData["AdminSuccess"] = locked
-            ? "Đã khóa tài khoản và thu hồi phiên đăng nhập."
-            : "Đã mở khóa tài khoản.";
+        if (locked && await _userManager.IsInRoleAsync(user, "Admin"))
+        {
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var hasOtherActive = admins.Any(item => item.Id != user.Id
+                && (!item.LockoutEnabled || item.LockoutEnd is null || item.LockoutEnd <= DateTimeOffset.UtcNow));
+            if (!hasOtherActive)
+            {
+                TempData["AdminError"] = "Không thể khóa Admin hoạt động cuối cùng.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+        var results = new[]
+        {
+            await _userManager.SetLockoutEnabledAsync(user, true),
+            await _userManager.SetLockoutEndDateAsync(user, locked ? DateTimeOffset.UtcNow.AddYears(100) : null),
+            await _userManager.ResetAccessFailedCountAsync(user),
+            await _userManager.UpdateSecurityStampAsync(user)
+        };
+        if (results.Any(result => !result.Succeeded))
+        {
+            await transaction.RollbackAsync();
+            TempData["AdminError"] = "Chưa thể thay đổi tài khoản. Vui lòng tải lại và thử lại.";
+            return RedirectToAction(nameof(Index));
+        }
+        await transaction.CommitAsync();
+        TempData["AdminSuccess"] = locked ? "Đã khóa tài khoản và thu hồi phiên đăng nhập." : "Đã mở khóa tài khoản.";
         return RedirectToAction(nameof(Index));
     }
 

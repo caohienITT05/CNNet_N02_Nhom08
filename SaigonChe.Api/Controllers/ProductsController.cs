@@ -60,49 +60,5 @@ namespace SaigonChe.Api.Controllers
             return Ok(product);
         }
 
-        [HttpPost]
-        public async Task<ActionResult<Product>> Create(Product product)
-        {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(
-                nameof(GetbyId),
-                new { id = product.Id},
-                product
-            );
-        }
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Product>> Update(int id, Product updateProduct)
-        {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            product.Name = updateProduct.Name;
-            product.Price = updateProduct.Price;
-            product.Description = updateProduct.Description;
-            product.IsAvailable = updateProduct.IsAvailable;
-            product.CategoryId = updateProduct.CategoryId;
-            product.ImageUrl = updateProduct.ImageUrl;
-            await _context.SaveChangesAsync();
-            return Ok(product);
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Product>> Delete(int id)
-        {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-            return NoContent();
-
-        }
-
     }
 }
