@@ -1,29 +1,38 @@
+using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using SaigonChe.Web.Data;
+using SaigonChe.Web.Interfaces;
 using SaigonChe.Web.Models;
 using SaigonChe.Web.ViewModels;
-using System.Text.Json;
 
 namespace SaigonChe.Web.Controllers
 {
     public class CartController : Controller
     {
         private const int MaxQuantityPerProduct = 20;
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<CartController> _logger;
 
-        public CartController(ApplicationDbContext context, ILogger<CartController> logger)
+        private readonly ICartService _cartService;
+        private readonly IOrderService _orderService;
+        private readonly ApplicationDbContext _context;
+
+        public CartController(
+            ICartService cartService,
+            IOrderService orderService,
+            ApplicationDbContext context)
         {
+            _cartService = cartService;
+            _orderService = orderService;
             _context = context;
-            _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var cart = await RefreshCartAsync();
+            var cart = await _cartService.GetCartAsync();
             return View(cart);
         }
 
@@ -31,273 +40,275 @@ namespace SaigonChe.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
-            if (productId <= 0 || quantity is < 1 or > MaxQuantityPerProduct)
+            if (!IsValidQuantity(productId, quantity))
             {
                 TempData["CartError"] = $"Số lượng mỗi món phải từ 1 đến {MaxQuantityPerProduct}.";
                 return RedirectToAction(nameof(Index));
             }
 
-            var product = await _context.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(item => item.Id == productId);
-            if (product == null || !product.IsAvailable)
-            {
-                TempData["CartError"] = "Sản phẩm không tồn tại hoặc đã ngừng bán.";
-                return RedirectToAction("Index", "Home");
-            }
-
-            var cart = GetCart();
-            var item = cart.FirstOrDefault(x => x.ProductId == productId);
-            if (item != null && item.Quantity + quantity > MaxQuantityPerProduct)
+            var cart = await _cartService.GetCartAsync();
+            var currentQuantity = cart.Items
+                .Where(item => item.ProductId == productId)
+                .Sum(item => item.Quantity);
+            if (currentQuantity + quantity > MaxQuantityPerProduct)
             {
                 TempData["CartError"] = $"Bạn chỉ có thể đặt tối đa {MaxQuantityPerProduct} phần cho mỗi món.";
                 return RedirectToAction(nameof(Index));
             }
 
-            if (item == null)
+            if (!await _cartService.AddToCartAsync(productId, quantity))
             {
-                cart.Add(new CartItemViewModel
-                {
-                    ProductId = product.Id,
-                    Name = product.Name,
-                    Price = product.Price,
-                    Quantity = quantity,
-                    ImageUrl = product.ImageUrl
-                });
-            }
-            else
-            {
-                item.Quantity += quantity;
+                TempData["CartError"] = "Sản phẩm không tồn tại hoặc đã ngừng bán.";
+                return RedirectToAction("Index", "Home");
             }
 
-            item ??= cart.First(cartItem => cartItem.ProductId == productId);
-            item.Name = product.Name;
-            item.Price = product.Price;
-            item.ImageUrl = product.ImageUrl;
-            SaveCart(cart);
-            TempData["CartSuccess"] = $"Đã thêm {product.Name} vào giỏ hàng.";
+            TempData["CartSuccess"] = "Đã thêm món vào giỏ hàng.";
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet, HttpPost]
+        [AutoValidateAntiforgeryToken]
+        public async Task<IActionResult> Add(int productId, int quantity = 1)
+        {
+            var isGetRequest = HttpMethods.IsGet(Request.Method);
+
+            if (!IsValidQuantity(productId, quantity))
+            {
+                if (isGetRequest)
+                {
+                    TempData["CartError"] = $"Số lượng mỗi món phải từ 1 đến {MaxQuantityPerProduct}.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                return Json(new { success = false, message = $"Số lượng mỗi món phải từ 1 đến {MaxQuantityPerProduct}." });
+            }
+
+            var cart = await _cartService.GetCartAsync();
+            var currentQuantity = cart.Items
+                .Where(item => item.ProductId == productId)
+                .Sum(item => item.Quantity);
+            if (currentQuantity + quantity > MaxQuantityPerProduct)
+            {
+                if (isGetRequest)
+                {
+                    TempData["CartError"] = $"Bạn chỉ có thể đặt tối đa {MaxQuantityPerProduct} phần cho mỗi món.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                return Json(new { success = false, message = $"Bạn chỉ có thể đặt tối đa {MaxQuantityPerProduct} phần cho mỗi món." });
+            }
+
+            if (!await _cartService.AddToCartAsync(productId, quantity))
+            {
+                if (isGetRequest)
+                {
+                    TempData["CartError"] = "Không thể thêm món vào giỏ hàng.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                return Json(new { success = false, message = "Không thể thêm món vào giỏ hàng." });
+            }
+
+            if (isGetRequest)
+            {
+                TempData["CartSuccess"] = "Đã thêm món vào giỏ hàng.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            cart = await _cartService.GetCartAsync();
+            return Json(new
+            {
+                success = true,
+                message = "Đã thêm món vào giỏ hàng thành công!",
+                totalItems = cart.Items.Sum(item => item.Quantity),
+                subTotal = cart.SubTotal
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateQuantity(int productId, int quantity)
         {
-            if (productId <= 0 || quantity is < 1 or > MaxQuantityPerProduct)
+            if (!IsValidQuantity(productId, quantity))
             {
                 TempData["CartError"] = $"Số lượng mỗi món phải từ 1 đến {MaxQuantityPerProduct}.";
                 return RedirectToAction(nameof(Index));
             }
 
-            var cart = GetCart();
-            var item = cart.FirstOrDefault(x => x.ProductId == productId);
-            if (item == null) return RedirectToAction(nameof(Index));
-
-            var product = await _context.Products
-                .AsNoTracking()
-                .FirstOrDefaultAsync(item => item.Id == productId && item.IsAvailable);
-            if (product == null)
+            if (!await _cartService.UpdateQuantityAsync(productId, quantity))
             {
-                cart.Remove(item);
-                SaveCart(cart);
-                TempData["CartError"] = $"Món {item.Name} hiện không còn khả dụng và đã được bỏ khỏi giỏ.";
-                return RedirectToAction(nameof(Index));
+                TempData["CartError"] = "Không thể cập nhật món trong giỏ hàng.";
             }
 
-            item.Name = product.Name;
-            item.Price = product.Price;
-            item.ImageUrl = product.ImageUrl;
-            item.Quantity = quantity;
-
-            SaveCart(cart);
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult RemoveItem(int productId)
+        public async Task<IActionResult> RemoveItem(int productId)
         {
-            var cart = GetCart();
-            var item = cart.FirstOrDefault(x => x.ProductId == productId);
-            if (item != null)
+            await _cartService.RemoveFromCartAsync(productId);
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(int productId, int quantity)
+        {
+            if (productId <= 0 || quantity is < 1 or > MaxQuantityPerProduct)
             {
-                cart.Remove(item);
-                SaveCart(cart);
+                return Json(new { success = false, message = $"Số lượng mỗi món phải từ 1 đến {MaxQuantityPerProduct}." });
             }
 
-            return RedirectToAction(nameof(Index));
+            if (!await _cartService.UpdateQuantityAsync(productId, quantity))
+            {
+                return Json(new { success = false, message = "Không thể cập nhật số lượng." });
+            }
+
+            var cart = await _cartService.GetCartAsync();
+            var item = cart.Items.FirstOrDefault(cartItem => cartItem.ProductId == productId);
+            return Json(new
+            {
+                success = true,
+                itemTotalPrice = item != null ? item.LineTotal.ToString("N0") + " đ" : "0 đ",
+                subTotal = cart.SubTotal.ToString("N0") + " đ",
+                discountAmount = cart.DiscountAmount.ToString("N0") + " đ",
+                finalTotal = cart.FinalTotal.ToString("N0") + " đ",
+                totalItems = cart.Items.Sum(cartItem => cartItem.Quantity)
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Remove(int productId)
+        {
+            var success = await _cartService.RemoveFromCartAsync(productId);
+            var cart = await _cartService.GetCartAsync();
+            return Json(new
+            {
+                success,
+                message = success ? "Đã xóa món khỏi giỏ hàng." : "Lỗi khi xóa món.",
+                subTotal = cart.SubTotal.ToString("N0") + " đ",
+                discountAmount = cart.DiscountAmount.ToString("N0") + " đ",
+                finalTotal = cart.FinalTotal.ToString("N0") + " đ",
+                totalItems = cart.Items.Sum(item => item.Quantity)
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApplyCoupon(string couponCode)
+        {
+            if (string.IsNullOrWhiteSpace(couponCode))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập mã ưu đãi." });
+            }
+
+            if (!await _cartService.ApplyCouponAsync(couponCode.Trim().ToUpperInvariant()))
+            {
+                return Json(new { success = false, message = "Mã ưu đãi không hợp lệ hoặc đã hết hạn." });
+            }
+
+            var cart = await _cartService.GetCartAsync();
+            return Json(new
+            {
+                success = true,
+                message = "Áp dụng mã ưu đãi thành công!",
+                discountAmount = cart.DiscountAmount.ToString("N0") + " đ",
+                finalTotal = cart.FinalTotal.ToString("N0") + " đ"
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCount()
+        {
+            var cart = await _cartService.GetCartAsync();
+            return Json(new { count = cart.Items.Sum(item => item.Quantity) });
         }
 
         [HttpGet]
         public async Task<IActionResult> Checkout()
         {
-            var cart = await RefreshCartAsync();
-            if (!cart.Any())
+            var cart = await _cartService.GetCartAsync();
+            if (!cart.Items.Any())
             {
-                TempData["CartError"] = "Giỏ hàng của bạn đang trống.";
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(CreateCheckoutViewModel(cart));
+            return View(new CheckoutViewModel
+            {
+                Items = cart.Items,
+                DiscountAmount = cart.DiscountAmount
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
-            var cart = GetCart();
-            if (!cart.Any())
+            var cart = await _cartService.GetCartAsync();
+            if (!cart.Items.Any())
             {
                 TempData["CartError"] = "Giỏ hàng của bạn đang trống.";
                 return RedirectToAction(nameof(Index));
             }
 
-            var products = await _context.Products
-                .Where(product => cart.Select(item => item.ProductId).Contains(product.Id))
-                .ToDictionaryAsync(product => product.Id);
-
-            var items = new List<OrderItem>();
-            foreach (var cartItem in cart)
+            if (cart.Items.Any(item =>
+                    !IsValidQuantity(item.ProductId, item.Quantity)))
             {
-                if (cartItem.ProductId <= 0 || cartItem.Quantity is < 1 or > MaxQuantityPerProduct)
-                {
-                    _logger.LogWarning("Invalid cart item found during checkout for product {ProductId}.", cartItem.ProductId);
-                    ModelState.AddModelError(string.Empty, "Giỏ hàng có số lượng không hợp lệ. Vui lòng kiểm tra lại.");
-                    continue;
-                }
-
-                if (!products.TryGetValue(cartItem.ProductId, out var product) || !product.IsAvailable)
-                {
-                    ModelState.AddModelError(string.Empty, $"Món {cartItem.Name} hiện không còn khả dụng.");
-                    continue;
-                }
-
-                items.Add(new OrderItem
-                {
-                    ProductId = product.Id,
-                    ProductName = product.Name,
-                    Price = product.Price,
-                    Quantity = cartItem.Quantity
-                });
+                ModelState.AddModelError(string.Empty, "Giỏ hàng có số lượng không hợp lệ. Vui lòng kiểm tra lại.");
             }
 
-            if (!ModelState.IsValid || items.Count != cart.Count)
+            if (!Enum.IsDefined(typeof(PaymentMethod), model.PaymentMethod))
             {
-                model.Items = CreateCheckoutViewModel(cart).Items;
+                ModelState.AddModelError(nameof(model.PaymentMethod), "Vui lòng chọn phương thức thanh toán hợp lệ.");
+            }
+
+            var productIds = cart.Items.Select(item => item.ProductId).Distinct().ToList();
+            var availableProductIds = await _context.Products
+                .Where(product => productIds.Contains(product.Id) && product.IsAvailable)
+                .Select(product => product.Id)
+                .ToListAsync();
+            if (availableProductIds.Count != productIds.Count)
+            {
+                ModelState.AddModelError(string.Empty, "Một hoặc nhiều món trong giỏ hiện không còn khả dụng.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                model.Items = cart.Items;
+                model.DiscountAmount = cart.DiscountAmount;
                 return View(model);
             }
 
-            var order = new Order
-            {
-                CustomerName = model.CustomerName.Trim(),
-                Phone = model.Phone.Trim(),
-                Address = model.Address.Trim(),
-                Total = items.Sum(item => item.Price * item.Quantity),
-                CreatedAt = DateTime.UtcNow,
-                CustomerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                PaymentMethod = PaymentMethod.CashOnDelivery,
-                Status = OrderStatus.Pending,
-                Items = items
-            };
+            var userId = User.Identity?.IsAuthenticated == true
+                ? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                : null;
+            var order = await _orderService.CreateOrderAsync(model, cart, userId);
 
-            _context.Orders.Add(order);
+            order.CustomerUserId = userId;
             _context.OrderStatusHistory.Add(new OrderStatusHistory
             {
-                Order = order,
+                OrderId = order.Id,
                 Status = OrderStatus.Pending,
-                ActorId = User.FindFirstValue(ClaimTypes.NameIdentifier),
+                ActorId = userId,
                 Note = "Khách tạo đơn online.",
                 CreatedAt = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
+            await _cartService.ClearCartAsync();
 
-            HttpContext.Session.Remove("Cart");
-            TempData["OrderId"] = order.Id;
-            TempData["OrderSuccess"] = "Đặt món thành công. Chúng tôi sẽ liên hệ xác nhận đơn hàng sớm nhất.";
-            return RedirectToAction("Index", "Home");
+            if (order.PaymentMethod == PaymentMethod.VietQR)
+            {
+                return RedirectToAction("VietQrPay", "Payment", new { orderCode = order.OrderCode });
+            }
+
+            return RedirectToAction("Success", "Order", new { orderCode = order.OrderCode });
         }
 
-        private List<CartItemViewModel> GetCart()
+        private static bool IsValidQuantity(int productId, int quantity)
         {
-            var cartJson = HttpContext.Session.GetString("Cart");
-            if (string.IsNullOrWhiteSpace(cartJson))
-            {
-                return new List<CartItemViewModel>();
-            }
-
-            try
-            {
-                var cart = JsonSerializer.Deserialize<List<CartItemViewModel>>(cartJson) ?? new List<CartItemViewModel>();
-                if (cart.Any(item => item.ProductId <= 0 || item.Quantity is < 1 or > MaxQuantityPerProduct))
-                {
-                    _logger.LogWarning("Invalid cart data found in session. Clearing the cart.");
-                    HttpContext.Session.Remove("Cart");
-                    TempData["CartError"] = "Giỏ hàng không hợp lệ đã được làm mới. Vui lòng chọn món lại.";
-                    return new List<CartItemViewModel>();
-                }
-
-                return cart;
-            }
-            catch (JsonException exception)
-            {
-                _logger.LogWarning(exception, "Could not read cart data from session. Clearing the cart.");
-                HttpContext.Session.Remove("Cart");
-                TempData["CartError"] = "Không thể đọc giỏ hàng đã lưu. Vui lòng chọn món lại.";
-                return new List<CartItemViewModel>();
-            }
-        }
-
-        private async Task<List<CartItemViewModel>> RefreshCartAsync()
-        {
-            var cart = GetCart();
-            if (cart.Count == 0)
-            {
-                return cart;
-            }
-
-            var productIds = cart.Select(item => item.ProductId).Distinct().ToList();
-            var products = await _context.Products
-                .AsNoTracking()
-                .Where(product => productIds.Contains(product.Id) && product.IsAvailable)
-                .ToDictionaryAsync(product => product.Id);
-
-            var unavailableItems = cart.Where(item => !products.ContainsKey(item.ProductId)).ToList();
-            if (unavailableItems.Count > 0)
-            {
-                cart.RemoveAll(item => !products.ContainsKey(item.ProductId));
-                TempData["CartError"] = "Một số món không còn bán và đã được bỏ khỏi giỏ hàng.";
-            }
-
-            foreach (var item in cart)
-            {
-                var product = products[item.ProductId];
-                item.Name = product.Name;
-                item.Price = product.Price;
-                item.ImageUrl = product.ImageUrl;
-            }
-
-            SaveCart(cart);
-            return cart;
-        }
-
-        private static CheckoutViewModel CreateCheckoutViewModel(List<CartItemViewModel> cart)
-        {
-            return new CheckoutViewModel
-            {
-                Items = cart.Select(item => new CartItemViewModel
-                {
-                    ProductId = item.ProductId,
-                    Name = item.Name,
-                    Price = item.Price,
-                    Quantity = item.Quantity,
-                    ImageUrl = item.ImageUrl
-                }).ToList()
-            };
-        }
-
-        private void SaveCart(List<CartItemViewModel> cart)
-        {
-            HttpContext.Session.SetString("Cart", System.Text.Json.JsonSerializer.Serialize(cart));
+            return productId > 0 && quantity is >= 1 and <= MaxQuantityPerProduct;
         }
     }
 }

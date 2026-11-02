@@ -5,18 +5,21 @@ namespace SaigonChe.Web.Models
     public enum OrderStatus
     {
         [Display(Name = "Chờ xác nhận")]
-        Pending,
+        Pending = 1,
 
         [Display(Name = "Đã xác nhận")]
-        Confirmed,
+        Confirmed = 2,
 
         [Display(Name = "Đang chuẩn bị")]
-        Preparing,
+        Preparing = 3,
+
+        [Display(Name = "Đang giao hàng")]
+        Shipping = 4, // <-- Thành viên 2 bổ sung để đúng luồng giao chè
 
         [Display(Name = "Đã hoàn thành")]
-        Completed,
+        Completed = 5,
 
         [Display(Name = "Đã hủy")]
-        Cancelled
+        Cancelled = 6
     }
 }

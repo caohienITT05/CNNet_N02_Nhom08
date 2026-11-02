@@ -1,9 +1,8 @@
-@model List<SaigonChe.Web.ViewModels.CartItemViewModel>
+@model SaigonChe.Web.ViewModels.CartViewModel
+
 @{
     ViewData["Title"] = "Giỏ hàng";
-    var total = Model.Sum(item => item.LineTotal);
-    var itemCount = Model.Sum(item => item.Quantity);
-    var freeShipping = total >= 150000m;
+    var itemCount = Model.Items.Sum(item => item.Quantity);
 }
 
 <section class="section">
@@ -11,7 +10,7 @@
         <div class="page-head">
             <span class="eyebrow">Giỏ hàng</span>
             <h1>Đơn hàng của bạn</h1>
-            <p>@(Model.Any() ? $"{itemCount} phần chè đang chờ được giao đến bạn." : "Chưa có món nào trong giỏ.")</p>
+            <p>@(Model.Items.Any() ? $"{itemCount} phần chè đang chờ được giao đến bạn." : "Chưa có món nào trong giỏ.")</p>
         </div>
 
         @if (TempData["CartError"] is string cartError)
@@ -24,7 +23,7 @@
             <div class="alert alert-success" role="status">@cartSuccess</div>
         }
 
-        @if (!Model.Any())
+        @if (!Model.Items.Any())
         {
             <div class="empty-state">
                 <span class="empty-icon">
@@ -42,11 +41,11 @@
         {
             <div class="cart-layout">
                 <div class="cart-items">
-                    @foreach (var item in Model)
+                    @foreach (var item in Model.Items)
                     {
-                        <article class="cart-item">
+                        <article class="cart-item" id="cart-row-@item.ProductId">
                             <div class="cart-thumb">
-                                <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80" : item.ImageUrl)"
+                                <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "/images/default-che.jpg" : item.ImageUrl)"
                                      alt="@item.Name" loading="lazy" />
                             </div>
 
@@ -55,33 +54,28 @@
                                 <p>@item.Price.ToString("N0")₫ / ly</p>
                             </div>
 
-                            <form asp-action="UpdateQuantity" asp-controller="Cart" method="post" class="cart-qty-form">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="productId" value="@item.ProductId" />
+                            <div class="cart-qty-form">
                                 <div class="qty-stepper">
-                                    <button type="button" data-qty-minus aria-label="Giảm số lượng @item.Name">
+                                    <button type="button" data-qty-minus aria-label="Giảm số lượng @item.Name"
+                                            onclick="updateQty(@item.ProductId, -1)">
                                         <svg class="icon" aria-hidden="true"><use href="#i-minus" /></svg>
                                     </button>
                                     <label class="sr-only" for="qty-@item.ProductId">Số lượng @item.Name</label>
-                                    <input id="qty-@item.ProductId" type="number" name="quantity" value="@item.Quantity" min="1" max="20" required />
-                                    <button type="button" data-qty-plus aria-label="Tăng số lượng @item.Name">
+                                    <input id="qty-@item.ProductId" type="number" value="@item.Quantity"
+                                           min="1" max="20" readonly />
+                                    <button type="button" data-qty-plus aria-label="Tăng số lượng @item.Name"
+                                            onclick="updateQty(@item.ProductId, 1)">
                                         <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>
                                     </button>
                                 </div>
-                                <button type="submit" class="btn btn-secondary btn-sm">Cập nhật</button>
-                            </form>
+                            </div>
 
-                            <span class="cart-total">@item.LineTotal.ToString("N0")₫</span>
+                            <span class="cart-total" id="item-total-@item.ProductId">@item.LineTotal.ToString("N0")₫</span>
 
-                            <form asp-action="RemoveItem" asp-controller="Cart" method="post"
-                                  data-confirm="Món “@item.Name” sẽ được bỏ khỏi giỏ hàng."
-                                  data-confirm-title="Xóa món khỏi giỏ?">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="productId" value="@item.ProductId" />
-                                <button type="submit" class="remove-btn" aria-label="Xóa @item.Name khỏi giỏ hàng" title="Xóa món">
-                                    <svg class="icon" aria-hidden="true"><use href="#i-trash" /></svg>
-                                </button>
-                            </form>
+                            <button type="button" class="remove-btn" aria-label="Xóa @item.Name khỏi giỏ hàng"
+                                    title="Xóa món" onclick="removeItem(@item.ProductId)">
+                                <svg class="icon" aria-hidden="true"><use href="#i-trash" /></svg>
+                            </button>
                         </article>
                     }
 
@@ -95,27 +89,39 @@
 
                 <aside class="cart-summary">
                     <h4>Tóm tắt đơn hàng</h4>
+
+                    <form id="couponForm" class="mb-3">
+                        @Html.AntiForgeryToken()
+                        <label for="couponCodeInput" class="form-label">Mã giảm giá / ưu đãi</label>
+                        <div class="input-group">
+                            <input type="text" id="couponCodeInput" class="form-control text-uppercase"
+                                   placeholder="Nhập mã ưu đãi..." value="@Model.CouponCode" />
+                            <button class="btn btn-dark" type="submit">Áp dụng</button>
+                        </div>
+                        <div id="couponMessage" class="small mt-2" role="status"></div>
+                    </form>
+
                     <div class="summary-row">
                         <span>Tạm tính (@itemCount phần)</span>
-                        <strong>@total.ToString("N0")₫</strong>
+                        <strong id="cartSubTotal">@Model.SubTotal.ToString("N0")₫</strong>
                     </div>
                     <div class="summary-row">
-                        <span>Phí giao hàng</span>
-                        <strong>@(freeShipping ? "Miễn phí" : "Tính khi giao")</strong>
+                        <span>Mã giảm giá</span>
+                        <strong id="cartDiscount">-@Model.DiscountAmount.ToString("N0")₫</strong>
                     </div>
                     <div class="summary-row total-row">
                         <span>Thành tiền</span>
-                        <strong>@total.ToString("N0")₫</strong>
+                        <strong id="cartFinalTotal">@Model.FinalTotal.ToString("N0")₫</strong>
                     </div>
 
                     <div class="summary-content">
                         <p>
                             <svg class="icon" aria-hidden="true"><use href="#i-truck" /></svg>
-                            @(freeShipping ? "Đơn của bạn được miễn phí giao hàng nội thành." : "Miễn phí giao hàng nội thành cho đơn từ 150.000₫.")
+                            Miễn phí giao hàng nội thành cho đơn từ 150.000₫.
                         </p>
                         <p>
                             <svg class="icon" aria-hidden="true"><use href="#i-shield" /></svg>
-                            Thanh toán khi nhận hàng, kiểm tra món trước khi trả tiền.
+                            Chọn thanh toán COD hoặc VietQR ở bước tiếp theo.
                         </p>
                     </div>
 
@@ -128,3 +134,86 @@
         }
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        const antiForgeryToken = document.querySelector('#couponForm input[name="__RequestVerificationToken"]')?.value;
+
+        function updateSummary(response) {
+            if (response.subTotal) $('#cartSubTotal').text(response.subTotal);
+            if (response.discountAmount) $('#cartDiscount').text('-' + response.discountAmount);
+            if (response.finalTotal) $('#cartFinalTotal').text(response.finalTotal);
+        }
+
+        function updateQty(productId, delta) {
+            const input = $('#qty-' + productId);
+            const quantity = parseInt(input.val(), 10) + delta;
+            if (quantity <= 0) {
+                removeItem(productId);
+                return;
+            }
+
+            $.post('/Cart/Update', {
+                productId: productId,
+                quantity: quantity,
+                __RequestVerificationToken: antiForgeryToken
+            }, function (response) {
+                if (!response.success) {
+                    alert(response.message);
+                    return;
+                }
+
+                input.val(quantity);
+                $('#item-total-' + productId).text(response.itemTotalPrice);
+                updateSummary(response);
+                if (response.totalItems === 0) location.reload();
+            });
+        }
+
+        function removeItem(productId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa món này?')) return;
+
+            $.post('/Cart/Remove', {
+                productId: productId,
+                __RequestVerificationToken: antiForgeryToken
+            }, function (response) {
+                if (!response.success) {
+                    alert(response.message);
+                    return;
+                }
+
+                $('#cart-row-' + productId).fadeOut(250, function () {
+                    $(this).remove();
+                    if (response.totalItems === 0) {
+                        location.reload();
+                        return;
+                    }
+                    updateSummary(response);
+                });
+            });
+        }
+
+        $('#couponForm').on('submit', function (event) {
+            event.preventDefault();
+            const code = $('#couponCodeInput').val().trim();
+            if (!code) {
+                $('#couponMessage').removeClass('text-success').addClass('text-danger')
+                    .text('Vui lòng điền mã.');
+                return;
+            }
+
+            $.post('/Cart/ApplyCoupon', {
+                couponCode: code,
+                __RequestVerificationToken: antiForgeryToken
+            }, function (response) {
+                const message = $('#couponMessage');
+                if (response.success) {
+                    message.removeClass('text-danger').addClass('text-success').text(response.message);
+                    updateSummary(response);
+                } else {
+                    message.removeClass('text-success').addClass('text-danger').text(response.message);
+                }
+            });
+        });
+    </script>
+}

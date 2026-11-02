@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -6,6 +8,29 @@ namespace SaigonChe.Web.Models
     public class Order
     {
         public int Id { get; set; }
+
+        [Required]
+        [StringLength(50)]
+        public string OrderCode { get; set; } = string.Empty;
+
+        public string? UserId { get; set; }
+
+        public string? Note { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal DiscountAmount { get; set; }
+
+        public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.COD;
+
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
+
+        public decimal? AmountReceived { get; set; }
+
+        public bool IsPaid { get; set; }
+
+        public DateTime? PaidAt { get; set; }
+
+        public DateTime? CompletedAt { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập họ tên.")]
         public string CustomerName { get; set; } = string.Empty;
@@ -20,23 +45,9 @@ namespace SaigonChe.Web.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal Total { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal DiscountAmount { get; set; }
-
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? AmountReceived { get; set; }
-
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         public OrderType Type { get; set; } = OrderType.Online;
-
-        public PaymentMethod? PaymentMethod { get; set; }
-
-        public bool IsPaid { get; set; }
-
-        public DateTime? PaidAt { get; set; }
-
-        public DateTime? CompletedAt { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -62,5 +73,7 @@ namespace SaigonChe.Web.Models
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 
         public ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
+
+        public ICollection<PaymentTransaction> Transactions { get; set; } = new List<PaymentTransaction>();
     }
 }

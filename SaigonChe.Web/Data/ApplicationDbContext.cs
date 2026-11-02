@@ -22,6 +22,10 @@ namespace SaigonChe.Web.Data
         public DbSet<PartyRequest> PartyRequests { get; set; }
         public DbSet<PartyRequestStatusHistory> PartyRequestStatusHistory { get; set; }
         public DbSet<Voucher> Vouchers { get; set; }
+        public DbSet<Cart> Carts { get; set; } = null!;
+        public DbSet<CartItem> CartItems { get; set; } = null!;
+        public DbSet<PaymentTransaction> PaymentTransactions { get; set; } = null!;
+        public DbSet<Coupon> Coupons { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
