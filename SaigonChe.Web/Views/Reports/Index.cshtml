@@ -5,7 +5,11 @@
     ViewData["BodyClass"] = "reports-page";
 }
 
-<div class="report-print-heading"><h1>Báo cáo doanh thu</h1><p>@Model.From.ToString("dd/MM/yyyy") - @Model.To.ToString("dd/MM/yyyy") · @(Model.Type ?? "Tất cả loại đơn") · Giờ Việt Nam</p></div>
+<div class="report-print-heading">
+    <h1>Báo cáo doanh thu</h1>
+    <p>@Model.From.ToString("dd/MM/yyyy") – @Model.To.ToString("dd/MM/yyyy") · @(Model.Type ?? "Tất cả loại đơn") · Giờ Việt Nam</p>
+</div>
+
 <div class="admin-page-head report-screen-only">
     <div>
         <span class="eyebrow">Phân tích kinh doanh</span>
@@ -13,16 +17,30 @@
         <p>Chỉ tính đơn đã thanh toán và hoàn thành trong khoảng ngày đã chọn.</p>
     </div>
     <div class="btn-row">
-        <a class="btn btn-secondary" asp-action="ExportExcel" asp-route-from="@Model.From" asp-route-to="@Model.To" asp-route-type="@Model.Type">Xuất Excel</a>
-        <button class="btn btn-primary" type="button" onclick="window.print()">In / lưu PDF</button>
+        <a class="btn btn-secondary" asp-action="ExportExcel" asp-route-from="@Model.From" asp-route-to="@Model.To" asp-route-type="@Model.Type">
+            <svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>
+            Xuất Excel
+        </a>
+        <button class="btn btn-primary" type="button" onclick="window.print()">
+            <svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>
+            In / lưu PDF
+        </button>
     </div>
 </div>
 
 <div asp-validation-summary="All" class="text-danger report-screen-only"></div>
+
 <form method="get" class="report-filters report-screen-only">
-    <label>Từ ngày <input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" /></label>
-    <label>Đến ngày <input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" /></label>
-    <label>Loại đơn
+    <label>
+        Từ ngày
+        <input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" />
+    </label>
+    <label>
+        Đến ngày
+        <input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" />
+    </label>
+    <label>
+        Loại đơn
         <select name="type">
             <option value="">Tất cả</option>
             <option value="Online" selected="@(Model.Type == "Online")">Online</option>
@@ -30,7 +48,7 @@
             <option value="Party" selected="@(Model.Type == "Party")">Đặt tiệc</option>
         </select>
     </label>
-    <button class="btn btn-secondary" type="submit">Lọc báo cáo</button>
+    <button class="btn btn-primary" type="submit">Lọc báo cáo</button>
 </form>
 
 <div class="stat-grid report-stat-grid">
@@ -41,60 +59,63 @@
 </div>
 
 <div class="report-chart-grid">
-    <section class="report-chart-card"><h2>Doanh thu theo ngày</h2><div class="report-chart-frame"><canvas id="dailyRevenueChart" aria-label="Biểu đồ doanh thu theo ngày" role="img"></canvas></div></section>
-    <section class="report-chart-card"><h2>Doanh thu theo tháng</h2><div class="report-chart-frame"><canvas id="monthlyRevenueChart" aria-label="Biểu đồ doanh thu theo tháng" role="img"></canvas></div></section>
+    <section class="report-chart-card">
+        <h2>Doanh thu theo ngày</h2>
+        <div class="report-chart-frame"><canvas id="dailyRevenueChart" aria-label="Biểu đồ doanh thu theo ngày" role="img"></canvas></div>
+    </section>
+    <section class="report-chart-card">
+        <h2>Doanh thu theo tháng</h2>
+        <div class="report-chart-frame"><canvas id="monthlyRevenueChart" aria-label="Biểu đồ doanh thu theo tháng" role="img"></canvas></div>
+    </section>
 </div>
 
 <section class="report-table-card">
-    <div class="report-section-head"><div><h2>Món bán chạy</h2><p>Top món theo số phần trong các đơn đủ điều kiện.</p></div></div>
-    <div class="table-responsive"><table class="admin-table"><thead><tr><th>Món</th><th>Số phần</th><th>Giá trị món</th></tr></thead><tbody>
-    @if (Model.BestSellers.Count == 0) { <tr><td colspan="3">Chưa có dữ liệu trong khoảng thời gian này.</td></tr> }
-    @foreach (var item in Model.BestSellers) { <tr><td>@item.Name</td><td>@item.Units</td><td>@item.Revenue.ToString("N0") ₫</td></tr> }
-    </tbody></table></div>
+    <div class="report-section-head">
+        <div>
+            <h2>Món bán chạy</h2>
+            <p>Top món theo số phần trong các đơn đủ điều kiện.</p>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead><tr><th>Món</th><th>Số phần</th><th>Giá trị món</th></tr></thead>
+            <tbody>
+                @if (Model.BestSellers.Count == 0)
+                {
+                    <tr><td colspan="3">Chưa có dữ liệu trong khoảng thời gian này.</td></tr>
+                }
+                @foreach (var item in Model.BestSellers)
+                {
+                    <tr><td>@item.Name</td><td>@item.Units</td><td>@item.Revenue.ToString("N0") ₫</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </section>
 
 <section class="report-table-card">
-    <div class="report-section-head"><div><h2>Đơn hoàn thành gần đây</h2><p>Thời gian hiển thị theo múi giờ Việt Nam. File Excel chứa danh sách đầy đủ trong kỳ.</p></div></div>
-    <div class="table-responsive"><table class="admin-table"><thead><tr><th>Mã đơn</th><th>Hoàn thành</th><th>Loại</th><th>Khách hàng</th><th>Số phần</th><th>Doanh thu thuần</th></tr></thead><tbody>
-    @if (Model.Orders.Count == 0) { <tr><td colspan="6">Chưa có đơn phù hợp.</td></tr> }
-    @foreach (var order in Model.Orders) { <tr><td>#@order.Id</td><td>@order.CompletedAtLocal.ToString("dd/MM/yyyy HH:mm")</td><td>@order.Type</td><td>@order.Customer</td><td>@order.Units</td><td>@order.Revenue.ToString("N0") ₫</td></tr> }
-    </tbody></table></div>
+    <div class="report-section-head">
+        <div>
+            <h2>Đơn hoàn thành gần đây</h2>
+            <p>Thời gian hiển thị theo múi giờ Việt Nam. File Excel chứa danh sách đầy đủ trong kỳ.</p>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead><tr><th>Mã đơn</th><th>Hoàn thành</th><th>Loại</th><th>Khách hàng</th><th>Số phần</th><th>Doanh thu thuần</th></tr></thead>
+            <tbody>
+                @if (Model.Orders.Count == 0)
+                {
+                    <tr><td colspan="6">Chưa có đơn phù hợp.</td></tr>
+                }
+                @foreach (var order in Model.Orders)
+                {
+                    <tr><td>#@order.Id</td><td>@order.CompletedAtLocal.ToString("dd/MM/yyyy HH:mm")</td><td>@order.Type</td><td>@order.Customer</td><td>@order.Units</td><td>@order.Revenue.ToString("N0") ₫</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </section>
-
-@section Head {
-    <style>
-        .report-filters{display:flex;gap:1rem;align-items:end;flex-wrap:wrap;margin:0 0 1.25rem;padding:1rem;border:1px solid var(--border);border-radius:14px;background:var(--card)}
-        .report-filters label{display:grid;gap:.35rem;font-size:.82rem;color:var(--muted-foreground)}
-        .report-filters input,.report-filters select{min-height:42px;padding:.5rem .7rem;border-radius:8px;border:1px solid var(--border);background:var(--background);color:inherit}
-        .report-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1rem 0}
-        .report-chart-card,.report-table-card{margin:1rem 0;padding:1rem;border:1px solid var(--border);border-radius:14px;background:var(--card)}
-        .report-chart-card h2,.report-table-card h2{font-size:1.05rem;margin:0 0 1rem}
-        .report-chart-frame{position:relative;width:100%;height:260px}.report-chart-frame canvas{width:100%!important;height:100%!important}
-        .report-section-head{margin-bottom:.8rem}.report-section-head p{margin:0;color:var(--muted-foreground)}
-        @@media(max-width:760px){.report-chart-grid{grid-template-columns:1fr}}
-        .report-print-heading,.print-chart-image{display:none}
-        @@media print{
-            @@page{size:A4;margin:12mm}
-            html:root,html:root[data-theme]{color-scheme:light!important;--background:#fff!important;--foreground:#111!important;--card:#fff!important;--muted-foreground:#444!important;--surface-1:#eee!important;--border:#bbb!important}
-            body::before{display:none!important}
-            .report-screen-only,header,footer,.admin-sidebar,.admin-topbar,.skip-link{display:none!important}
-            .report-print-heading{display:block!important;margin-bottom:12pt}.report-print-heading h1{font-size:20pt}.report-print-heading p{font-size:10pt}
-            html,body,.admin-shell,.admin-main,main{min-height:0!important;height:auto!important}
-            .admin-shell{display:block!important}.admin-main,.admin-content{margin:0!important;padding:0!important;max-width:none!important}
-            .admin-content>:last-child{margin-bottom:0!important}.admin-content{overflow:visible!important}
-            .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6pt}.stat-card{padding:8pt;box-shadow:none!important}.stat-value{font-size:14pt}
-            .report-chart-grid{display:block!important}.report-chart-card{break-inside:avoid;margin:10pt 0;padding:8pt;background:#fff!important}
-            .report-chart-frame{height:auto!important}.report-chart-card canvas{display:none!important}.print-chart-image{display:block!important;width:100%;height:auto}
-            .report-chart-card h2,.report-table-card h2{color:#111!important}
-            .report-table-card{break-inside:avoid;background:#fff!important;box-shadow:none!important}
-            .table-responsive{overflow:visible!important;box-shadow:none!important;background:#fff!important}
-            .admin-table{min-width:0!important;width:100%!important;color:#111!important}
-            .admin-table th,.admin-table td{white-space:normal!important;overflow-wrap:anywhere;padding:4pt!important;font-size:8pt!important;color:#111!important}
-            .admin-table thead{display:table-header-group}.admin-table tr{break-inside:avoid}.admin-table th{background:#eee!important}
-            body{background:#fff!important;color:#111!important}
-        }
-    </style>
-}
 
 @section Scripts {
     <script src="/lib/chartjs/chart.umd.min.js"></script>
@@ -102,10 +123,11 @@
         const daily = @Html.Raw(JsonSerializer.Serialize(Model.DailyRevenue, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
         const monthly = @Html.Raw(JsonSerializer.Serialize(Model.MonthlyRevenue, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
         const money = value => new Intl.NumberFormat('vi-VN').format(value) + ' ₫';
+        const accent = () => getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#e0a54a';
         function renderRevenueChart(id, items) {
             const node = document.getElementById(id);
             if (!node || !window.Chart) return;
-            new Chart(node, { type: 'bar', data: { labels: items.map(item => item.label), datasets: [{ data: items.map(item => item.revenue), backgroundColor: '#dc6b8a', borderRadius: 6 }] }, options: { responsive: true, animation: false, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => money(context.raw) } } }, scales: { y: { ticks: { callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value) } } } } });
+            new Chart(node, { type: 'bar', data: { labels: items.map(item => item.label), datasets: [{ data: items.map(item => item.revenue), backgroundColor: accent(), borderRadius: 6 }] }, options: { responsive: true, animation: false, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => money(context.raw) } } }, scales: { y: { ticks: { callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value) } } } } });
         }
         renderRevenueChart('dailyRevenueChart', daily);
         renderRevenueChart('monthlyRevenueChart', monthly);
@@ -120,6 +142,7 @@
                     chart.options.scales[axis].ticks.color = text;
                     chart.options.scales[axis].grid.color = line;
                 });
+                chart.data.datasets.forEach(set => set.backgroundColor = printing ? '#c79453' : accent());
                 chart.update('none');
                 if (printing) preparePrintChart(chart);
                 else chart.resize();
@@ -133,7 +156,7 @@
             canvas.height = 150;
             const snapshot = new Chart(canvas, {
                 type: 'bar',
-                data: {labels: [...chart.data.labels], datasets: chart.data.datasets.map(set => ({...set, data: [...set.data]}))},
+                data: {labels: [...chart.data.labels], datasets: chart.data.datasets.map(set => ({...set, data: [...set.data], backgroundColor: '#c79453'}))},
                 options: {
                     responsive: false, animation: false, devicePixelRatio: 2,
                     plugins: {legend: {display: false}},
@@ -155,6 +178,5 @@
         window.matchMedia('print').addEventListener('change', updateChartTheme);
         window.addEventListener('beforeprint', updateChartTheme);
         window.addEventListener('afterprint', updateChartTheme);
-
     </script>
 }

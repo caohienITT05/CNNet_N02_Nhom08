@@ -4,90 +4,241 @@
     var order = Model.Order;
     var subtotal = order.Items.Sum(item => item.Price * item.Quantity);
 }
-<style>
-    .pos-wrap{max-width:1180px;margin:2rem auto;padding:0 1rem;color:var(--foreground)}.pos-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;box-shadow:0 8px 24px #1b2a3a0b}.pos-header{display:flex;justify-content:space-between;align-items:center;gap:1rem}.pos-header h1{margin:0}.pos-muted{color:var(--muted-foreground)}.pos-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:1rem;margin-top:1rem}.pos-card h2{margin:0 0 .8rem;font-size:1.15rem}.pos-row{display:grid;grid-template-columns:minmax(0,2fr) 90px minmax(0,1.3fr) auto;gap:.5rem;align-items:center;padding:.65rem 0;border-bottom:1px solid #edf0f4}.pos-form{display:flex;gap:.5rem;align-items:end;flex-wrap:wrap}.pos-form label{font-size:.85rem;font-weight:600;display:grid;gap:.3rem}.pos-form input,.pos-form select,.pos-form textarea{min-height:40px;padding:.55rem .65rem;border:1px solid var(--input);border-radius:8px;max-width:100%}.pos-form textarea{min-height:40px}.pos-form button,.pos-btn{background:var(--primary);color:white;border:0;border-radius:9px;padding:.65rem .9rem;font-weight:650;cursor:pointer;text-decoration:none}.pos-danger{background:var(--card);color:var(--destructive)!important;border:1px solid var(--border)!important;border-radius:8px;padding:.45rem .7rem;cursor:pointer}.pos-alert{padding:.8rem 1rem;border-radius:10px;margin:.8rem 0}.pos-error{background:color-mix(in oklab,var(--destructive) 12%,var(--card));color:var(--destructive)}.pos-success{background:color-mix(in oklab,var(--success) 12%,var(--card));color:var(--success)}.pos-total{display:flex;justify-content:space-between;padding:.35rem 0}.pos-grand{font-size:1.25rem;font-weight:750;border-top:1px solid #e8ebf0;margin-top:.45rem;padding-top:.75rem}.pos-qr{max-width:260px;width:100%;height:auto;border:1px solid #e6e9ee;border-radius:12px;margin:.75rem auto;display:block}.pos-customer{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}.pos-customer label:last-of-type{grid-column:1/-1}.pos-qr-help{background:var(--secondary);padding:.7rem;border-radius:9px;font-size:.9rem}.pos-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.85rem}.pos-mono{font-family:ui-monospace,Consolas,monospace}.pos-pay input[type=number]{width:150px}.pos-delete{display:inline}.pos-small{font-size:.85rem}@@media(max-width:850px){.pos-grid{grid-template-columns:minmax(0,1fr)}.pos-row{grid-template-columns:minmax(0,1.4fr) 70px minmax(0,1fr)}.pos-row .pos-delete{grid-column:1/-1}.pos-header{align-items:flex-start;flex-direction:column}}
 
-.pos-wrap input,.pos-wrap select,.pos-wrap textarea{background:var(--card);color:var(--foreground);border-color:var(--input)}
-.pos-form button,.pos-btn{color:var(--primary-foreground)}
-.pos-grid>*{min-width:0}.pos-form>label{min-width:0;max-width:100%;flex:1 1 9rem}.pos-form input,.pos-form select,.pos-form textarea{min-width:0;width:100%}.pos-row>*{min-width:0;max-width:100%}.pos-row input{width:100%}
-.pos-form button:disabled,.pos-btn:disabled{opacity:.55;cursor:not-allowed}
-</style>
-<main class="pos-wrap">
-    <header class="pos-header"><div><h1>Đơn POS #@order.Id</h1><div class="pos-muted">@(order.Table?.Name ?? "Mang về") · tạo @VietnamTime.ToLocal(order.CreatedAt).ToString("dd/MM/yyyy HH:mm")</div></div><a asp-action="Index" class="pos-btn">← Danh sách đơn</a></header>
-    @if (TempData["PosError"] is string error) { <div class="pos-alert pos-error" role="alert">@error</div> }
-    @if (TempData["PosSuccess"] is string success) { <div class="pos-alert pos-success" role="status">@success</div> }
-    <div class="pos-grid">
-        <section class="pos-card">
-            <h2>Món trong đơn</h2>
-            @if (order.Items.Count == 0) { <p class="pos-muted">Chưa thêm món.</p> }
-            @foreach (var item in order.Items.OrderBy(item => item.Id))
-            {
-                <form asp-action="UpdateItem" method="post" class="pos-row">
-                    @Html.AntiForgeryToken()<input type="hidden" name="orderId" value="@order.Id"/><input type="hidden" name="itemId" value="@item.Id"/><input type="hidden" name="rowVersion" value="@Model.RowVersion"/>
-                    <span><strong>@item.ProductName</strong><div class="pos-muted pos-small">@item.Price.ToString("N0") ₫ × @item.Quantity = <strong>@((item.Price * item.Quantity).ToString("N0")) ₫</strong></div></span>
-                    <label class="pos-small">SL<input name="quantity" type="number" min="1" max="50" value="@item.Quantity" required/></label>
-                    <label class="pos-small">Ghi chú<input name="notes" maxlength="500" value="@item.Notes"/></label>
-                    <button class="pos-btn" type="submit">Lưu</button>
-                </form>
-                <form asp-action="RemoveItem" method="post" class="pos-delete" style="display:flex;justify-content:flex-end;margin:-.25rem 0 .5rem">
-                    @Html.AntiForgeryToken()<input type="hidden" name="orderId" value="@order.Id"/><input type="hidden" name="itemId" value="@item.Id"/><input type="hidden" name="rowVersion" value="@Model.RowVersion"/><button class="pos-danger" type="submit">Xóa món</button>
-                </form>
-            }
-            <h2 style="margin-top:1.25rem">Thêm món</h2>
-            <div class="pos-form" style="margin-bottom:.5rem">
-                <label>Tìm món<input id="posOrderProductSearch" type="search" placeholder="Nhập tên món"/></label>
-                <label>Danh mục<select id="posOrderCategoryFilter"><option value="">Tất cả</option>@foreach (var category in Model.Products.Select(product => product.Category).Where(category => category != null).DistinctBy(category => category!.Id)) { <option value="@category!.Id">@category!.Name</option> }</select></label>
+<div class="admin-page-head">
+    <div>
+        <span class="eyebrow">Vận hành · POS · #@order.Id</span>
+        <h1>Đơn POS #@order.Id</h1>
+        <p>@(order.Table?.Name ?? "Mang về") · tạo @VietnamTime.ToLocal(order.CreatedAt).ToString("dd/MM/yyyy HH:mm")</p>
+    </div>
+    <div class="btn-row">
+        <a asp-action="Index" class="btn btn-secondary btn-sm">
+            <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+            Danh sách đơn
+        </a>
+    </div>
+</div>
+
+@if (TempData["PosError"] is string error)
+{
+    <div class="alert alert-danger" role="alert"><span>@error</span></div>
+}
+@if (TempData["PosSuccess"] is string success)
+{
+    <div class="alert alert-success" role="status"><span>@success</span></div>
+}
+
+<div class="admin-split">
+    <div class="admin-stack">
+        <section class="panel">
+            <div class="panel__head">
+                <div>
+                    <h2 class="panel__title">Món trong đơn</h2>
+                    <p class="panel__sub">Chỉnh số lượng, ghi chú hoặc xóa món khỏi đơn nháp.</p>
+                </div>
+                <span class="pill pill--muted">@order.Items.Count món</span>
             </div>
-            <form asp-action="AddItem" method="post" class="pos-form">
-                @Html.AntiForgeryToken()<input type="hidden" name="OrderId" value="@order.Id"/><input type="hidden" name="RowVersion" value="@Model.RowVersion"/>
-                <label>Món<select id="posOrderProduct" name="ProductId" required><option value="">Chọn món</option>@foreach (var product in Model.Products){<option value="@product.Id" data-name="@product.Name" data-category="@product.CategoryId">@product.Name · @product.Price.ToString("N0") ₫ @(product.Stock.HasValue ? "(tồn " + product.Stock.Value + ")" : "(chưa khởi tạo tồn)")</option>}</select></label>
-                <label>Số lượng<input type="number" name="Quantity" min="1" max="50" value="1" required/></label>
-                <label>Ghi chú<input name="Notes" maxlength="500" placeholder="Ít ngọt, thêm đá…"/></label>
-                <button type="submit">Thêm vào đơn</button>
-            </form>
-        </section>
-        <div style="display:grid;gap:1rem;align-content:start">
-            <section class="pos-card">
-                <h2>Khách hàng</h2>
-                <form asp-action="Customer" method="post" class="pos-form pos-customer">
-                    @Html.AntiForgeryToken()<input type="hidden" name="orderId" value="@order.Id"/><input type="hidden" name="rowVersion" value="@Model.RowVersion"/>
-                    <label>Tên<input name="customerName" maxlength="100" value="@order.CustomerName" required/></label>
-                    <label>Điện thoại<input name="phone" maxlength="30" value="@order.Phone" required/></label>
-                    <label>Địa chỉ hoặc bàn<input name="address" maxlength="300" value="@order.Address" required/></label>
-                    <button type="submit">Lưu thông tin</button>
-                </form>
-            </section>
-            <section class="pos-card">
-                <h2>Voucher và thanh toán</h2>
-                <form asp-action="Voucher" method="post" class="pos-form">
-                    @Html.AntiForgeryToken()<input type="hidden" name="orderId" value="@order.Id"/><input type="hidden" name="rowVersion" value="@Model.RowVersion"/>
-                    <label>Voucher<select name="voucherId"><option value="">Không áp dụng</option>@foreach (var voucher in Model.Vouchers){<option value="@voucher.Id" selected="@(order.VoucherId == voucher.Id ? "selected" : null)">@voucher.Code · @voucher.Amount.ToString("N0") @(voucher.Type == VoucherType.Percentage ? "%" : "₫")</option>}</select></label><button type="submit">Áp dụng</button>
-                </form>
-                <div class="pos-total" style="margin-top:.75rem"><span>Tạm tính</span><strong>@subtotal.ToString("N0") ₫</strong></div>
-                <div class="pos-total"><span>Giảm giá</span><strong>−@order.DiscountAmount.ToString("N0") ₫</strong></div>
-                <div class="pos-total pos-grand"><span>Khách cần trả</span><strong>@order.Total.ToString("N0") ₫</strong></div>
+            <div class="panel__body" style="padding-top:.4rem;padding-bottom:.4rem">
                 @if (order.Items.Count == 0)
                 {
-                    <p class="pos-muted pos-small" role="status">Đơn chưa có món. Thêm ít nhất một món ở cột bên trái để bật thanh toán.</p>
+                    <p class="empty-state" style="margin:1rem 0;padding:1.5rem">Chưa thêm món.</p>
+                }
+                @foreach (var item in order.Items.OrderBy(item => item.Id))
+                {
+                    <form asp-action="UpdateItem" method="post" class="pos-line">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@order.Id" />
+                        <input type="hidden" name="itemId" value="@item.Id" />
+                        <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
+                        <div class="pos-line__info">
+                            <strong>@item.ProductName</strong>
+                            <span>@item.Price.ToString("N0") ₫ × @item.Quantity = <strong>@((item.Price * item.Quantity).ToString("N0")) ₫</strong></span>
+                        </div>
+                        <label class="field">
+                            <span class="field__label">SL</span>
+                            <input name="quantity" type="number" min="1" max="50" value="@item.Quantity" required class="form-control" />
+                        </label>
+                        <label class="field">
+                            <span class="field__label">Ghi chú</span>
+                            <input name="notes" maxlength="500" value="@item.Notes" class="form-control" />
+                        </label>
+                        <button class="btn btn-secondary btn-sm" type="submit">Lưu</button>
+                    </form>
+                    <form asp-action="RemoveItem" method="post" class="pos-line__remove">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@order.Id" />
+                        <input type="hidden" name="itemId" value="@item.Id" />
+                        <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
+                        <button class="btn btn-ghost btn-sm" type="submit">
+                            <svg class="icon" aria-hidden="true"><use href="#i-trash" /></svg>
+                            Xóa món
+                        </button>
+                    </form>
+                }
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel__head">
+                <div>
+                    <h2 class="panel__title">Thêm món</h2>
+                    <p class="panel__sub">Tìm theo tên hoặc lọc theo danh mục rồi chọn món.</p>
+                </div>
+            </div>
+            <div class="panel__body">
+                <div class="field-grid field-grid--2" style="margin-bottom:.8rem">
+                    <label class="field">
+                        <span class="field__label">Tìm món</span>
+                        <input id="posOrderProductSearch" type="search" class="form-control" placeholder="Nhập tên món" />
+                    </label>
+                    <label class="field">
+                        <span class="field__label">Danh mục</span>
+                        <select id="posOrderCategoryFilter" class="form-select">
+                            <option value="">Tất cả</option>
+                            @foreach (var category in Model.Products.Select(product => product.Category).Where(category => category != null).DistinctBy(category => category!.Id))
+                            {
+                                <option value="@category!.Id">@category!.Name</option>
+                            }
+                        </select>
+                    </label>
+                </div>
+                <form asp-action="AddItem" method="post" class="admin-stack">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="OrderId" value="@order.Id" />
+                    <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+                    <label class="field">
+                        <span class="field__label">Món</span>
+                        <select id="posOrderProduct" name="ProductId" required class="form-select">
+                            <option value="">Chọn món</option>
+                            @foreach (var product in Model.Products)
+                            {
+                                <option value="@product.Id" data-name="@product.Name" data-category="@product.CategoryId">@product.Name · @product.Price.ToString("N0") ₫ @(product.Stock.HasValue ? "(tồn " + product.Stock.Value + ")" : "(chưa khởi tạo tồn)")</option>
+                            }
+                        </select>
+                    </label>
+                    <div class="field-grid field-grid--2">
+                        <label class="field">
+                            <span class="field__label">Số lượng</span>
+                            <input type="number" name="Quantity" min="1" max="50" value="1" required class="form-control" />
+                        </label>
+                        <label class="field">
+                            <span class="field__label">Ghi chú</span>
+                            <input name="Notes" maxlength="500" placeholder="Ít ngọt, thêm đá…" class="form-control" />
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>
+                        Thêm vào đơn
+                    </button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <div class="admin-stack">
+        <section class="panel">
+            <div class="panel__head">
+                <div>
+                    <h2 class="panel__title">Khách hàng</h2>
+                    <p class="panel__sub">Thông tin in trên phiếu thanh toán.</p>
+                </div>
+            </div>
+            <div class="panel__body">
+                <form asp-action="Customer" method="post" class="admin-stack">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@order.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
+                    <div class="field-grid field-grid--2">
+                        <label class="field">
+                            <span class="field__label">Tên</span>
+                            <input name="customerName" maxlength="100" value="@order.CustomerName" required class="form-control" />
+                        </label>
+                        <label class="field">
+                            <span class="field__label">Điện thoại</span>
+                            <input name="phone" maxlength="30" value="@order.Phone" required class="form-control" />
+                        </label>
+                    </div>
+                    <label class="field">
+                        <span class="field__label">Địa chỉ hoặc bàn</span>
+                        <input name="address" maxlength="300" value="@order.Address" required class="form-control" />
+                    </label>
+                    <button type="submit" class="btn btn-secondary">Lưu thông tin</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel__head">
+                <div>
+                    <h2 class="panel__title">Voucher và thanh toán</h2>
+                    <p class="panel__sub">Kiểm tra tổng tiền trước khi xác nhận.</p>
+                </div>
+            </div>
+            <div class="panel__body">
+                <form asp-action="Voucher" method="post" class="admin-stack" style="margin-bottom:.9rem">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@order.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
+                    <label class="field">
+                        <span class="field__label">Voucher</span>
+                        <select name="voucherId" class="form-select">
+                            <option value="">Không áp dụng</option>
+                            @foreach (var voucher in Model.Vouchers)
+                            {
+                                <option value="@voucher.Id" selected="@(order.VoucherId == voucher.Id ? "selected" : null)">@voucher.Code · @voucher.Amount.ToString("N0") @(voucher.Type == VoucherType.Percentage ? "%" : "₫")</option>
+                            }
+                        </select>
+                    </label>
+                    <button type="submit" class="btn btn-secondary btn-sm">Áp dụng</button>
+                </form>
+
+                <div class="summary">
+                    <div class="summary__row"><span>Tạm tính</span><strong>@subtotal.ToString("N0") ₫</strong></div>
+                    <div class="summary__row"><span>Giảm giá</span><strong>−@order.DiscountAmount.ToString("N0") ₫</strong></div>
+                    <div class="summary__row summary__row--total"><span>Khách cần trả</span><strong>@order.Total.ToString("N0") ₫</strong></div>
+                </div>
+
+                @if (order.Items.Count == 0)
+                {
+                    <p class="pos-note" role="status">Đơn chưa có món. Thêm ít nhất một món ở cột bên trái để bật thanh toán.</p>
                 }
                 @if (Model.VietQrConfigured && !string.IsNullOrWhiteSpace(Model.VietQrUrl))
                 {
-                    <img class="pos-qr" src="@Model.VietQrUrl" alt="Mã VietQR cho đơn POS #@order.Id"/>
-                    <div class="pos-qr-help">Quét mã với nội dung <strong class="pos-mono">POS @order.Id</strong>. Chỉ xác nhận VietQR sau khi nhân viên đối chiếu tài khoản nhận.</div>
+                    <img class="pos-qr" src="@Model.VietQrUrl" alt="Mã VietQR cho đơn POS #@order.Id" />
+                    <p class="pos-note">Quét mã với nội dung <strong>POS @order.Id</strong>. Chỉ xác nhận VietQR sau khi nhân viên đối chiếu tài khoản nhận.</p>
                 }
-                <form asp-action="Pay" method="post" class="pos-form pos-pay" style="margin-top:.8rem" id="posPayForm">
-                    @Html.AntiForgeryToken()<input type="hidden" name="orderId" value="@order.Id"/><input type="hidden" name="rowVersion" value="@Model.RowVersion"/>
-                    <label>Phương thức<select name="method" id="paymentMethod"><option value="@((int)PaymentMethod.Cash)">Tiền mặt</option><option value="@((int)PaymentMethod.VietQr)" disabled="@(!Model.VietQrConfigured ? "disabled" : null)">VietQR@(Model.VietQrConfigured ? " · đã nhận tiền" : " · chưa cấu hình")</option></select></label>
-                    <label id="cashReceivedField">Tiền khách đưa<input type="number" min="@order.Total.ToString("0")" step="1" name="amountReceived" value="@order.Total.ToString("0")"/></label>
-                    <button type="submit" disabled="@(order.Items.Count == 0 ? "disabled" : null)" onclick="return confirm('Xác nhận đã nhận đủ thanh toán và trừ tồn kho cho đơn này?')">Xác nhận đã nhận thanh toán</button>
+
+                <form asp-action="Pay" method="post" class="admin-stack" style="margin-top:.9rem" id="posPayForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@order.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
+                    <label class="field">
+                        <span class="field__label">Phương thức</span>
+                        <select name="method" id="paymentMethod" class="form-select">
+                            <option value="@((int)PaymentMethod.Cash)">Tiền mặt</option>
+                            <option value="@((int)PaymentMethod.VietQr)" disabled="@(!Model.VietQrConfigured ? "disabled" : null)">VietQR@(Model.VietQrConfigured ? " · đã nhận tiền" : " · chưa cấu hình")</option>
+                        </select>
+                    </label>
+                    <label class="field" id="cashReceivedField">
+                        <span class="field__label">Tiền khách đưa</span>
+                        <input type="number" min="@order.Total.ToString("0")" step="1" name="amountReceived" value="@order.Total.ToString("0")" class="form-control" />
+                    </label>
+                    <button type="submit" class="btn btn-primary btn-block" disabled="@(order.Items.Count == 0 ? "disabled" : null)" onclick="return confirm('Xác nhận đã nhận đủ thanh toán và trừ tồn kho cho đơn này?')">
+                        <svg class="icon" aria-hidden="true"><use href="#i-check" /></svg>
+                        Xác nhận đã nhận thanh toán
+                    </button>
                 </form>
-                <form asp-action="Cancel" method="post" class="pos-actions" onsubmit="return confirm('Hủy đơn POS chưa thanh toán này?')">
-                    @Html.AntiForgeryToken()<input type="hidden" name="orderId" value="@order.Id"/><input type="hidden" name="rowVersion" value="@Model.RowVersion"/><button class="pos-danger" type="submit">Hủy đơn nháp</button>
+                <form asp-action="Cancel" method="post" style="margin-top:.6rem" onsubmit="return confirm('Hủy đơn POS chưa thanh toán này?')">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="orderId" value="@order.Id" />
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
+                    <button class="btn btn-ghost btn-sm btn-block" type="submit">Hủy đơn nháp</button>
                 </form>
-            </section>
-        </div>
+            </div>
+        </section>
     </div>
-</main>
+</div>
+
 <script>
     (() => { const method = document.getElementById('paymentMethod'); const field = document.getElementById('cashReceivedField'); const update = () => { field.hidden = method.value !== '@((int)PaymentMethod.Cash)'; }; method.addEventListener('change', update); update(); })();
     (() => {

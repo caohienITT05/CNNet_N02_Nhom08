@@ -3,25 +3,51 @@
     ViewData["Title"] = $"Bill POS #{Model.Order.Id}";
     var order = Model.Order;
 }
-<style>
-    .receipt-wrap{max-width:720px;margin:2rem auto;padding:0 1rem;color:#202b39}.receipt-actions{display:flex;justify-content:space-between;gap:.75rem;margin-bottom:1rem}.receipt-btn{border:0;border-radius:9px;background:#237b68;color:#fff;padding:.7rem 1rem;font-weight:700;text-decoration:none;cursor:pointer}.receipt{background:#fff;border:1px solid #e1e6ed;border-radius:14px;padding:2rem;box-shadow:0 8px 26px #1b2a3a12}.receipt h1,.receipt h2,.receipt p{text-align:center}.receipt h1,.receipt h2{color:#202b39}.receipt h1{margin:.1rem}.receipt-muted{color:#68778b}.receipt-line{display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px dashed #d7dce4}.receipt-total{font-weight:700}.receipt-qr{display:block;max-width:190px;width:100%;margin:1rem auto}.receipt-disclaimer{text-align:center;font-size:.8rem;color:#68778b;margin-top:1.5rem}
-    @@media print{.admin-sidebar,.admin-topbar,.skip-link{display:none!important}.admin-shell{display:block!important}.admin-content{padding:0!important;max-width:none!important}body{background:#fff!important}.receipt-wrap{margin:0 auto;padding:0}.receipt-actions{display:none}.receipt{border:0;box-shadow:none;padding:.5cm}.container{max-width:none!important;padding:0!important}}
-</style>
-<div class="receipt-wrap">
-    <nav class="receipt-actions"><a asp-action="Index" class="receipt-btn">← Về bán hàng</a><button class="receipt-btn" type="button" onclick="window.print()">In / Lưu PDF</button></nav>
-    <article class="receipt">
-        <h1>SAIGONCHE</h1><p class="receipt-muted">PHIẾU THANH TOÁN TẠI QUẦY</p>
-        <p><strong>Đơn #@order.Id</strong><br/>@VietnamTime.ToLocal(order.PaidAt ?? order.CreatedAt).ToString("dd/MM/yyyy HH:mm")</p>
+<div class="receipt-page">
+    <nav class="receipt-actions">
+        <a asp-action="Index" class="btn btn-secondary">
+            <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+            Về bán hàng
+        </a>
+        <button class="btn btn-primary" type="button" onclick="window.print()">
+            <svg class="icon" aria-hidden="true"><use href="#i-file" /></svg>
+            In / Lưu PDF
+        </button>
+    </nav>
+
+    <article class="receipt-paper">
+        <p class="receipt-brand">SAIGONCHE</p>
+        <p class="receipt-kicker">Phiếu thanh toán tại quầy</p>
+        <p class="receipt-meta">
+            <strong>Đơn #@order.Id</strong><br />
+            @VietnamTime.ToLocal(order.PaidAt ?? order.CreatedAt).ToString("dd/MM/yyyy HH:mm")
+        </p>
+
         <div class="receipt-line"><span>Khách hàng</span><strong>@order.CustomerName</strong></div>
         <div class="receipt-line"><span>Điện thoại</span><strong>@order.Phone</strong></div>
         <div class="receipt-line"><span>Bàn / hình thức</span><strong>@(order.Table?.Name ?? "Mang về")</strong></div>
+
         @foreach (var item in order.Items)
         {
-            <div class="receipt-line"><span>@item.ProductName × @item.Quantity@if (!string.IsNullOrWhiteSpace(item.Notes)){<small class="receipt-muted"><br/>@item.Notes</small>}</span><strong>@((item.Price * item.Quantity).ToString("N0")) ₫</strong></div>
+            <div class="receipt-line">
+                <span>
+                    @item.ProductName × @item.Quantity
+                    @if (!string.IsNullOrWhiteSpace(item.Notes))
+                    {
+                        <small class="receipt-kicker" style="display:block;text-align:left;margin:.2rem 0 0;letter-spacing:0">@item.Notes</small>
+                    }
+                </span>
+                <strong>@((item.Price * item.Quantity).ToString("N0")) ₫</strong>
+            </div>
         }
+
         <div class="receipt-line"><span>Tạm tính</span><strong>@order.Items.Sum(item => item.Price * item.Quantity).ToString("N0") ₫</strong></div>
-        @if (order.Voucher != null) { <div class="receipt-line"><span>Voucher @order.Voucher.Code</span><strong>−@order.DiscountAmount.ToString("N0") ₫</strong></div> }
-        <div class="receipt-line receipt-total"><span>Đã thanh toán</span><strong>@order.Total.ToString("N0") ₫</strong></div>
+        @if (order.Voucher != null)
+        {
+            <div class="receipt-line"><span>Voucher @order.Voucher.Code</span><strong>−@order.DiscountAmount.ToString("N0") ₫</strong></div>
+        }
+        <div class="receipt-line receipt-line--total"><span>Đã thanh toán</span><strong>@order.Total.ToString("N0") ₫</strong></div>
+
         @if (order.PaymentMethod == PaymentMethod.Cash)
         {
             <div class="receipt-line"><span>Khách đưa</span><strong>@Model.AmountReceived.ToString("N0") ₫</strong></div>
@@ -31,7 +57,12 @@
         {
             <div class="receipt-line"><span>Thanh toán</span><strong>VietQR · đã xác nhận</strong></div>
         }
-        @if (order.PaymentMethod == PaymentMethod.VietQr && !string.IsNullOrWhiteSpace(Model.VietQrUrl)) { <img class="receipt-qr" src="@Model.VietQrUrl" alt="Mã VietQR của đơn"/> }
+
+        @if (order.PaymentMethod == PaymentMethod.VietQr && !string.IsNullOrWhiteSpace(Model.VietQrUrl))
+        {
+            <img class="receipt-art" src="@Model.VietQrUrl" alt="Mã VietQR của đơn" />
+        }
+
         <p class="receipt-disclaimer">Phiếu bán hàng nội bộ · Không thay thế hóa đơn điện tử</p>
     </article>
 </div>

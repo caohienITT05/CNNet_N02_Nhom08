@@ -363,7 +363,7 @@ public sealed class AuditFlowTests(AuditHost host) : IClassFixture<AuditHost>
                 Assert.Equal(200,response!.Status);
                 Assert.False(await page.Locator("body").InnerTextAsync().ContinueWith(t=>t.Result.Contains("An unhandled exception")));
                 if(route=="/Pos")
-                    Assert.True(await page.Locator(".pos-card").First.EvaluateAsync<bool>("node=>{const p=document.createElement('div');p.style.background='var(--card)';document.body.append(p);const ok=getComputedStyle(p).backgroundColor===getComputedStyle(node).backgroundColor;p.remove();return ok;}"));
+                    Assert.True(await page.Locator(".pos-product").First.EvaluateAsync<bool>("node=>{const p=document.createElement('div');p.style.background='color-mix(in oklab, var(--card) 82%, var(--surface-1))';document.body.append(p);const ok=getComputedStyle(p).backgroundColor===getComputedStyle(node).backgroundColor;p.remove();return ok;}"));
                 if(route=="/Reports") Assert.True(await page.EvaluateAsync<bool>("()=>Boolean(window.Chart)"));
                 if(route=="/OrderOperations")
                 {
@@ -484,8 +484,8 @@ public sealed class AuditFlowTests(AuditHost host) : IClassFixture<AuditHost>
         await staffPage.Locator("form[action='/Pos/AddItem'] button[type=submit]").ClickAsync();
         await staffPage.SetViewportSizeAsync(390,900);
         await staffPage.ScreenshotAsync(new(){Path=Path.Combine(host.Artifacts,"staff-pos-order-mobile.png")});
-        Assert.True(await staffPage.Locator(".pos-wrap").EvaluateAsync<bool>("node=>node.scrollWidth<=node.clientWidth+1"),
-            await staffPage.Locator(".pos-wrap").EvaluateAsync<string>("node=>JSON.stringify([...node.querySelectorAll('*')].filter(e=>e.getBoundingClientRect().right>node.getBoundingClientRect().right+1).map(e=>({tag:e.tagName,class:e.className,width:e.getBoundingClientRect().width})))"));
+        Assert.True(await staffPage.Locator(".admin-split").EvaluateAsync<bool>("node=>node.scrollWidth<=node.clientWidth+1"),
+            await staffPage.Locator(".admin-split").EvaluateAsync<string>("node=>JSON.stringify([...node.querySelectorAll('*')].filter(e=>e.getBoundingClientRect().right>node.getBoundingClientRect().right+1).map(e=>({tag:e.tagName,class:e.className,width:e.getBoundingClientRect().width})))"));
         await staffPage.SetViewportSizeAsync(1366,900);
         await staffPage.ScreenshotAsync(new(){Path=Path.Combine(host.Artifacts,"staff-pos-order-desktop.png")});
         await staffPage.Locator("#posPayForm input[name='amountReceived']").FillAsync("30000");
