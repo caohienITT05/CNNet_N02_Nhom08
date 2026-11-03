@@ -59,7 +59,7 @@ namespace SaigonChe.Web.Controllers
             if (!await _cartService.AddToCartAsync(productId, quantity))
             {
                 TempData["CartError"] = "Sản phẩm không tồn tại hoặc đã ngừng bán.";
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction(nameof(Index));
             }
 
             TempData["CartSuccess"] = "Đã thêm món vào giỏ hàng.";

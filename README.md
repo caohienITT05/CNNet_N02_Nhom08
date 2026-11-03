@@ -14,6 +14,19 @@ Trình duyệt → SaigonChe.Web → SQL Server
 
 ## Trạng thái chức năng
 
+lần đầu chạy :
+
+```
+$env:ConnectionStrings__DefaultConnection = 'Server=(localdb)\MSSQLLocalDB;Database=SaigonCheDb_Demo;Trusted_Connection=True;TrustServerCertificate=True;'
+dotnet run --project .\SaigonChe.Web\SaigonChe.Web.csproj --launch-profile http
+```
+
+```
+dotnet user-secrets init --project .\SaigonChe.Web\SaigonChe.Web.csproj
+dotnet user-secrets set 'Seed:AdminPassword' 'THAY_BANG_MAT_KHAU_MOI' --project .\SaigonChe.Web\SaigonChe.Web.csproj
+dotnet run --project .\SaigonChe.Web\SaigonChe.Web.csproj --launch-profile http
+```
+
 Đã có:
 
 - CRUD danh mục và món chè.
@@ -36,6 +49,7 @@ Trình duyệt → SaigonChe.Web → SQL Server
 - Ảnh minh họa thực đơn được lưu cục bộ trong `SaigonChe.Web/wwwroot/images/menu`; nguồn và giấy phép ảnh được liệt kê ở cuối thực đơn.
 
 Các giới hạn hiện tại:
+
 - VietQR chỉ hiển thị yêu cầu chuyển khoản; nhân viên xác nhận đã nhận tiền, chưa có cổng thanh toán tự động.
 - Tồn kho tính theo số phần món, chưa trừ nguyên liệu.
 - Chưa hỗ trợ hoàn tiền, ghép/tách bàn, đặt cọc tiệc hoặc hóa đơn điện tử.
@@ -130,11 +144,11 @@ dotnet test .\SaigonChe.slnx
 
 Bộ kiểm thử hiện bao phủ tính tổng/giảm giá, voucher hết hạn hoặc hết lượt, tiền thừa và thiếu tiền, thiếu tồn, bán phần cuối theo thứ tự, xác nhận thanh toán lặp và từ chối đơn ở trạng thái kết thúc. Kiểm thử chưa thay thế xác minh cạnh tranh giao dịch trên SQL Server hoặc kiểm thử tích hợp đủ ba vai trò.
 
-| Quyền | Được phép | Bị chặn |
-|---|---|---|
-| `Customer` | Thực đơn, giỏ hàng/checkout, yêu cầu tiệc và lịch sử của mình (`/Party/Create`, `/Party/MyRequests`) | POS, hàng đợi nhân viên, quản trị và báo cáo |
-| `Staff` | POS (`/Pos`), hàng đợi đơn (`/OrderOperations`), xử lý yêu cầu tiệc (`/Party`) | Quản lý nhân viên/danh mục/tồn kho/voucher và báo cáo doanh thu |
-| `Admin` | Toàn bộ chức năng quản trị, vận hành, báo cáo và quản lý Staff | Không được khóa hoặc hạ quyền Admin cuối cùng |
+| Quyền       | Được phép                                                                                                         | Bị chặn                                                                |
+| ------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `Customer` | Thực đơn, giỏ hàng/checkout, yêu cầu tiệc và lịch sử của mình (`/Party/Create`, `/Party/MyRequests`) | POS, hàng đợi nhân viên, quản trị và báo cáo                   |
+| `Staff`    | POS (`/Pos`), hàng đợi đơn (`/OrderOperations`), xử lý yêu cầu tiệc (`/Party`)                        | Quản lý nhân viên/danh mục/tồn kho/voucher và báo cáo doanh thu |
+| `Admin`    | Toàn bộ chức năng quản trị, vận hành, báo cáo và quản lý Staff                                           | Không được khóa hoặc hạ quyền Admin cuối cùng                  |
 
 ## Kịch bản demo Thành viên 3 (5–10 phút)
 

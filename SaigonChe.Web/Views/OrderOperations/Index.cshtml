@@ -4,6 +4,8 @@
     ViewData["Title"] = "Đơn hàng cần xử lý";
     var ordersTimeZone = VietnamTime.Zone;
 }
+<section class="section container" aria-label="@ViewData["Title"]">
+    <partial name="_AdminFeedback" />
 <div class="admin-page-head"><div><span class="eyebrow">Vận hành giao hàng</span><h1>Đơn hàng trực tuyến</h1><p>Xác nhận, chuẩn bị, giao và ghi nhận thanh toán COD.</p></div></div>
 <div class="admin-table-wrap"><table class="table admin-table"><thead><tr><th>Đơn / món</th><th>Khách hàng</th><th>Địa chỉ</th><th>Đặt lúc</th><th>Tổng tiền</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead><tbody>
 @foreach (var order in Model)
@@ -25,3 +27,4 @@
 }
 @if (Model.Count == 0) { <tr><td colspan="7">Hiện không có đơn trực tuyến cần xử lý.</td></tr> }
 </tbody></table></div>
+</section>

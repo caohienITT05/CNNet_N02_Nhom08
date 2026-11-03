@@ -1,7 +1,16 @@
-@model List<SaigonChe.Web.Models.Order>
+@using SaigonChe.Web.Models
+@model List<Order>
 
 @{
-    ViewData["Title"] = "Tra cứu đơn hàng - Quán Chè Sài Gòn";
+    ViewData["Title"] = "Tra cứu đơn hàng";
+    var steps = new (OrderStatus Status, string Label, string Icon)[]
+    {
+        (OrderStatus.Pending, "Chờ xác nhận", "receipt"),
+        (OrderStatus.Confirmed, "Đã xác nhận", "check"),
+        (OrderStatus.Preparing, "Đang chuẩn bị", "cup"),
+        (OrderStatus.Shipping, "Đang giao", "truck"),
+        (OrderStatus.Completed, "Đã nhận chè", "home")
+    };
 }
 
 <div class="container py-5">
@@ -11,14 +20,18 @@
         
         <form method="get" class="row justify-content-center g-2 mt-3">
             <div class="col-md-4">
-                <input type="text" name="orderCode" class="form-control rounded-pill px-4" placeholder="Nhập mã đơn (VD: TF2026...)" />
+                <label for="tracking-code" class="visually-hidden">Mã đơn hàng</label>
+                <input id="tracking-code" type="text" name="orderCode" value="@Context.Request.Query["orderCode"]"
+                       class="form-control rounded-pill px-4" placeholder="Nhập mã đơn (VD: TF2026...)" />
             </div>
             <div class="col-md-3">
-                <input type="text" name="phone" class="form-control rounded-pill px-4" placeholder="Hoặc số điện thoại..." />
+                <label for="tracking-phone" class="visually-hidden">Số điện thoại</label>
+                <input id="tracking-phone" type="tel" name="phone" value="@Context.Request.Query["phone"]"
+                       class="form-control rounded-pill px-4" placeholder="Hoặc số điện thoại..." />
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-danger w-100 rounded-pill fw-semibold">
-                    <i class="bi bi-search me-1"></i> Tra cứu
+                    <svg class="icon me-1" aria-hidden="true"><use href="#i-search" /></svg> Tra cứu
                 </button>
             </div>
         </form>
@@ -37,41 +50,37 @@
             foreach (var order in Model)
             {
                 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center border-bottom pb-3 mb-3">
                         <div>
                             <h5 class="fw-bold text-danger mb-0">Đơn hàng: #@order.OrderCode</h5>
-                            <small class="text-muted">Ngày đặt: @order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                            <small class="text-muted">Ngày đặt: @VietnamTime.ToLocal(order.CreatedAt).ToString("dd/MM/yyyy HH:mm")</small>
                         </div>
                         <div>
                             <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">
-                                @order.Status.ToString()
+                                @Html.DisplayFor(_ => order.Status)
                             </span>
                         </div>
                     </div>
 
-                    <!-- Tiến trình đơn hàng -->
-                    <div class="row text-center my-3">
-                        <div class="col text-success">
-                            <i class="bi bi-receipt fs-3"></i>
-                            <div class="small fw-bold">Chờ xác nhận</div>
-                        </div>
-                        <div class="col @(order.Status >= SaigonChe.Web.Models.OrderStatus.Confirmed ? "text-success" : "text-muted")">
-                            <i class="bi bi-check2-circle fs-3"></i>
-                            <div class="small fw-bold">Đã xác nhận</div>
-                        </div>
-                        <div class="col @(order.Status >= SaigonChe.Web.Models.OrderStatus.Preparing ? "text-success" : "text-muted")">
-                            <i class="bi bi-cup-hot fs-3"></i>
-                            <div class="small fw-bold">Bếp đang làm</div>
-                        </div>
-                        <div class="col @(order.Status >= SaigonChe.Web.Models.OrderStatus.Shipping ? "text-success" : "text-muted")">
-                            <i class="bi bi-bicycle fs-3"></i>
-                            <div class="small fw-bold">Đang giao</div>
-                        </div>
-                        <div class="col @(order.Status == SaigonChe.Web.Models.OrderStatus.Completed ? "text-success" : "text-muted")">
-                            <i class="bi bi-house-door fs-3"></i>
-                            <div class="small fw-bold">Đã nhận chè</div>
-                        </div>
-                    </div>
+                    @if (order.Status == OrderStatus.Cancelled)
+                    {
+                        <p class="alert alert-secondary">Đơn hàng đã hủy.</p>
+                    }
+                    else
+                    {
+                        var status = order.Status == OrderStatus.Delivering ? OrderStatus.Shipping : order.Status;
+                        var currentStep = Array.FindIndex(steps, step => step.Status == status);
+                        <ol class="row row-cols-2 row-cols-sm-5 g-3 text-center my-3 list-unstyled" aria-label="Tiến trình đơn hàng">
+                            @for (var index = 0; index < steps.Length; index++)
+                            {
+                                var step = steps[index];
+                                <li class="col @(index <= currentStep ? "text-success" : "text-muted")" aria-current="@(index == currentStep ? "step" : null)">
+                                    <svg class="icon fs-3" aria-hidden="true"><use href="#i-@step.Icon" /></svg>
+                                    <div class="small fw-bold">@step.Label</div>
+                                </li>
+                            }
+                        </ol>
+                    }
 
                     <div class="bg-light rounded-3 p-3 mt-2">
                         <div class="row">

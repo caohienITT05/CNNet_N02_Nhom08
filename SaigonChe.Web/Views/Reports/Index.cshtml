@@ -5,10 +5,11 @@
     ViewData["BodyClass"] = "reports-page";
 }
 
+<section class="section container" aria-label="@ViewData["Title"]">
 <div class="admin-page-head report-screen-only">
     <div>
         <span class="eyebrow">Phân tích kinh doanh</span>
-        <h1>Dashboard báo cáo</h1>
+        <h1>Báo cáo doanh thu</h1>
         <p>Chỉ tính đơn đã thanh toán và hoàn thành trong khoảng ngày đã chọn.</p>
     </div>
     <div class="btn-row">
@@ -58,18 +59,20 @@
     @foreach (var order in Model.Orders) { <tr><td>#@order.Id</td><td>@order.CompletedAtLocal.ToString("dd/MM/yyyy HH:mm")</td><td>@order.Type</td><td>@order.Customer</td><td>@order.Units</td><td>@order.Revenue.ToString("N0") ₫</td></tr> }
     </tbody></table></div>
 </section>
+</section>
 
 @section Head {
     <style>
-        .report-filters{display:flex;gap:1rem;align-items:end;flex-wrap:wrap;margin:0 0 1.25rem;padding:1rem;border:1px solid var(--line,#333);border-radius:14px;background:var(--panel,#17171a)}
-        .report-filters label{display:grid;gap:.35rem;font-size:.82rem;color:var(--muted,#a8a8b0)}
-        .report-filters input,.report-filters select{min-height:42px;padding:.5rem .7rem;border-radius:8px;border:1px solid var(--line,#333);background:var(--surface,#101012);color:inherit}
+        .report-filters{display:flex;gap:1rem;align-items:end;flex-wrap:wrap;margin:0 0 1.25rem;padding:1rem;border:1px solid rgba(89,58,42,.18);border-radius:14px;background:var(--white)}
+        .report-filters label{display:grid;gap:.35rem;font-size:.82rem;color:var(--muted)}
+        .report-filters input,.report-filters select{min-height:42px;padding:.5rem .7rem;border-radius:8px;border:1px solid rgba(89,58,42,.18);background:var(--cream-bg);color:inherit}
         .report-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1rem 0}
-        .report-chart-card,.report-table-card{margin:1rem 0;padding:1rem;border:1px solid var(--line,#333);border-radius:14px;background:var(--panel,#17171a)}
+        .report-chart-card,.report-table-card{margin:1rem 0;padding:1rem;border:1px solid rgba(89,58,42,.18);border-radius:14px;background:var(--white)}
         .report-chart-card h2,.report-table-card h2{font-size:1.05rem;margin:0 0 1rem}
-        .report-chart-card canvas{max-height:290px}
-        .report-section-head{margin-bottom:.8rem}.report-section-head p{margin:0;color:var(--muted,#a8a8b0)}
-        @@media(max-width:760px){.report-chart-grid{grid-template-columns:1fr}}
+        .report-chart-card{min-width:0}
+        .report-chart-card canvas{max-width:100%;max-height:290px}
+        .report-section-head{margin-bottom:.8rem}.report-section-head p{margin:0;color:var(--muted)}
+        @@media(max-width:760px){.report-chart-grid{grid-template-columns:minmax(0,1fr)}}
         @@media print{.report-screen-only,header,footer,.admin-sidebar,.admin-topbar,.skip-link{display:none!important}.admin-main,.admin-content{margin:0!important;padding:0!important}.report-table-card,.stat-card{break-inside:avoid;background:white!important;color:#111!important;border-color:#bbb!important}.stat-label,.stat-hint{color:#444!important}body{background:#fff!important;color:#111!important}}
     </style>
 }
@@ -83,7 +86,7 @@
         function renderRevenueChart(id, items) {
             const node = document.getElementById(id);
             if (!node || !window.Chart) return;
-            new Chart(node, { type: 'bar', data: { labels: items.map(item => item.label), datasets: [{ data: items.map(item => item.revenue), backgroundColor: '#dc6b8a', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => money(context.raw) } } }, scales: { y: { ticks: { callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value) } } } } });
+            new Chart(node, { type: 'bar', data: { labels: items.map(item => item.label), datasets: [{ data: items.map(item => item.revenue), backgroundColor: '#b74637', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: context => money(context.raw) } } }, scales: { y: { ticks: { callback: value => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value) } } } } });
         }
         renderRevenueChart('dailyRevenueChart', daily);
         renderRevenueChart('monthlyRevenueChart', monthly);

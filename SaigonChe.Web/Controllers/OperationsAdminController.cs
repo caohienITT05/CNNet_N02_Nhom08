@@ -66,8 +66,8 @@ public sealed class OperationsAdminController(ApplicationDbContext context) : Co
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveDiningTable(DiningTableFormViewModel model)
     {
-        var code = model.Code.Trim().ToUpperInvariant();
-        if (await context.DiningTables.AnyAsync(table => table.Code == code && table.Id != model.Id))
+        var code = model.Code?.Trim().ToUpperInvariant() ?? string.Empty;
+        if (ModelState.IsValid && await context.DiningTables.AnyAsync(table => table.Code == code && table.Id != model.Id))
             ModelState.AddModelError(nameof(model.Code), "Mã bàn đã tồn tại.");
         if (!ModelState.IsValid) return View("DiningTables", await context.DiningTables.AsNoTracking().OrderBy(table => table.Code).ToListAsync());
 

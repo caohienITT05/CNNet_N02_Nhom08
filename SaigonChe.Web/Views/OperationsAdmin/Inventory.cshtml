@@ -1,10 +1,30 @@
 @model IReadOnlyList<SaigonChe.Web.ViewModels.InventoryAdminViewModel>
 @{ ViewData["Title"] = "Tồn kho món"; }
+<section class="section container" aria-label="@ViewData["Title"]">
+    <partial name="_AdminFeedback" />
 <div class="admin-page-head"><div><span class="eyebrow">Quản lý kho</span><h1>Tồn kho món</h1><p>Nhập số lượng ban đầu, bổ sung hoặc điều chỉnh tồn. Mọi thay đổi được lưu lịch sử.</p></div></div>
-<div class="admin-table-wrap"><table class="table admin-table"><thead><tr><th>Món</th><th>Tồn hiện tại</th><th>Thay đổi (+/-)</th><th>Lý do</th><th></th></tr></thead><tbody>
-@foreach (var product in Model)
-{
-<tr><td>@product.ProductName</td><td>@(product.Stock?.ToString() ?? "Chưa thiết lập")</td><td colspan="3"><form asp-action="AdjustStock" method="post" class="d-flex gap-2 flex-wrap">@Html.AntiForgeryToken()<input type="hidden" name="ProductId" value="@product.ProductId"/><input class="form-control" type="number" name="QuantityChange" min="-10000" max="10000" required aria-label="Thay đổi số lượng"/><input class="form-control" name="Reason" maxlength="100" required placeholder="Lý do" aria-label="Lý do điều chỉnh"/><button class="btn btn-secondary btn-sm" type="submit">Cập nhật</button></form></td></tr>
-}
-@if (Model.Count == 0) { <tr><td colspan="5">Chưa có món trong thực đơn.</td></tr> }
-</tbody></table></div>
+<div class="admin-table-wrap operations-table">
+    <table class="table admin-table">
+        <thead><tr><th>Món</th><th>Tồn hiện tại</th><th>Thay đổi (+/−)</th><th>Lý do</th><th>Thao tác</th></tr></thead>
+        <tbody>
+        @foreach (var product in Model)
+        {
+            var formId = $"stock-{product.ProductId}";
+            <tr>
+                <td>@product.ProductName</td>
+                <td>@(product.Stock?.ToString() ?? "Chưa thiết lập")</td>
+                <td><input form="@formId" class="form-control operations-number" type="number" name="QuantityChange" min="-10000" max="10000" required placeholder="± số phần" aria-label="Thay đổi tồn @product.ProductName" /></td>
+                <td><input form="@formId" class="form-control" name="Reason" maxlength="100" required placeholder="Lý do điều chỉnh" aria-label="Lý do điều chỉnh @product.ProductName" /></td>
+                <td>
+                    <form id="@formId" asp-action="AdjustStock" method="post">
+                        <input type="hidden" name="ProductId" value="@product.ProductId" />
+                        <button class="btn btn-secondary btn-sm" type="submit">Cập nhật</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (Model.Count == 0) { <tr><td colspan="5">Chưa có món trong thực đơn.</td></tr> }
+        </tbody>
+    </table>
+</div>
+</section>

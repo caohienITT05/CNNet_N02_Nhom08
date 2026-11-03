@@ -19,7 +19,7 @@
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            <svg class="icon me-2" aria-hidden="true"><use href="#i-check" /></svg>@TempData["Success"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
@@ -27,7 +27,7 @@
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show rounded-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+            <svg class="icon me-2" aria-hidden="true"><use href="#i-alert" /></svg>@TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
@@ -64,7 +64,7 @@
             </div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-danger rounded-pill w-100 fw-semibold">
-                    <i class="bi bi-funnel me-1"></i> Lọc
+                    <svg class="icon me-1" aria-hidden="true"><use href="#i-filter" /></svg> Lọc
                 </button>
                 <a href="/AdminOrder" class="btn btn-outline-secondary rounded-pill px-3">Xóa</a>
             </div>
@@ -105,7 +105,7 @@
                                 </td>
                                 <td>
                                     <div class="fw-bold">@order.CustomerName</div>
-                                    <div class="small text-muted"><i class="bi bi-telephone me-1"></i>@order.Phone</div>
+                                    <div class="small text-muted"><svg class="icon me-1" aria-hidden="true"><use href="#i-phone" /></svg>@order.Phone</div>
                                     <div class="small text-secondary text-truncate" style="max-width: 200px;"
                                          title="@order.Address">@order.Address</div>
                                 </td>
@@ -126,11 +126,11 @@
                                     <div class="mt-1">
                                         @if (order.PaymentStatus == SaigonChe.Web.Models.PaymentStatus.Paid)
                                         {
-                                            <span class="badge bg-success"><i class="bi bi-check2"></i> Đã thanh toán</span>
+                                            <span class="badge bg-success"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg> Đã thanh toán</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Chờ thanh
+                                            <span class="badge bg-warning text-dark"><svg class="icon" aria-hidden="true"><use href="#i-clock" /></svg> Chờ thanh
                                                 toán</span>
                                             }
                                         </div>

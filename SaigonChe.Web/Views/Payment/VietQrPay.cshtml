@@ -1,7 +1,7 @@
 @model SaigonChe.Web.ViewModels.VietQrPaymentViewModel
 
 @{
-    ViewData["Title"] = "Quét mã VietQR - Quán Chè Sài Gòn";
+    ViewData["Title"] = "Quét mã VietQR";
 }
 
 <div class="container py-5 text-center">
@@ -10,17 +10,17 @@
             <div class="card border-0 shadow-lg rounded-4 p-4">
                 <div class="mb-3">
                     <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold">
-                        <i class="bi bi-shield-check me-1"></i> Cổng thanh toán VietQR Napas247
+                        <svg class="icon me-1" aria-hidden="true"><use href="#i-shield" /></svg> Cổng thanh toán VietQR Napas247
                     </span>
                 </div>
 
-                <h4 class="fw-bold text-danger mb-1">Mã Đơn: @Model.OrderCode</h4>
+                <h1 class="h4 fw-bold text-danger mb-1 text-break">Mã đơn @Model.OrderCode</h1>
                 <p class="text-muted small">Mở app Ngân hàng hoặc MoMo quét mã QR bên dưới</p>
 
                 <!-- Ảnh QR Động sinh ra từ VietQrService -->
                 <div class="p-3 bg-light rounded-4 my-3 d-inline-block shadow-sm">
-                    <img src="@Model.QrImageUrl" alt="VietQR Code" class="img-fluid rounded-3"
-                         style="max-width: 290px;" />
+                    <img src="@Model.QrImageUrl" alt="Mã VietQR của đơn @Model.OrderCode" class="img-fluid rounded-3"
+                         style="width: min(290px, 100%);" />
                 </div>
 
                 <div class="bg-light p-3 rounded-3 text-start small mb-3">
@@ -34,7 +34,7 @@
                     </div>
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted">Chủ tài khoản:</span>
-                        <strong class="text-dark">@Model.AccountName</strong>
+                        <strong class="text-dark text-end text-break ms-2">@Model.AccountName</strong>
                     </div>
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted">Số tiền:</span>
@@ -42,18 +42,17 @@
                     </div>
                     <div class="d-flex justify-content-between">
                         <span class="text-muted">Nội dung CK:</span>
-                        <strong class="text-primary font-monospace">@Model.OrderCode</strong>
+                        <strong class="text-primary font-monospace text-end text-break ms-2">@Model.OrderCode</strong>
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center justify-content-center text-muted small mb-3" id="waitingBox">
-                    <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>
-                    <span>Hệ thống đang chờ nhận tiền tự động...</span>
+                <div class="text-muted small mb-3" id="waitingBox" role="status">
+                    Đang chờ xác nhận chuyển khoản. Bạn có thể theo dõi trạng thái trong trang tra cứu đơn hàng.
                 </div>
 
-                <a href="/Order/Tracking?orderCode=@Model.OrderCode"
+                <a asp-controller="Order" asp-action="Tracking" asp-route-orderCode="@Model.OrderCode"
                    class="btn btn-outline-secondary rounded-pill btn-sm">
-                    Để sau / Tra cứu đơn hàng
+                    Tra cứu đơn hàng
                 </a>
             </div>
         </div>
@@ -64,25 +63,24 @@
     <!-- Thư viện Microsoft SignalR từ CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
-        const orderCode = "@Model.OrderCode";
+        const orderCode = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OrderCode));
 
-        // Khởi tạo kết nối tới Hub SignalR
-        const connection = new signalR.HubConnectionBuilder()
+        if (window.signalR) {
+            const connection = new signalR.HubConnectionBuilder()
             .withUrl("/paymentHub")
             .withAutomaticReconnect()
             .build();
 
-        // Lắng nghe sự kiện "PaymentSuccess" từ server
-        connection.on("PaymentSuccess", function (res) {
-            $('#waitingBox').html('<div class="alert alert-success py-2 w-100 fw-bold">Thanh toán thành công! Đang chuyển hướng...</div>');
-            setTimeout(function () {
-                window.location.href = '/Order/Success?orderCode=' + orderCode;
-            }, 1500);
-        });
+            connection.on("PaymentSuccess", function () {
+                document.getElementById('waitingBox').textContent = 'Đã xác nhận thanh toán. Đang mở thông tin đơn hàng.';
+                setTimeout(function () {
+                    window.location.href = '/Order/Success?orderCode=' + encodeURIComponent(orderCode);
+                }, 1500);
+            });
 
-        // Bắt đầu kết nối và join vào room đơn hàng
-        connection.start().then(function () {
-            connection.invoke("JoinOrderGroup", orderCode).catch(err => console.error(err));
-        }).catch(err => console.error("SignalR Connection Error: ", err));
+            const joinOrder = () => connection.invoke("JoinOrderGroup", orderCode).catch(console.error);
+            connection.onreconnected(joinOrder);
+            connection.start().then(joinOrder).catch(console.error);
+        }
     </script>
 }

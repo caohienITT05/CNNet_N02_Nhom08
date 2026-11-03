@@ -5,51 +5,48 @@
 @if (SignInManager.IsSignedIn(User))
 {
     <li class="nav-item">
-        <a class="nav-link" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
-            Xin chào, @User.Identity?.Name
+        <a class="nav-link account-nav-link text-truncate" asp-area="Identity" asp-page="/Account/Manage/Index" title="Hồ sơ của @User.Identity?.Name">
+            Tài khoản
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" asp-controller="Favorite" asp-action="Index">Yêu thích</a>
+        <a class="nav-link" asp-area="" asp-controller="Favorite" asp-action="Index">Yêu thích</a>
     </li>
     @if (User.IsInRole("Admin"))
     {
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Admin" asp-action="Dashboard">Quản trị</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Staff" asp-action="Orders">Vận hành đơn</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Admin" asp-action="Products">Sản phẩm</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Admin" asp-action="Categories">Danh mục</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Admin" asp-action="Orders">Đơn hàng</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Admin" asp-action="ContactMessages">Liên hệ</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Admin" asp-action="Staff">Nhân viên</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="AdminReviews" asp-action="Index">Đánh giá</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="AdminCustomers" asp-action="Index">Khách hàng</a>
+        <li class="nav-item dropdown">
+            <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Quản trị</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Dashboard">Tổng quan</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Reports" asp-action="Index">Báo cáo doanh thu</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Products">Sản phẩm</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Categories">Danh mục</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Orders">Đơn hàng</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="ContactMessages">Liên hệ</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Staff">Nhân viên</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="AdminReviews" asp-action="Index">Đánh giá</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="AdminCustomers" asp-action="Index">Khách hàng</a></li>
+                <li><hr class="dropdown-divider" /></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="OperationsAdmin" asp-action="Inventory">Tồn kho</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="OperationsAdmin" asp-action="DiningTables">Bàn phục vụ</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="OperationsAdmin" asp-action="Vouchers">Voucher</a></li>
+            </ul>
         </li>
     }
-    else if (User.IsInRole("Staff"))
+    @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
     {
-        <li class="nav-item">
-            <a class="nav-link" asp-controller="Staff" asp-action="Orders">Đơn cần xử lý</a>
+        <li class="nav-item dropdown">
+            <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Vận hành</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" asp-area="" asp-controller="Staff" asp-action="Orders">Đơn cần xử lý</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="OrderOperations" asp-action="Index">Đơn trực tuyến</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Pos" asp-action="Index">Bán tại quầy</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Party" asp-action="Index">Yêu cầu đặt tiệc</a></li>
+            </ul>
         </li>
     }
     <li class="nav-item">
-        <form class="d-inline" asp-controller="Account" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post">
+        <form class="d-inline" asp-area="" asp-controller="Account" asp-action="Logout" asp-route-returnUrl="@Url.Action("Index", "Home")" method="post">
             <button type="submit" class="btn btn-outline-primary btn-sm">Đăng xuất</button>
         </form>
     </li>
@@ -57,9 +54,9 @@
 else
 {
     <li class="nav-item">
-        <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+        <a class="btn btn-outline-primary btn-sm" asp-area="" asp-controller="Account" asp-action="Login">Đăng nhập</a>
     </li>
     <li class="nav-item">
-        <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">Đăng ký</a>
+        <a class="btn btn-primary btn-sm" asp-area="" asp-controller="Account" asp-action="Register">Đăng ký</a>
     </li>
 }

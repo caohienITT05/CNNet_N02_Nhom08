@@ -6,13 +6,14 @@
     var terminal = Model.Status is PartyRequestStatus.Cancelled or PartyRequestStatus.Completed;
 }
 
+<section class="section container party-details">
 @if (Model.IsStaffView)
 {
     <div class="admin-page-head"><div><span class="eyebrow">Đặt tiệc · #@Model.Id</span><h1>Chi tiết yêu cầu</h1><p>Trạng thái hiện tại: <strong>@Model.Status.ToDisplayName()</strong></p></div><a asp-action="Index" class="btn btn-ghost">Về hàng đợi</a></div>
 }
 else
 {
-    <section class="section"><div class="container"><div class="page-head"><span class="eyebrow">Yêu cầu #@Model.Id</span><h1>Chi tiết đặt tiệc</h1><p>Trạng thái: <strong>@Model.Status.ToDisplayName()</strong></p></div></div></section>
+    <div class="page-head"><span class="eyebrow">Yêu cầu #@Model.Id</span><h1>Chi tiết đặt tiệc</h1><p>Trạng thái: <strong>@Model.Status.ToDisplayName()</strong></p></div>
 }
 
 @if (TempData["PartyError"] is string partyError)
@@ -24,7 +25,7 @@ else
     <div class="alert alert-success" role="status">@partySuccess</div>
 }
 
-<div class="@(Model.IsStaffView ? "report-table-card" : "container report-table-card")">
+<div class="report-table-card">
     <dl class="party-details-grid">
         <div><dt>Người liên hệ</dt><dd>@Model.CustomerName</dd></div>
         @if (Model.IsStaffView) { <div><dt>Điện thoại</dt><dd>@Model.Phone</dd></div> }
@@ -39,7 +40,7 @@ else
     </dl>
 </div>
 
-<section class="@(Model.IsStaffView ? "report-table-card" : "container report-table-card")">
+<section class="report-table-card">
     <h2>Lịch sử trạng thái</h2>
     <ol class="party-history-list">
     @foreach (var entry in Model.StatusHistory)
@@ -51,7 +52,7 @@ else
 
 @if (Model.IsStaffView && !terminal)
 {
-    <section class="@(Model.IsStaffView ? "report-table-card" : "container report-table-card")">
+    <section class="report-table-card">
         <h2>Cập nhật yêu cầu</h2>
         <form asp-action="Update" method="post">
             @Html.AntiForgeryToken()
@@ -97,11 +98,13 @@ else
 }
 else if (!Model.IsStaffView)
 {
-    <div class="container"><a asp-action="MyRequests" class="btn btn-ghost">Quay lại yêu cầu của tôi</a></div>
+    <div><a asp-action="MyRequests" class="btn btn-ghost">Quay lại yêu cầu của tôi</a></div>
 }
+
+</section>
 
 @section Head {
     <style>
-        .party-card{max-width:760px;margin:auto}.party-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:0}.party-details-grid>div{padding:.85rem;border:1px solid var(--line,#333);border-radius:10px}.party-details-grid dt{color:var(--muted,#aaa);font-size:.82rem}.party-details-grid dd{margin:.25rem 0 0;white-space:pre-wrap}.party-notes{grid-column:1/-1}.party-products{margin:1rem 0;padding:1rem;border:1px solid var(--line,#333);border-radius:12px}.party-products legend{float:none;width:auto;padding:0 .4rem;font-weight:700}.party-product-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--line,#333)}.party-product-row .form-control{max-width:110px}.party-payment-qr{padding:.8rem 1rem;border-radius:10px;background:var(--panel,#17171a)}.party-payment-qr img{display:block;width:min(260px,100%);height:auto;margin:.75rem auto;border-radius:10px;background:white}.party-history-list{padding-left:1.25rem}.party-history-list li{margin:.75rem 0;padding-left:.3rem}.party-history-list span{display:block;color:var(--muted,#aaa);font-size:.85rem}.party-history-list p{margin:.3rem 0;white-space:pre-wrap}@@media(max-width:600px){.party-details-grid{grid-template-columns:1fr}.party-notes{grid-column:auto}.party-product-row{align-items:flex-start;flex-direction:column}}
+        .party-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:0}.party-details-grid>div{padding:.85rem;border:1px solid rgba(89,58,42,.18);border-radius:10px}.party-details-grid dt{color:var(--muted);font-size:.82rem}.party-details-grid dd{margin:.25rem 0 0;white-space:pre-wrap}.party-notes{grid-column:1/-1}.party-products{margin:1rem 0;padding:1rem;border:1px solid rgba(89,58,42,.18);border-radius:12px}.party-products legend{float:none;width:auto;padding:0 .4rem;font-weight:700}.party-product-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.5rem 0;border-bottom:1px solid rgba(89,58,42,.18)}.party-product-row .form-control{max-width:110px}.party-payment-qr{padding:.8rem 1rem;border-radius:10px;background:var(--cream-bg)}.party-payment-qr img{display:block;width:min(260px,100%);height:auto;margin:.75rem auto;border-radius:10px;background:white}.party-history-list{padding-left:1.25rem}.party-history-list li{margin:.75rem 0;padding-left:.3rem}.party-history-list span{display:block;color:var(--muted);font-size:.85rem}.party-history-list p{margin:.3rem 0;white-space:pre-wrap}@@media(max-width:600px){.party-details-grid{grid-template-columns:1fr}.party-notes{grid-column:auto}.party-product-row{align-items:flex-start;flex-direction:column}}
     </style>
 }

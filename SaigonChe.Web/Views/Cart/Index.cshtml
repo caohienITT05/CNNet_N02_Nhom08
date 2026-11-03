@@ -31,7 +31,7 @@
                 </span>
                 <h2>Giỏ hàng đang trống</h2>
                 <p>Hãy chọn vài ly chè yêu thích — chúng tôi sẽ chuẩn bị và giao ngay khi bạn xác nhận.</p>
-                <a asp-controller="Home" asp-action="Index" asp-fragment="menu" class="btn btn-primary">
+                <a asp-controller="Menu" asp-action="Index" class="btn btn-primary">
                     Khám phá thực đơn
                     <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
                 </a>
@@ -45,8 +45,10 @@
                     {
                         <article class="cart-item" id="cart-row-@item.ProductId">
                             <div class="cart-thumb">
-                                <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "/images/default-che.jpg" : item.ImageUrl)"
-                                     alt="@item.Name" loading="lazy" />
+                                @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" alt="" loading="lazy" />
+                                }
                             </div>
 
                             <div class="cart-details">
@@ -60,7 +62,7 @@
                                             onclick="updateQty(@item.ProductId, -1)">
                                         <svg class="icon" aria-hidden="true"><use href="#i-minus" /></svg>
                                     </button>
-                                    <label class="sr-only" for="qty-@item.ProductId">Số lượng @item.Name</label>
+                                    <label class="visually-hidden" for="qty-@item.ProductId">Số lượng @item.Name</label>
                                     <input id="qty-@item.ProductId" type="number" value="@item.Quantity"
                                            min="1" max="20" readonly />
                                     <button type="button" data-qty-plus aria-label="Tăng số lượng @item.Name"
@@ -80,7 +82,7 @@
                     }
 
                     <div>
-                        <a asp-controller="Home" asp-action="Index" asp-fragment="menu" class="btn btn-ghost btn-sm">
+                        <a asp-controller="Menu" asp-action="Index" class="btn btn-ghost btn-sm">
                             <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
                             Tiếp tục chọn món
                         </a>
@@ -102,7 +104,7 @@
                     </form>
 
                     <div class="summary-row">
-                        <span>Tạm tính (@itemCount phần)</span>
+                        <span>Tạm tính (<span id="cartItemCount">@itemCount</span> phần)</span>
                         <strong id="cartSubTotal">@Model.SubTotal.ToString("N0")₫</strong>
                     </div>
                     <div class="summary-row">
@@ -166,8 +168,8 @@
                 input.val(quantity);
                 $('#item-total-' + productId).text(response.itemTotalPrice);
                 updateSummary(response);
-                if (response.totalItems === 0) location.reload();
-            });
+                updateCartCount(response.totalItems);
+            }).fail(showCartRequestError);
         }
 
         function removeItem(productId) {
@@ -189,8 +191,18 @@
                         return;
                     }
                     updateSummary(response);
+                    updateCartCount(response.totalItems);
                 });
-            });
+            }).fail(showCartRequestError);
+        }
+
+        function updateCartCount(count) {
+            $('#cartItemCount, .cart-nav-link .badge').text(count);
+            $('.page-head p').text(count + ' phần chè đang chờ được giao đến bạn.');
+        }
+
+        function showCartRequestError() {
+            alert('Không thể cập nhật giỏ hàng. Vui lòng tải lại trang và thử lại.');
         }
 
         $('#couponForm').on('submit', function (event) {
@@ -213,7 +225,7 @@
                 } else {
                     message.removeClass('text-success').addClass('text-danger').text(response.message);
                 }
-            });
+            }).fail(showCartRequestError);
         });
     </script>
 }
