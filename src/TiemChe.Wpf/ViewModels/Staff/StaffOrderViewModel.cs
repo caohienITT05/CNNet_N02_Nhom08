@@ -44,6 +44,7 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
     private CancellationTokenSource? quoteCancellation;
     private int quoteGeneration;
     private Guid requestId = Guid.NewGuid();
+    private bool completeAfterTransfer;
     public override string Title => "Đặt món tại quầy";
     public ObservableCollection<StaffOrderLine> Lines { get; } = [];
     public IReadOnlyList<Choice<bool>> CompletionModes { get; } =
@@ -67,7 +68,6 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
     [ObservableProperty] private CheckoutQuote? quote;
     [ObservableProperty] private bool isQuoting;
     [ObservableProperty] private bool completeNow = true;
-    [ObservableProperty] private bool paymentReceived;
     [ObservableProperty] private CashShiftDto? currentShift;
     [ObservableProperty] private IReadOnlyList<Choice<PaymentMethod>> paymentMethods = [];
     [ObservableProperty] private PaymentMethod paymentMethod = PaymentMethod.CashOnDelivery;
@@ -77,8 +77,10 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
     public long TotalVnd => Quote?.TotalVnd ?? 0;
     public bool HasLines => Lines.Count != 0;
     public bool ShowForm => CreatedOrder is null;
-    public bool HasQr => !string.IsNullOrWhiteSpace(CreatedOrder?.Payment.BankTransfer?.QrImageUrl);
-    public bool ShowPaymentReceived => CompleteNow && PaymentMethod == PaymentMethod.BankTransfer;
+    public bool CanConfirmTransfer => CreatedOrder is
+        { Status: OrderStatus.Preparing, Payment.Method: PaymentMethod.BankTransfer, Payment.Status: PaymentStatus.Unpaid };
+    public bool ShowBankTransfer => CanConfirmTransfer && CreatedOrder?.Payment.BankTransfer is not null;
+    public bool HasQr => ShowBankTransfer && !string.IsNullOrWhiteSpace(CreatedOrder?.Payment.BankTransfer?.QrImageUrl);
     public bool ShowShiftWarning => CurrentShift is null;
     public bool CanCreateOrder => !IsQuoting && Quote is not null && HasLines;
     public string PaymentHint => CheckoutOptions switch
@@ -99,6 +101,8 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
     partial void OnCreatedOrderChanged(OrderDetails? value)
     {
         OnPropertyChanged(nameof(ShowForm));
+        OnPropertyChanged(nameof(CanConfirmTransfer));
+        OnPropertyChanged(nameof(ShowBankTransfer));
         OnPropertyChanged(nameof(HasQr));
     }
 
@@ -109,13 +113,6 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
     }
 
     partial void OnIsQuotingChanged(bool value) => OnPropertyChanged(nameof(CanCreateOrder));
-    partial void OnCompleteNowChanged(bool value)
-    {
-        OnPropertyChanged(nameof(CanCreateOrder));
-        OnPropertyChanged(nameof(ShowPaymentReceived));
-    }
-
-    partial void OnPaymentMethodChanged(PaymentMethod value) => OnPropertyChanged(nameof(ShowPaymentReceived));
     partial void OnCurrentShiftChanged(CashShiftDto? value) => OnPropertyChanged(nameof(ShowShiftWarning));
 
     partial void OnSelectedCustomerChanged(StaffCustomerDto? value)
@@ -136,6 +133,8 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
 
     protected override async Task LoadAsync(CancellationToken ct)
     {
+        if (CreatedOrder is { } order)
+            CreatedOrder = await api.GetAsync<OrderDetails>($"operations/orders/{order.Id}", ct);
         var categories = await api.GetAsync<CategoryDto[]>("catalog/categories", ct);
         var availability = await api.GetAsync<AvailabilityCatalog>("operations/availability", ct);
         CheckoutOptions = await api.GetAsync<StaffCheckoutOptions>("operations/checkout-options", ct);
@@ -282,11 +281,10 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
             throw new InvalidOperationException("Hãy thêm ít nhất một món vào đơn.");
         if (Quote is null || IsQuoting)
             throw new InvalidOperationException("Vui lòng đợi hệ thống tính xong tổng tiền.");
-        if (CompleteNow && PaymentMethod == PaymentMethod.BankTransfer && !PaymentReceived)
-            throw new InvalidOperationException("Vui lòng xác nhận đã nhận chuyển khoản.");
         if (!dialogs.Confirm($"Xác nhận tạo đơn với tổng tiền {Display.Money(Quote.TotalVnd)}?"))
             return;
         var request = BuildRequest(Quote.TotalVnd);
+        completeAfterTransfer = CompleteNow && request.PaymentMethod == PaymentMethod.BankTransfer;
         try
         {
             CreatedOrder = await api.PostAsync<OrderDetails>("operations/orders", request, ct);
@@ -300,11 +298,35 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
         SelectedLine = null;
         RecipientName = Phone = Note = "";
         RefreshTotals();
-        Report(CompleteNow ? "Đã thu tiền và hoàn thành đơn tại quầy." : "Đã gửi đơn đến bếp.", false);
+        Report(CanConfirmTransfer ? "Đã tạo đơn chờ chuyển khoản." : CreatedOrder.Status == OrderStatus.Completed
+            ? "Đã thu tiền và hoàn thành đơn tại quầy." : "Đã gửi đơn đến bếp.", false);
+    });
+
+    [RelayCommand] private Task ConfirmTransferAsync() => RunAsync(async ct =>
+    {
+        if (CreatedOrder is not { } order || !CanConfirmTransfer
+            || !dialogs.Confirm($"Xác nhận đã nhận {Display.Money(order.Payment.AmountVnd)} cho đơn {order.OrderNumber}?"))
+            return;
+
+        var route = $"operations/orders/{order.Id}";
+        try
+        {
+            CreatedOrder = await api.PostAsync<OrderDetails>($"{route}/confirm-transfer",
+                new ConfirmTransferRequest(order.Version, completeAfterTransfer), ct);
+        }
+        catch (ApiException error) when (error.Status == System.Net.HttpStatusCode.Conflict)
+        {
+            CreatedOrder = await api.GetAsync<OrderDetails>(route, ct);
+            throw;
+        }
+        Report(CreatedOrder.Status == OrderStatus.Completed ? "Đã nhận chuyển khoản và hoàn thành đơn."
+            : "Đã ghi nhận chuyển khoản.", false);
     });
 
     [RelayCommand] private void NewOrder()
     {
+        if (IsBusy)
+            return;
         CreatedOrder = null;
         requestId = Guid.NewGuid();
         Product = null;
@@ -315,7 +337,7 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
         CustomerSearch = CouponCode = "";
         Customers = [];
         SelectedCustomer = null;
-        PaymentReceived = false;
+        completeAfterTransfer = false;
         CompleteNow = true;
         Quote = null;
         if (CheckoutOptions?.AllowsBankTransfer != true)
@@ -362,7 +384,8 @@ public sealed partial class StaffOrderViewModel(ShopApi api, Navigator navigatio
 
     private StaffOrderRequest BuildRequest(long? expectedTotal) => new(RecipientName, Phone, Note, PaymentMethod,
         Lines.Select(x => new StaffOrderLineRequest(x.SizeId, x.Quantity, x.ToppingIds)).ToArray(),
-        requestId, SelectedCustomer?.Id, CouponCode, CompleteNow, PaymentReceived, expectedTotal);
+        requestId, SelectedCustomer?.Id, CouponCode, CompleteNow && PaymentMethod != PaymentMethod.BankTransfer,
+        ExpectedTotalVnd: expectedTotal);
 
     private void RefreshQuote()
     {

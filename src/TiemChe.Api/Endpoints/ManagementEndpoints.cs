@@ -78,7 +78,7 @@ internal static class ManagementEndpoints
         orders.MapGet("/{id:int}", (int id, OrderService service, CancellationToken ct) => service.GetAsync(id, null, ct));
         orders.MapPut("/{id:int}/status", (int id, OrderStatusRequest body, ClaimsPrincipal user, OrderService service, CancellationToken ct) =>
             service.UpdateStatusAsync(id, user.UserId(), body, ct));
-        orders.MapPost("/{id:int}/confirm-transfer", (int id, VersionRequest body, ClaimsPrincipal user, OrderService service, CancellationToken ct) =>
+        orders.MapPost("/{id:int}/confirm-transfer", (int id, ConfirmTransferRequest body, ClaimsPrincipal user, OrderService service, CancellationToken ct) =>
             service.ConfirmTransferAsync(id, user.UserId(), body, ct));
 
         var admin = api.MapGroup("/admin").RequireAuthorization(nameof(RoleName.Admin));

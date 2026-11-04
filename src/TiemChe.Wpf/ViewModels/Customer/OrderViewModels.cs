@@ -193,7 +193,8 @@ public sealed partial class OrderViewModel(ShopApi api, Navigator navigation, De
             OrderStatus.Pending => value!.Payment.Status == PaymentStatus.Unpaid
                 ? [OrderStatus.Preparing, OrderStatus.Cancelled] : [OrderStatus.Preparing],
             OrderStatus.Preparing when Operations && value!.Channel == OrderChannel.InStore =>
-                [OrderStatus.Completed, OrderStatus.Cancelled],
+                value.Payment.Method == PaymentMethod.CashOnDelivery || value.Payment.Status == PaymentStatus.Paid
+                    ? [OrderStatus.Completed, OrderStatus.Cancelled] : [OrderStatus.Cancelled],
             OrderStatus.Preparing when value!.Channel == OrderChannel.InStore => [],
             OrderStatus.Preparing when Operations && value!.Payment.Method == PaymentMethod.CashOnDelivery
                 => [OrderStatus.Delivering, OrderStatus.Cancelled],
@@ -295,7 +296,7 @@ public sealed partial class OrderViewModel(ShopApi api, Navigator navigation, De
     {
         if (Order is null || !CanConfirmTransfer || !dialogs.Confirm($"Xác nhận đã nhận {Display.Money(Order.Payment.AmountVnd)}?"))
             return;
-        Order = await api.PostAsync<OrderDetails>(Route + "/confirm-transfer", new VersionRequest(Order.Version), ct);
+        Order = await api.PostAsync<OrderDetails>(Route + "/confirm-transfer", new ConfirmTransferRequest(Order.Version), ct);
         Report("Đã ghi nhận thanh toán.", false);
     });
 

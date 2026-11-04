@@ -290,7 +290,8 @@ public sealed class OrderService(ITiemCheData data, CartService carts, CheckoutS
             (OrderStatus.Preparing, OrderStatus.Cancelled) => staff
                 && order.Payment.Status is PaymentStatus.Unpaid or PaymentStatus.Paid,
             (OrderStatus.Pending, OrderStatus.Preparing) => staff,
-            (OrderStatus.Preparing, OrderStatus.Completed) => staff && order.Channel == OrderChannel.InStore,
+            (OrderStatus.Preparing, OrderStatus.Completed) => staff && order.Channel == OrderChannel.InStore
+                && (order.Payment.Method == PaymentMethod.CashOnDelivery || order.Payment.Status == PaymentStatus.Paid),
             (OrderStatus.Preparing, OrderStatus.Delivering) => staff &&
                 order.Channel == OrderChannel.Online &&
                 (order.Payment.Method == PaymentMethod.CashOnDelivery || order.Payment.Status == PaymentStatus.Paid),
@@ -316,7 +317,7 @@ public sealed class OrderService(ITiemCheData data, CartService carts, CheckoutS
         if (request.Status == OrderStatus.Completed)
         {
             order.CompletedAtUtc = now;
-            if (order.Channel == OrderChannel.InStore || order.Payment.Method == PaymentMethod.CashOnDelivery)
+            if (order.Payment.Method == PaymentMethod.CashOnDelivery)
                 MarkPaid(order.Payment, actorId, now);
         }
         order.StatusHistory.Add(new OrderStatusHistory
@@ -334,7 +335,7 @@ public sealed class OrderService(ITiemCheData data, CartService carts, CheckoutS
         return Describe(await FindAsync(id, staff ? null : actorId, ct), staff);
     }
 
-    public async Task<OrderDetails> ConfirmTransferAsync(int id, int actorId, VersionRequest request, CancellationToken ct)
+    public async Task<OrderDetails> ConfirmTransferAsync(int id, int actorId, ConfirmTransferRequest request, CancellationToken ct)
     {
         await using var transaction = await data.BeginWriteAsync(ct);
         var order = await FindAsync(id, null, ct);
@@ -342,7 +343,23 @@ public sealed class OrderService(ITiemCheData data, CartService carts, CheckoutS
         if (order.Payment.Method != PaymentMethod.BankTransfer || order.Payment.Status != PaymentStatus.Unpaid
             || order.Status is not (OrderStatus.Pending or OrderStatus.Preparing))
             throw Check.Conflict("Đơn này không có khoản chuyển khoản đang chờ xác nhận.");
-        MarkPaid(order.Payment, actorId, time.GetUtcNow().UtcDateTime);
+        if (request.CompleteNow && (order.Channel != OrderChannel.InStore || order.Status != OrderStatus.Preparing))
+            throw Check.Conflict("Chỉ có thể hoàn thành ngay đơn tại quầy đang chuẩn bị.");
+        var now = time.GetUtcNow().UtcDateTime;
+        MarkPaid(order.Payment, actorId, now);
+        if (request.CompleteNow)
+        {
+            order.StatusHistory.Add(new OrderStatusHistory
+            {
+                PreviousStatus = order.Status,
+                NewStatus = OrderStatus.Completed,
+                ChangedAtUtc = now,
+                ChangedByUserId = actorId,
+                Note = "Đã xác nhận chuyển khoản tại quầy"
+            });
+            order.Status = OrderStatus.Completed;
+            order.CompletedAtUtc = now;
+        }
         order.Version = Guid.NewGuid();
         await data.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);

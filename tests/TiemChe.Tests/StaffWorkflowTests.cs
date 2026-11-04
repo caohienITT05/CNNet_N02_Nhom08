@@ -209,6 +209,35 @@ public sealed class StaffWorkflowTests
     }
 
     [Fact]
+    public async Task InStoreQrPaymentRequiresConfirmationAndCanCompleteWithIt()
+    {
+        await using var test = await TestDatabase.CreateAsync();
+        var staff = await test.AddUserAsync(RoleName.Staff, "staff@example.com");
+        var settings = new CheckoutSettings { BankName = "VCB", AccountNumber = "123456789", AccountName = "TIEM CHE" };
+        var orders = new OrderService(test.Db, test.Carts, settings, test.Clock, new TestPasswordHasher());
+        var request = test.Request(sizeId: 9, completeNow: false) with { PaymentMethod = PaymentMethod.BankTransfer };
+        var order = await orders.CreateStaffOrderAsync(staff.Id, request, CancellationToken.None);
+
+        Assert.Equal(OrderStatus.Preparing, order.Status);
+        Assert.Equal(PaymentStatus.Unpaid, order.Payment.Status);
+        var transfer = Assert.IsType<BankTransferDto>(order.Payment.BankTransfer);
+        Assert.Equal(order.OrderNumber, transfer.Reference);
+        Assert.Contains($"?amount={order.Amounts.TotalVnd}&addInfo={order.OrderNumber}", transfer.QrImageUrl);
+        Assert.Equal(409, (await Assert.ThrowsAsync<BusinessException>(() => orders.UpdateStatusAsync(order.Id,
+            staff.Id, new OrderStatusRequest(order.Version, OrderStatus.Completed, null), CancellationToken.None))).Status);
+
+        var confirmed = await orders.ConfirmTransferAsync(order.Id, staff.Id,
+            new ConfirmTransferRequest(order.Version, CompleteNow: true), CancellationToken.None);
+
+        Assert.Equal(PaymentStatus.Paid, confirmed.Payment.Status);
+        Assert.Equal(OrderStatus.Completed, confirmed.Status);
+        Assert.Equal(OrderStatus.Completed, confirmed.History.Last().Status);
+        Assert.NotEqual(order.Version, confirmed.Version);
+        Assert.Equal(409, (await Assert.ThrowsAsync<BusinessException>(() => orders.ConfirmTransferAsync(order.Id,
+            staff.Id, new ConfirmTransferRequest(order.Version, CompleteNow: true), CancellationToken.None))).Status);
+    }
+
+    [Fact]
     public async Task InternalOrderNotesAreOnlyReturnedForOperators()
     {
         await using var test = await TestDatabase.CreateAsync();

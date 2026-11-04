@@ -36,5 +36,6 @@ public sealed record OrderDetails(int Id, string OrderNumber, Guid Version, Orde
 public sealed record OrderStatusRequest(Guid Version, OrderStatus Status, string? Note);
 public sealed record OrderNoteRequest(string? Text);
 public sealed record VersionRequest(Guid Version);
+public sealed record ConfirmTransferRequest(Guid Version, bool CompleteNow = false);
 public sealed record ReorderRequest(Guid? CartVersion);
 public sealed record ReorderResult(CartDto Cart, IReadOnlyList<string> SkippedItems);

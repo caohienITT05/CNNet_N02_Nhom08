@@ -57,7 +57,7 @@ public sealed class CheckoutSettings
         if (bin is null || amountVnd <= 0)
             return null;
         return "https://img.vietqr.io/image/" +
-            $"{Uri.EscapeDataString(bin)}-{Uri.EscapeDataString(AccountNumber!.Trim())}-compact2.png" +
+            $"{Uri.EscapeDataString(bin)}-{Uri.EscapeDataString(AccountNumber!.Trim())}-compact2.svg" +
             $"?amount={amountVnd}" +
             $"&addInfo={Uri.EscapeDataString(reference)}" +
             $"&accountName={Uri.EscapeDataString(AccountName!.Trim())}";

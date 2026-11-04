@@ -74,3 +74,5 @@ Nếu dùng Visual Studio, mở `TiemChe.sln`. Solution có sẵn cả `TiemChe.
 - Theo dõi/lọc đơn theo kênh, trạng thái và thanh toán; xác nhận chuyển khoản, hủy/hoàn tiền theo điều kiện.
 - Mở/đóng ca, đối soát tiền mặt, xem và in lịch sử ca; tra cứu khách và lịch sử đơn.
 - Cập nhật tình trạng món kèm nhật ký, ẩn/hiện đánh giá và thêm ghi chú nội bộ trên đơn.
+
+Để dùng VietQR tại quầy, cấu hình `Checkout__BankName`, `Checkout__AccountNumber`, `Checkout__AccountName` và `Checkout__BankBin` nếu cần, rồi khởi động lại API. Chọn **Chuyển khoản** và tạo đơn để hiện mã có sẵn số tiền và mã đơn. Sau khi đối chiếu khoản tiền vào tài khoản, bấm **Xác nhận đã nhận chuyển khoản**. Nếu đã chọn thu tiền và hoàn thành ngay, đơn sẽ được hoàn thành trong cùng bước xác nhận. [Cấu hình ngân hàng](docs/04-dich-vu-va-api.md#chạy-api-trên-máy-phát-triển)

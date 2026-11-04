@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Media.Imaging;
 using TiemChe.Wpf.Services;
 
 namespace TiemChe.Wpf.Resources;
@@ -19,7 +18,7 @@ public sealed class DisplayConverter : IValueConverter
         "Image" => value is string path && path.StartsWith("/images/", StringComparison.Ordinal)
             ? new Uri(ApiConfiguration.FromEnvironment().BaseAddress, path.TrimStart('/')) : null,
         "Qr" => value is string url && Uri.TryCreate(url, UriKind.Absolute, out var uri)
-            ? new BitmapImage(uri) : null,
+            && uri.Scheme == Uri.UriSchemeHttps && uri.Host == "img.vietqr.io" ? uri : null,
         _ => Display.Label(value)
     };
 
