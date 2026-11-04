@@ -1,0 +1,47 @@
+<Application x:Class="TiemChe.Wpf.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:avm="clr-namespace:TiemChe.Wpf.ViewModels.Auth"
+             xmlns:av="clr-namespace:TiemChe.Wpf.Views.Auth"
+             xmlns:cvm="clr-namespace:TiemChe.Wpf.ViewModels.Customer"
+             xmlns:cv="clr-namespace:TiemChe.Wpf.Views.Customer"
+             xmlns:mvm="clr-namespace:TiemChe.Wpf.ViewModels.Admin"
+             xmlns:mv="clr-namespace:TiemChe.Wpf.Views.Admin"
+             xmlns:svm="clr-namespace:TiemChe.Wpf.ViewModels.Staff"
+             xmlns:sv="clr-namespace:TiemChe.Wpf.Views.Staff"
+             ShutdownMode="OnMainWindowClose">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <md:BundledTheme BaseTheme="Light" PrimaryColor="Green" SecondaryColor="Amber"/>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml"/>
+                <ResourceDictionary Source="Resources/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <DataTemplate DataType="{x:Type avm:AuthViewModel}"><av:AuthView/></DataTemplate>
+            <DataTemplate DataType="{x:Type avm:ProfileViewModel}"><av:ProfileView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:HomeViewModel}"><cv:HomeView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:CatalogViewModel}"><cv:CatalogView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:ProductViewModel}"><cv:ProductView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:WishlistViewModel}"><cv:WishlistView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:CartViewModel}"><cv:CartView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:CheckoutViewModel}"><cv:CheckoutView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:AddressesViewModel}"><cv:AddressesView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:OrdersViewModel}"><cv:OrdersView/></DataTemplate>
+            <DataTemplate DataType="{x:Type cvm:OrderViewModel}"><cv:OrderView/></DataTemplate>
+            <DataTemplate DataType="{x:Type mvm:DashboardViewModel}"><mv:DashboardView/></DataTemplate>
+            <DataTemplate DataType="{x:Type mvm:ProductsAdminViewModel}"><mv:ProductsAdminView/></DataTemplate>
+            <DataTemplate DataType="{x:Type mvm:CategoriesAdminViewModel}"><mv:CategoriesAdminView/></DataTemplate>
+            <DataTemplate DataType="{x:Type mvm:ToppingsAdminViewModel}"><mv:ToppingsAdminView/></DataTemplate>
+            <DataTemplate DataType="{x:Type mvm:CouponsAdminViewModel}"><mv:CouponsAdminView/></DataTemplate>
+            <DataTemplate DataType="{x:Type mvm:BannersAdminViewModel}"><mv:BannersAdminView/></DataTemplate>
+            <DataTemplate DataType="{x:Type mvm:AccountsAdminViewModel}"><mv:AccountsAdminView/></DataTemplate>
+            <DataTemplate DataType="{x:Type mvm:ReviewsAdminViewModel}"><mv:ReviewsAdminView/></DataTemplate>
+            <DataTemplate DataType="{x:Type svm:ShiftSummaryViewModel}"><sv:ShiftSummaryView/></DataTemplate>
+            <DataTemplate DataType="{x:Type svm:CashShiftsViewModel}"><sv:CashShiftsView/></DataTemplate>
+            <DataTemplate DataType="{x:Type svm:CustomerLookupViewModel}"><sv:CustomerLookupView/></DataTemplate>
+            <DataTemplate DataType="{x:Type svm:StaffOrderViewModel}"><sv:StaffOrderView/></DataTemplate>
+            <DataTemplate DataType="{x:Type svm:AvailabilityViewModel}"><sv:AvailabilityView/></DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

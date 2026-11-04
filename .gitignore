@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+.tiemche/
+*.user
+*.db
+*.db-shm
+*.db-wal
+*.db-journal

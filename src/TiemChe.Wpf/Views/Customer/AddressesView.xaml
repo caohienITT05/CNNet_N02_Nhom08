@@ -1,0 +1,49 @@
+<UserControl x:Class="TiemChe.Wpf.Views.Customer.AddressesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:r="clr-namespace:TiemChe.Wpf.Resources"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF">
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <StackPanel>
+            <Button Style="{StaticResource SoftButton}" Content="‹ Quay lại thanh toán" Command="{Binding BackCommand}" HorizontalAlignment="Left"
+                    Visibility="{Binding FromCheckout, Converter={StaticResource BoolVisibility}}" Margin="0,0,0,12"/>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Border Style="{StaticResource Panel}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="Địa chỉ đã lưu" Style="{StaticResource Heading}"/>
+                        <ListBox ItemsSource="{Binding Addresses}" SelectedItem="{Binding Selected}" MinHeight="115" MaxHeight="350">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,5">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding RecipientName}" FontWeight="SemiBold"/>
+                                            <TextBlock Text=" · Mặc định" Foreground="{StaticResource Leaf}" Visibility="{Binding IsDefault, Converter={StaticResource BoolVisibility}}"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding AddressLine}" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Phone}" Style="{StaticResource MutedText}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource Panel}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="Thông tin địa chỉ" Style="{StaticResource Heading}"/>
+                        <TextBox Style="{StaticResource Field}" md:HintAssist.Hint="Tên người nhận" Text="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBox Style="{StaticResource Field}" md:HintAssist.Hint="Điện thoại" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBox Style="{StaticResource Field}" md:HintAssist.Hint="Địa chỉ giao hàng" Text="{Binding Line, UpdateSourceTrigger=PropertyChanged}"/>
+                        <CheckBox Content="Đặt làm địa chỉ mặc định" IsChecked="{Binding IsDefault}" Margin="0,0,0,10"/>
+                        <WrapPanel>
+                            <Button Style="{StaticResource PrimaryButton}" Content="Lưu địa chỉ" Command="{Binding SaveCommand}"/>
+                            <Button Style="{StaticResource SoftButton}" Content="Thêm địa chỉ mới" Command="{Binding ClearCommand}"/>
+                            <Button Style="{StaticResource SoftButton}" Content="Xóa" Command="{Binding DeleteCommand}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

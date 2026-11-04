@@ -1,0 +1,15 @@
+<UserControl x:Class="TiemChe.Wpf.Views.Customer.WishlistView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:r="clr-namespace:TiemChe.Wpf.Resources"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF">
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <StackPanel>
+            <Button Style="{StaticResource SoftButton}" Content="Khám phá thực đơn" Command="{Binding BrowseCommand}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+            <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource ProductTile}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

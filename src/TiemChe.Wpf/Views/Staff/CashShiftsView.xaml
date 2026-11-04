@@ -1,0 +1,42 @@
+<UserControl x:Class="TiemChe.Wpf.Views.Staff.CashShiftsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:r="clr-namespace:TiemChe.Wpf.Resources">
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <Border Style="{StaticResource Panel}">
+            <StackPanel>
+                <WrapPanel>
+                    <ComboBox Style="{StaticResource ComboField}" Width="230" Margin="0,0,12,5"
+                              md:HintAssist.Hint="Nhân viên"
+                              Visibility="{Binding IsAdmin, Converter={StaticResource BoolVisibility}}"
+                              ItemsSource="{Binding StaffFilters}" DisplayMemberPath="Label"
+                              SelectedValuePath="Value" SelectedValue="{Binding StaffId}"/>
+                    <Button Style="{StaticResource PrimaryButton}" Content="Lọc ca"
+                            Command="{Binding SearchCommand}"/>
+                    <Button Style="{StaticResource SoftButton}" Content="In biên bản"
+                            Command="{Binding PrintCommand}"/>
+                </WrapPanel>
+                <DataGrid Style="{StaticResource Table}" Height="440" ItemsSource="{Binding Shifts}"
+                          SelectedItem="{Binding Selected}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nhân viên" Binding="{Binding StaffName}" Width="*"/>
+                        <DataGridTextColumn Header="Mở ca" Binding="{Binding OpenedAtUtc, Converter={StaticResource Display}, ConverterParameter=Date}" Width="140"/>
+                        <DataGridTextColumn Header="Đóng ca" Binding="{Binding ClosedAtUtc, Converter={StaticResource Display}, ConverterParameter=Date}" Width="140"/>
+                        <DataGridTextColumn Header="Tiền đầu ca" Binding="{Binding OpeningCashVnd, Converter={StaticResource Display}, ConverterParameter=Money}" Width="115"/>
+                        <DataGridTextColumn Header="Tiền mặt thu" Binding="{Binding CashCollectedVnd, Converter={StaticResource Display}, ConverterParameter=Money}" Width="115"/>
+                        <DataGridTextColumn Header="Chuyển khoản" Binding="{Binding ConfirmedTransferVnd, Converter={StaticResource Display}, ConverterParameter=Money}" Width="115"/>
+                        <DataGridTextColumn Header="Dự kiến" Binding="{Binding ExpectedCashVnd, Converter={StaticResource Display}, ConverterParameter=Money}" Width="110"/>
+                        <DataGridTextColumn Header="Kiểm đếm" Binding="{Binding CountedCashVnd, Converter={StaticResource Display}, ConverterParameter=Money}" Width="110"/>
+                        <DataGridTextColumn Header="Chênh lệch" Binding="{Binding DifferenceVnd, Converter={StaticResource Display}, ConverterParameter=Money}" Width="110"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <WrapPanel Margin="0,10,0,0">
+                    <Button Style="{StaticResource SoftButton}" Content="Trang trước" Command="{Binding PreviousCommand}"/>
+                    <Button Style="{StaticResource SoftButton}" Content="Trang sau" Command="{Binding NextCommand}"/>
+                    <TextBlock Text="{Binding PageLabel}" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+    </ScrollViewer>
+</UserControl>
