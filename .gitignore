@@ -1,41 +1,9 @@
-# Visual Studio user data and caches
+bin/
+obj/
 .vs/
-*.suo
+.tiemche/
 *.user
-*.userosscache
-*.sln.docstates
-
-# .NET build output
-[Bb]in/
-[Oo]bj/
-artifacts/
-
-# Test and coverage output
-TestResults/
-coverage/
-*.coverage
-*.coveragexml
-
-# Local configuration and secrets
-appsettings.Local.json
-appsettings.*.Local.json
-secrets.json
-.env
-.env.*
-*.pfx
-*.snk
-
-# AI assistant local skills/config
-.codex/
-.opencode/
-.shared/
-
-# IDE and operating-system files
-.idea/
-.vscode/
-*.swp
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
+*.db
+*.db-shm
+*.db-wal
+*.db-journal

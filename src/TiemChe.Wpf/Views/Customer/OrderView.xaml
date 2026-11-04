@@ -1,0 +1,115 @@
+<UserControl x:Class="TiemChe.Wpf.Views.Customer.OrderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:r="clr-namespace:TiemChe.Wpf.Resources"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF">
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <StackPanel>
+            <Button Style="{StaticResource SoftButton}" Content="‹ Danh sách đơn" Command="{Binding BackCommand}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+            <StackPanel Visibility="{Binding Order, Converter={StaticResource Display}, ConverterParameter=Visible}">
+                <Border Style="{StaticResource Panel}" Margin="0,0,0,14">
+                    <StackPanel>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource SoftButton}" Content="In hóa đơn" Command="{Binding PrintCommand}"/>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Order.OrderNumber}" Style="{StaticResource Heading}"/>
+                                <TextBlock Text="{Binding Order.PlacedAtUtc, Converter={StaticResource Display}, ConverterParameter=Date}" Style="{StaticResource MutedText}"/>
+                            </StackPanel>
+                        </DockPanel>
+                        <WrapPanel Margin="0,9,0,6">
+                            <TextBlock Text="{Binding Order.Status, Converter={StaticResource Display}}" FontWeight="Bold" Foreground="{StaticResource Leaf}" Margin="0,0,15,0"/>
+                            <TextBlock Text="{Binding Order.Payment.Method, Converter={StaticResource Display}}" Margin="0,0,15,0"/>
+                            <TextBlock Text="{Binding Order.Payment.Status, Converter={StaticResource Display}}"/>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding Order.Recipient}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Order.Phone}" Style="{StaticResource MutedText}"/>
+                        <TextBlock Text="{Binding Order.Address}" Style="{StaticResource MutedText}"/>
+                        <Border Background="{StaticResource Mint}" CornerRadius="8" Padding="10" Margin="0,12,0,0"
+                                Visibility="{Binding ShowBankTransfer, Converter={StaticResource BoolVisibility}}">
+                            <StackPanel>
+                                <TextBlock Text="Thông tin chuyển khoản" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding Order.Payment.BankTransfer.BankName}" Margin="0,3"/>
+                                <TextBlock Text="{Binding Order.Payment.BankTransfer.AccountName}" Margin="0,0,0,3"/>
+                                <TextBlock><Run Text="Số tài khoản: "/><Run Text="{Binding Order.Payment.BankTransfer.AccountNumber, Mode=OneWay}"/></TextBlock>
+                                <TextBlock><Run Text="Nội dung: "/><Run Text="{Binding Order.Payment.BankTransfer.Reference, Mode=OneWay}"/></TextBlock>
+                            </StackPanel>
+                        </Border>
+                        <WrapPanel Margin="0,9,0,0">
+                            <Button Style="{StaticResource SoftButton}" Content="Hủy đơn" Command="{Binding CancelCommand}" Visibility="{Binding CanCancel, Converter={StaticResource BoolVisibility}}"/>
+                            <Button Style="{StaticResource SoftButton}" Content="Mua lại" Command="{Binding ReorderCommand}" Visibility="{Binding Customer, Converter={StaticResource BoolVisibility}}"/>
+                            <Button Style="{StaticResource PrimaryButton}" Content="Xác nhận đã nhận chuyển khoản" Command="{Binding ConfirmTransferCommand}"
+                                    Visibility="{Binding CanConfirmTransfer, Converter={StaticResource BoolVisibility}}"/>
+                        </WrapPanel>
+                        <WrapPanel Visibility="{Binding CanUpdateStatus, Converter={StaticResource BoolVisibility}}">
+                            <ComboBox Style="{StaticResource ComboField}" Width="155" Margin="0,0,12,5" md:HintAssist.Hint="Trạng thái tiếp theo"
+                                      ItemsSource="{Binding NextStatuses}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding NextStatus}"/>
+                            <TextBox Style="{StaticResource Field}" Width="200" Margin="0,0,12,5" md:HintAssist.Hint="Ghi chú (tùy chọn)" Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Button Style="{StaticResource PrimaryButton}" Content="Cập nhật trạng thái" Command="{Binding UpdateStatusCommand}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="5*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="4*"/></Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource Panel}" VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Text="Món đã đặt" Style="{StaticResource Heading}"/>
+                            <ItemsControl ItemsSource="{Binding Order.Items}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,2,0,8">
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding LineTotalVnd, Converter={StaticResource Display}, ConverterParameter=Money}" Margin="8,0,0,0"/>
+                                                <TextBlock TextWrapping="Wrap" FontWeight="SemiBold">
+                                                    <Run Text="{Binding ProductName, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding SizeName, Mode=OneWay}"/><Run Text=" × "/><Run Text="{Binding Quantity, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </DockPanel>
+                                            <ItemsControl ItemsSource="{Binding Toppings}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate><TextBlock Text="{Binding Name, StringFormat=+ {0}}" Style="{StaticResource MutedText}" Margin="8,0,0,0"/></DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Separator/>
+                            <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Order.Amounts.SubtotalVnd, Converter={StaticResource Display}, ConverterParameter=Money}"/><TextBlock Text="Tiền món"/></DockPanel>
+                            <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Order.Amounts.DiscountVnd, Converter={StaticResource Display}, ConverterParameter=Money}"/><TextBlock Text="Giảm giá"/></DockPanel>
+                            <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Order.Amounts.ShippingFeeVnd, Converter={StaticResource Display}, ConverterParameter=Money}"/><TextBlock Text="Phí giao"/></DockPanel>
+                            <DockPanel Margin="0,6,0,0"><TextBlock DockPanel.Dock="Right" Style="{StaticResource Price}" Text="{Binding Order.Amounts.TotalVnd, Converter={StaticResource Display}, ConverterParameter=Money}"/><TextBlock Text="Tổng tiền" FontWeight="Bold"/></DockPanel>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource Panel}" VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Text="Lịch sử trạng thái" Style="{StaticResource Heading}"/>
+                            <ItemsControl ItemsSource="{Binding Order.History}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,8">
+                                            <TextBlock Text="{Binding Status, Converter={StaticResource Display}}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding ChangedAtUtc, Converter={StaticResource Display}, ConverterParameter=Date}" Style="{StaticResource MutedText}"/>
+                                            <TextBlock Text="{Binding Note}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                <Border Style="{StaticResource Panel}" Visibility="{Binding CanReview, Converter={StaticResource BoolVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="Đánh giá món đã mua" Style="{StaticResource Heading}"/>
+                        <WrapPanel>
+                            <ComboBox Style="{StaticResource ComboField}" Width="235" Margin="0,0,12,8" md:HintAssist.Hint="Món đã mua"
+                                      ItemsSource="{Binding Order.Items}" DisplayMemberPath="ProductName" SelectedItem="{Binding ReviewItem}"/>
+                            <TextBox Style="{StaticResource Field}" Width="105" md:HintAssist.Hint="Số sao (1–5)" Text="{Binding Rating, UpdateSourceTrigger=PropertyChanged}"/>
+                        </WrapPanel>
+                        <TextBox Style="{StaticResource Field}" md:HintAssist.Hint="Nhận xét" Text="{Binding Comment, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Style="{StaticResource PrimaryButton}" Content="Gửi đánh giá" Command="{Binding ReviewCommand}" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

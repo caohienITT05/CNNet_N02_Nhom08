@@ -1,0 +1,40 @@
+<UserControl x:Class="TiemChe.Wpf.Views.Admin.ToppingsAdminView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:r="clr-namespace:TiemChe.Wpf.Resources"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF">
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="4*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="6*"/></Grid.ColumnDefinitions>
+            <Border Style="{StaticResource Panel}" VerticalAlignment="Top">
+                <StackPanel>
+                    <TextBlock Text="Danh sách" Style="{StaticResource Heading}"/>
+                    <ListBox ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" DisplayMemberPath="Label"
+                             MinHeight="100" MaxHeight="490"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource Panel}" VerticalAlignment="Top">
+                <StackPanel>
+                    <TextBlock Text="Thông tin topping" Style="{StaticResource Heading}"/>
+                    <TextBox Style="{StaticResource Field}" md:HintAssist.Hint="Tên topping" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox Style="{StaticResource Field}" md:HintAssist.Hint="Giá (đồng)" Text="{Binding Price, UpdateSourceTrigger=PropertyChanged}" />
+                    
+                <WrapPanel>
+                    <Button Style="{StaticResource SoftButton}" Content="Chọn ảnh" Command="{Binding ImageCommand}"/>
+                    <Button Style="{StaticResource SoftButton}" Content="Bỏ ảnh" Command="{Binding ClearImageCommand}"/>
+                </WrapPanel>
+                <Image Source="{Binding ImagePath, Converter={StaticResource Display}, ConverterParameter=Image}"
+                       Height="115" Margin="0,0,0,12" Stretch="Uniform" HorizontalAlignment="Left"
+                       Visibility="{Binding ImagePath, Converter={StaticResource Display}, ConverterParameter=Visible}"/>
+                    <CheckBox Content="Đang bán" IsChecked="{Binding IsActive}" Margin="0,5,0,10"/>
+                    <WrapPanel>
+                        <Button Style="{StaticResource PrimaryButton}" Content="Lưu" Command="{Binding SaveCommand}"/>
+                        <Button Style="{StaticResource SoftButton}" Content="Tạo mục mới" Command="{Binding ClearCommand}"/>
+                        <Button Style="{StaticResource SoftButton}" Content="Ngừng bán" Command="{Binding RemoveCommand}"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
