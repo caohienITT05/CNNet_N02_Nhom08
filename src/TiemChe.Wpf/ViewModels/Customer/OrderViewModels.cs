@@ -49,6 +49,7 @@ public sealed partial class OrdersViewModel(ShopApi api, Navigator navigation, O
             ApplyToday();
         }
         await FetchAsync(page, ct);
+        ct.ThrowIfCancellationRequested();
         if (Operations)
             StartTimer();
     }
@@ -84,11 +85,12 @@ public sealed partial class OrdersViewModel(ShopApi api, Navigator navigation, O
 
     private async void OnTimerTick(object? sender, EventArgs args)
     {
-        if (IsBusy)
+        var ct = LifetimeToken;
+        if (IsBusy || ct.IsCancellationRequested)
             return;
         IsBusy = true;
-        try { await FetchAsync(page, LifetimeToken, true); }
-        catch (OperationCanceledException) when (LifetimeToken.IsCancellationRequested) { }
+        try { await FetchAsync(page, ct, true); }
+        catch (Exception) when (ct.IsCancellationRequested) { }
         catch { Report("Không thể tự làm mới danh sách. Sẽ thử lại sau.", false); }
         finally { IsBusy = false; }
     }
@@ -111,6 +113,7 @@ public sealed partial class OrdersViewModel(ShopApi api, Navigator navigation, O
             : ShopApi.Query("customer/orders", ("status", Status), ("search", Search), ("page", number),
                 ("pageSize", PageSize));
         var result = await api.GetAsync<PageResult<OrderSummary>>(route, ct);
+        ct.ThrowIfCancellationRequested();
         Orders = result.Items;
         Selected = Orders.FirstOrDefault(x => x.Id == selectedId) ?? Orders.FirstOrDefault();
         page = result.Page;

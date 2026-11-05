@@ -11,6 +11,7 @@ namespace TiemChe.Wpf.ViewModels;
 public abstract partial class Screen : ObservableObject
 {
     private CancellationTokenSource? lifetime;
+    private CancellationToken lifetimeToken = new(canceled: true);
     [ObservableProperty] private bool isBusy;
     [ObservableProperty] private string? notice;
     [ObservableProperty] private bool isError;
@@ -18,21 +19,29 @@ public abstract partial class Screen : ObservableObject
     public abstract string Title { get; }
     protected virtual Task LoadAsync(CancellationToken ct) => Task.CompletedTask;
 
-    protected CancellationToken LifetimeToken => lifetime?.Token ?? CancellationToken.None;
+    protected CancellationToken LifetimeToken => lifetimeToken;
 
     internal Task ActivateAsync()
     {
-        lifetime = new CancellationTokenSource();
+        var source = new CancellationTokenSource();
+        lifetimeToken = source.Token;
+        lifetime = source;
         OnActivated();
         return RunAsync(LoadAsync);
     }
 
     internal void Deactivate()
     {
-        OnDeactivated();
-        lifetime?.Cancel();
-        lifetime?.Dispose();
+        if (lifetime is not { } source)
+            return;
+
         lifetime = null;
+        lifetimeToken = new CancellationToken(canceled: true);
+        using (source)
+        {
+            OnDeactivated();
+            source.Cancel();
+        }
     }
 
     protected virtual void OnActivated() { }
@@ -42,9 +51,9 @@ public abstract partial class Screen : ObservableObject
 
     protected async Task RunAsync(Func<CancellationToken, Task> operation)
     {
-        if (IsBusy || lifetime is null)
+        var ct = LifetimeToken;
+        if (IsBusy || ct.IsCancellationRequested)
             return;
-        var ct = lifetime.Token;
         IsBusy = true;
         Notice = null;
         IsError = false;
