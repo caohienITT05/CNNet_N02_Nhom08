@@ -7,3 +7,4 @@ obj/
 *.db-shm
 *.db-wal
 *.db-journal
+/src/TiemChe.Api/appsettings.Development.json

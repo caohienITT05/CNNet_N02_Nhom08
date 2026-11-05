@@ -52,15 +52,19 @@ Sau lần tạo đầu tiên, không chạy lại `--bootstrap-admin`. Các lầ
 
 ### 4. Khởi động API
 
-Nếu muốn thử VietQR, đặt thông tin nhận tiền trong chính cửa sổ PowerShell chạy API. Thay các giá trị mẫu bằng thông tin của cửa hàng.
+Nếu muốn dùng VietQR và giữ cấu hình qua các lần mở API, tạo tệp `src/TiemChe.Api/appsettings.Development.json` trên máy. Thay các giá trị mẫu bằng thông tin của cửa hàng. Git tự bỏ qua tệp này.
 
-```powershell
-$env:Checkout__BankName = 'VCB'
-$env:Checkout__AccountNumber = 'SO_TAI_KHOAN_CUA_HANG'
-$env:Checkout__AccountName = 'TEN_CHU_TAI_KHOAN'
+```json
+{
+  "Checkout": {
+    "BankName": "VCB",
+    "AccountNumber": "SO_TAI_KHOAN_CUA_HANG",
+    "AccountName": "TEN_CHU_TAI_KHOAN"
+  }
+}
 ```
 
-`VCB` là tên viết tắt được nhận diện sẵn cho Vietcombank. Với ngân hàng chưa được dự án nhận diện, đặt thêm `Checkout__BankBin` bằng mã BIN của ngân hàng. Khi mở cửa sổ PowerShell khác để chạy API, đặt lại các biến này. [Cấu hình ngân hàng](docs/04-dich-vu-va-api.md#chạy-api-trên-máy-phát-triển)
+`VCB` là tên viết tắt được nhận diện sẵn cho Vietcombank. Với ngân hàng chưa được dự án nhận diện, thêm trường `BankBin` vào mục `Checkout`. Khởi động lại API sau khi đổi cấu hình. Các biến môi trường `Checkout__*` của phiên chạy API có thể ghi đè giá trị trong tệp. [Cấu hình ngân hàng](docs/04-dich-vu-va-api.md#chạy-api-trên-máy-phát-triển)
 
 Chạy API từ thư mục dự án. Nếu Windows hỏi có tin cậy chứng chỉ HTTPS dành cho phát triển hay không, xác nhận để WPF kết nối được với API cục bộ.
 
